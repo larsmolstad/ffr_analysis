@@ -1,15 +1,11 @@
-#%% imports:
+#%% Imports:
 
 import os
 import glob
-import pylab as plt
-try:
-    import my_plotter2 as mp
-    plt = mp
-except:
-    print 'no my_plotter2, using plt'
+from plotting_compat import plt
 import numpy as np
 import pandas as pd
+
 
 # for spyder: os.chdir('c:/zip/sort_results/sort_ffr_results/')
 import resdir
@@ -19,6 +15,8 @@ import find_regressions as fr
 import plot_rectangles as pr
 import sort_results as sr
 import find_plot
+import weather_data
+import flux_calculations
 
 
 #%% Override the default result directories:
@@ -74,7 +72,6 @@ plt.cla()
 plt.hold(True)
 rectangles = pr.migmin_field_rectangles()
 pr.plot_rectangles(rectangles.values(), rectangles.keys())
-plt.axis('equal')
 show_and_wait()
 
 
@@ -91,7 +88,71 @@ df, df0 = sr.make_df_from_slope_file(name, rectangles,
                                      find_plot.treatments,
                                      remove_redoings_time=3600)
 
-print df
+print(df)
 
-#plt.show()
+#%% Pandas... Pandas is a python library that gives python R-like
+# dataframes. It takes some time to learn Pandas, although there is an
+# introduction called "10 minutes to Pandas"
+print(df.head())
+print(df.tail())
+print(df.columns)
+d = df[df.plot_nr==1]
+plt.cla()
+plt.axis('auto')
+plt.plot(d['t'], d['N2O'])
+print d['N2O']
+
+
+#%% add in some weather data, calculate fluxes, wrap it up in a function:
+# (if you have internet, you can do weather_data.data.update() first)
+
+def update(precip_dt=2, rectangles=rectangles):
+    df, df0 = sr.make_df_from_slope_file(name, rectangles,
+                                         find_plot.treatments,
+                                         remove_redoings_time=3600)
+    df['Tc'] = weather_data.data.get_temp(df.t)
+    df['precip'] = weather_data.data.get_precip(df.t)
+    df['precip2'] = weather_data.data.get_precip2(df.t, [0, precip_dt])
+    df['N2O_N_mmol_m2day'] = 2 * 1000 * 86400 * \
+        flux_calculations.calc_flux(df.N2O, df.Tc)  # 2 because 2 N in N2O
+    df['CO2_C_mmol_m2day'] = 1000 * 86400 * \
+        flux_calculations.calc_flux(df.CO2, df.Tc)
+    return df, df0
+
+df, df0 = update()
+
+print df.head()
+
+
+#%% A little check that the sorting is ok:
+
+def test_nr(nr):
+    pr.plot_rectangles(rectangles.values(), rectangles.keys())
+    d = df0[df0.plot_nr==nr]
+    plt.plot(d.x, d.y, '.')
+
+nrs = np.unique(df[df.treatment=='Norite'].plot_nr)
+
+print nrs
+
+plt.cla()
+
+for nr in nrs:
+    test_nr(nr)
+
+#%% Just the days with high fluxes:
+
+df2 = sr.filter_for_average_slope_days(df, 0.0005)
+
+# useful:
+a = df.groupby('daynr').N2O
+a = a.mean().values[a.count().values>10]
+plt.hist(a*1000, bins='auto')
+
+#%%barmaps
+
+_ = sr.barmap_splitted(df, df0, theta=0)
+
+#%%
+plt.show()
 raw_input('')

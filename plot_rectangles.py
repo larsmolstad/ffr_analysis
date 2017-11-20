@@ -1,9 +1,6 @@
 """ Defining and plotting the geometry of the plots in E22 """
 import os
-try:
-    import my_plotter2 as plt
-except:
-    import pylab as plt
+from plotting_compat import plt
 from get_data import parse_filename
 from find_plot import find_plot, treatment_names, treatments
 import math

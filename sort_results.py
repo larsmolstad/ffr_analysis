@@ -24,7 +24,7 @@ import numpy as np
 import pandas as pd
 import scipy.integrate
 import resdir
-import pylab as plt
+from plotting_compat import plt
 plot = plt.plot
 
 # import utils
@@ -938,7 +938,32 @@ def plot_barmap(df, offsets=[0,0], theta=0, thickness=4, alpha=1):
     names = [k[0] for k in matkeys]
     plot('legend', proxies, names)            
     return x, y, z, keys, colors, proxies, names
-    
+
+
+def barmap_splitted(df, df0, thickness=2, alpha=1, theta=np.pi/4, 
+                    do_clf=True, ret=False):
+    if do_clf:
+        plt.clf()
+        plt.subplot(111, projection='3d')
+    def is_nw(res):
+        return (res['side'] == 'left') != (res['vehicle_pos']['heading'] > -1)
+    both_sides = df0.vehicle_pos.map(lambda x:x['side']=='both')[df.index]
+    dfboth = df[both_sides]
+    heading = df0.vehicle_pos.map(lambda x:x['heading'])[dfboth.index]
+    side = df0.side[dfboth.index]
+    nw = (side=='left') != (heading>-1)
+    se = ~nw
+    x1, y1, z1, _, colors1, proxies, names = plot_barmap(dfboth[nw], theta=theta, thickness=thickness)
+    x2, y2, z2, _, colors2, proxies, names = plot_barmap(dfboth[se], theta=theta, thickness=thickness)
+    x = np.concatenate((x1, x2))
+    y = np.concatenate((y1, y2))
+    z = np.concatenate((z1, z2))
+    colors = colors1 + colors2
+    plt.cla()
+    plot_bars(x, y, z, thickness, colors, alpha=alpha)
+    plt.legend(proxies, names)            
+    return nw, se, both, x,y,z,thickness,colors
+
 #
 # def get_all_days_we_measured(resdict, minimum_number_of_measurements_in_a_day=1):
 #     """ returns a list of (daynumber, number_of_measurements) pairs"""
