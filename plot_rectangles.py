@@ -87,6 +87,7 @@ def plot_rectangles(rectangles, names=[]):
         rectangles = rectangles.values()
     for i, r in enumerate(rectangles):
         plot_rectangle(r, text=None if not names else names[i])
+    plt.axis('equal')
 
 
 def rectangle_midpoint(p):

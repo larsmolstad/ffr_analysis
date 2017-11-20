@@ -55,6 +55,8 @@ if __name__ == '__main__':
         filename, function_name = args.filter_fun.split('.')
         G.filter_fun = getattr(importlib(filename), function_name)
 
+# import cProfile, pstats, StringIO
+# prf = cProfile.Profile()
 
 def plot_regressions(data, regressions, plotfun, normalized=True, do_plot=True):
     """ plotting the n2o and co2 with regression lines. 
