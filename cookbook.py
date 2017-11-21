@@ -31,6 +31,16 @@ resdir.slopes_path = 'c:\\zip\\sort_results'
 example_file = '2016-06-16-10-19-50-x599234_725955-y6615158_31496-z0_0-h0_743558650162_both_Plot_9_'
 
 
+#%% plotting examples
+x = [1,2,3,4]
+y = [1,2,2,1]
+plt.plot(x,y)
+plt.show()
+plt.axis('equal')
+plt.axis('auto')
+s1 = plt.subplot(2,3,1)
+
+
 #%% Never mind this:
 
 do_show = False
@@ -169,6 +179,44 @@ plt.hist(a*1000, bins='auto')
 
 _ = sr.barmap_splitted(df, df0, theta=0)
 
-#%%
+#%%Excel
+
+df.to_excel('excel_filename.xls')
+# or
+sr.xlswrite_from_df('excel_filename2', df, True)
+# todo more sheets, names, small rectangles?
+
+#%% trapezoidal integration
+# see buckets.py
+
+#%% subplots integration gothrough
+
+#%% ginput
+
+
+
 plt.show()
 raw_input('')
+
+# * batch-programmer
+# From dos, powershell or bash:
+
+# >> cd to_the_path_to_this_readme_file
+
+# >> python ffr_trace_plotter.py
+
+# (you can untick the plot tickbox for faster regressions)
+
+# Some command-line scripts. (-h gives a short help text)
+
+# >> python find_regressions.py -h
+
+# >> python sort_results.py -h
+
+# >> python export_raw_data_to_excel.py -h
+
+# For example
+
+# >> python find_regressions.py c:\data --out c:\regressions\slopes.txt
+
+# >> python sort_results.py  -s ..\slopes.txt 
