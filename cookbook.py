@@ -1,5 +1,11 @@
-#%% Imports:
+"""
 
+Showing some examples of how to deal with the ffr data
+
+"""
+
+
+#%% Imports:
 import os
 import glob
 from plotting_compat import plt
@@ -28,9 +34,12 @@ example_file = '2016-06-16-10-19-50-x599234_725955-y6615158_31496-z0_0-h0_743558
 #%% Never mind this:
 
 do_show = False
+do_wait = False
 def show_and_wait():
     if do_show:
         plt.show()
+    if do_wait:
+        raw_input('Press Enter ')
 
         
 #%% Get a list of all result files
@@ -55,12 +64,19 @@ b = utils.dict2inst(a)
 print(dir(b))
 # (now you can do b.N2O etc with tab completion)
 
+
 #%% Do a regression:
 plt.cla()
 a = get_data.get_file_data(filename)
 reg = fr.find_all_slopes(a, interval=100, co2_guides=True, plotfun=plt.plot)
 fr.print_reg(reg)
 show_and_wait()
+# Here, a can be the filename or the data dict. Interval is the length
+# of time of the regression line. If co2_guides==True, the interval in
+# time where the co2 curve is the steepest is used for the time of
+# regression for the N2O. Otherwise, the steepest part of the N2O is used.
+# (todo mse etc)
+
 
 # (the division of the data from the two chambers is done in divide_left_and_right.py like this)
 import divide_left_and_right

@@ -934,7 +934,8 @@ def plot_barmap(df, offsets=[0,0], theta=0, thickness=4, alpha=1):
     plot_bars(x, y, z, thickness, color=colors, alpha=alpha)
     # make the legend
     matkeys = colordict.keys()
-    proxies = [plt.Rectangle((0,0), 1, 1, fc= colordict[material]) for material in matkeys]
+    proxies = [plt.Rectangle((0,0), 1, 1, fc= colordict[material])
+               for material in matkeys]
     names = [k[0] for k in matkeys]
     plot('legend', proxies, names)            
     return x, y, z, keys, colors, proxies, names
@@ -945,11 +946,14 @@ def barmap_splitted(df, df0, thickness=2, alpha=1, theta=np.pi/4,
     if do_clf:
         plt.clf()
         plt.subplot(111, projection='3d')
-    def is_nw(res):
-        return (res['side'] == 'left') != (res['vehicle_pos']['heading'] > -1)
-    both_sides = df0.vehicle_pos.map(lambda x:x['side']=='both')[df.index]
-    dfboth = df[both_sides]
-    heading = df0.vehicle_pos.map(lambda x:x['heading'])[dfboth.index]
+    # both_sides = df0.vehicle_pos.map(lambda x:x['side']=='both')[df.index]
+    dfboth = df[df0.used_sides=='both']
+    # todo
+    heading = dfboth.heading
+    #side = df0.loc[dfboth.index].side
+    # sjekk at jeg har forstaatt dette:
+    # print all(df0.loc[dfboth.index].CO2 == dfboth.CO2)
+    # enklere:
     side = df0.side[dfboth.index]
     nw = (side=='left') != (heading>-1)
     se = ~nw
@@ -962,7 +966,7 @@ def barmap_splitted(df, df0, thickness=2, alpha=1, theta=np.pi/4,
     plt.cla()
     plot_bars(x, y, z, thickness, colors, alpha=alpha)
     plt.legend(proxies, names)            
-    return nw, se, both, x,y,z,thickness,colors
+    return nw, se, dfboth, x,y,z,thickness,colors
 
 #
 # def get_all_days_we_measured(resdict, minimum_number_of_measurements_in_a_day=1):
