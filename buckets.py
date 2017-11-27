@@ -175,7 +175,7 @@ def set_ylims(lims):
         plt.gca().set_ylim(lims)
 
 
-    def plot_all(df, ylims=True, t0=(2017, 1, 1, 0, 0, 0, 0, 0, 0)):
+def plot_all(df, ylims=True, t0=(2017, 1, 1, 0, 0, 0, 0, 0, 0)):
     if isinstance(t0, (list, tuple)):
         t0 = time.mktime(t0)
     plt.clf()
