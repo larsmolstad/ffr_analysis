@@ -135,9 +135,9 @@ def regress_within(x, y, x1, x2, plotfun=False):
     i = 0 if x1 <= x[0] else bisect_find(x, x1, True)
     j = len(x) - 1 if x2 >= x[-1] else bisect_find(x, x2, True)
     if i < 0:
-        raise Exception, 'x1=%g before x[0]=%g' % (x1, x[0])
+        raise Exception('x1=%g before x[0]=%g' % (x1, x[0]))
     if j < 0:
-        raise Exception, 'x2=%g after x[-1]=%g' % (x2, x[-1])
+        raise Exception('x2=%g after x[-1]=%g' % (x2, x[-1]))
     xin = np.array(x)[i:j]
     yin = np.array(y)[i:j]
     reg = regression2(xin, yin)

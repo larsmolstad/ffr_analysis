@@ -45,7 +45,7 @@ def bucket_treatment_numbers():
 
 def show_bucket_treatment_numbers():
     a = bucket_treatment_numbers()
-    for key, val in a.iteritems():
-        print key, val
+    for key, val in a.items():
+        print(key, val)
         
 bucket_treatments = {key: bucket_treatment(key) for key in bucket_numbers}

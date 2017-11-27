@@ -13,9 +13,9 @@ class remember(object):
         last_directory_file = os.path.join(folder, filename)
         if not os.path.exists(last_directory_file):
             if not os.path.isdir(os.path.split(last_directory_file)[0]):
-                raise RuntimeError, last_directory_file + ' Directory does not exist.'
+                raise RuntimeError(last_directory_file + ' Directory does not exist.')
             else:
-                fid=open(last_directory_file,'w');
+                fid = open(last_directory_file,'w');
                 fid.close()#lager fila hvis den ikke finnes
         self.last_directory_file = last_directory_file
     def get(self):

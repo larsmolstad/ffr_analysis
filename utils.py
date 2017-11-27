@@ -44,7 +44,7 @@ def my_prints(x, maxn=5, levels=4, truncate=100, indent=0, do_ind=1):
             s += prt(')' if isinstance(x,tuple) else ']', 0)
     elif isinstance(x, dict):
         s += '\n' + prt('{', indent, end='')
-        for i, (key,value) in enumerate(x.iteritems()):
+        for i, (key,value) in enumerate(x.items()):
             s += prt(repr(key)+':', indent + 1 if i else 0, end='')
             s += my_prints(value, rest(maxn), levels, indent+levels)
         s = s.rstrip('\n')
@@ -54,7 +54,7 @@ def my_prints(x, maxn=5, levels=4, truncate=100, indent=0, do_ind=1):
     return s
 
 def my_print(x, maxn=5, levels=2, truncate=100):
-    print(my_prints(x, maxn, levels,truncate))
+    print((my_prints(x, maxn, levels,truncate)))
     sys.stderr.flush()
     sys.stdout.flush()
 
@@ -63,7 +63,7 @@ def myhook(value):
     import __main__
     if value is not None:
         __main__.__builtins__._ = value
-        print 'ok'
+        print('ok')
         pprint.pprint(value)
 
 class Myprint:
@@ -128,7 +128,7 @@ class Empty_class():pass
 def dict2inst(x):# just to be able to use tab key on the repl to show dicts..
     if isinstance(x, dict):
         a = Empty_class()
-        for key,v in x.iteritems():
+        for key,v in x.items():
             setattr(a, make_fieldname(key), dict2inst(v))
     elif isinstance(x, (list, tuple)):
         a = [dict2inst(xi) for xi in x]
@@ -148,7 +148,7 @@ def catch_dos_command_output(command, filename = '_slettmeg.txt'):
     
 def get_com_ports(filter = None):
     q = catch_dos_command_output('wmic path Win32_SerialPort')
-    a = unicode(q,"utf_16le")[1:].split('\r\n')
+    a = str(q,"utf_16le")[1:].split('\r\n')
     if filter is None:
         return a
     else:
@@ -169,7 +169,7 @@ def find_relay_card():
     return find_com_nr(get_com_ports('K8090'))
             
 def trun(fun, *args, **kwargs):
-    daemon = kwargs.pop('_daemon') if kwargs.has_key('_daemon') else False 
+    daemon = kwargs.pop('_daemon') if '_daemon' in kwargs else False 
     tr=threading.Thread(target=fun, args=args, kwargs=kwargs)
     if daemon:
         tr.daemon = True
@@ -194,12 +194,12 @@ def colwrite(sv,n, number=False):
         s = ''
         for n, e in zip(maxn, r):
             s+=str(e).ljust(n+3)
-        print s
+        print(s)
 
 def named_tuplify(dct, name='NT', recursive=1000):
     from collections import namedtuple
     if (not isinstance(dct, dict)) or not recursive:
        return dct
-    keys = dct.keys()
+    keys = list(dct.keys())
     A = namedtuple(name, keys)
     return(A(*[named_tuplify(dct[key],recursive=recursive-1) for key in keys]))

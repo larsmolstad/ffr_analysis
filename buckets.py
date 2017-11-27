@@ -31,7 +31,7 @@ def my_group(df, columns):
     for c in columns[1:]:
         s += '_' + df[c].apply(str)
     tempname = '_'.join(columns) + str(np.random.random()).replace('.', '')
-    print tempname
+    print(tempname)
     df[tempname] = s
     groups = df.groupby(tempname)
     df.drop(tempname, axis=1, inplace=True)
@@ -116,7 +116,7 @@ def make_df(names, left=None, right=None, subst='N2O', plotter=False,
             left.append(l)
             right.append(r)
             if i % (subplots[0] * subplots[1]) == 0:
-                print i,
+                print(i, end=' ')
                 #plt.plot([1,2,i%13])
                 if plotter == plt:
                     show()
@@ -175,7 +175,7 @@ def set_ylims(lims):
         plt.gca().set_ylim(lims)
 
 
-def plot_all(df, ylims=True, t0=[2017, 1, 1, 0, 0, 0, 0, 0, 0]):
+    def plot_all(df, ylims=True, t0=(2017, 1, 1, 0, 0, 0, 0, 0, 0)):
     if isinstance(t0, (list, tuple)):
         t0 = time.mktime(t0)
     plt.clf()
@@ -197,7 +197,7 @@ def barplot_groups(yy, labels, plotax=plt):
     ticx = []
     for i, w in enumerate(yy):
         x0 = len(y) + i
-        x.extend(range(x0, x0 + len(w)))
+        x.extend(list(range(x0, x0 + len(w))))
         y.extend(w)
         ticx.append(x0)
     plotax.cla()
@@ -233,7 +233,7 @@ def print_best_pvalues(ols_res):
     c = c.sort_values(by='p')
     c['x'] = [0 if x.startswith('C(day)') else x for x in c.index]
     c = c[c.x != 0].drop('x', axis=1)
-    print c[p < 0.1]
+    print(c[p < 0.1])
 
 
 def ols_with_transform(df, f, model='y ~ C(treatment) + C(side) + C(day)', do_print=True):
@@ -241,7 +241,7 @@ def ols_with_transform(df, f, model='y ~ C(treatment) + C(side) + C(day)', do_pr
     df['y'] = df.gN2O_Nperdaym2.apply(f)
     res = ols(model, data=df).fit()
     if do_print:
-        print res.summary()
+        print(res.summary())
     scipy.stats.probplot(res.resid.values, plot=plt)
     return res
 
@@ -339,7 +339,7 @@ def analyse(df):
     # print(number_side_trapz_res.summary())
     modtrapz = 'np.log(trapz+0.005) ~ C(treatment) + C(side)'
     number_side_trapz_res = ols(modtrapz, data=number_side_df).fit()
-    print number_side_trapz_res.summary()
+    print(number_side_trapz_res.summary())
     #nsd_df_res = ols(mod2, data=nsd_df).fit()
     # print(nsd_df_res.summary())
 
@@ -361,7 +361,7 @@ ok_names = [x for x in names if filename_is_ok(x, startdate=startdate)
 # todo
 # '2017-08-11-15-00-27-x599289_904642-y6615232_9609-z0_0-h-2_79697159303_both_Plot_bw_2_'
 # etc
-print len(ok_names)
+print(len(ok_names))
 remove_redoings(ok_names)
 # remove_redoings(bw_names)
 # bw_names.pop(0)
@@ -402,7 +402,7 @@ def barplot_trapz(df):
     for i, tr in enumerate(treatments):
         left = a[a.treatment == tr][a.side == 'left'].trapz.values
         right = a[a.treatment == tr][a.side == 'right'].trapz.values
-        toplotx.extend(range(x, x + len(left) + len(right)))
+        toplotx.extend(list(range(x, x + len(left) + len(right))))
         ticx.append(x + 2)
         x += 2 + len(left) + len(right)
         toploty.extend(list(left) + list(right))

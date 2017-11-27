@@ -24,7 +24,7 @@ before rotation by angle.
     y1 = np.array([0, 0, H, H])
     x = x1 * c - y1 * s + x0
     y = x1 * s + y1 * c + y0
-    return zip(x.tolist(), y.tolist())
+    return list(zip(x.tolist(), y.tolist()))
 
 
 main_rectangle = make_rectangle(45.5 + xmin, -11.5 + ymin, angle, 86.5, 83)
@@ -72,7 +72,7 @@ def divide_rectangle(p, n, other_way=False, gaps=(0, 0, 0)):
 
 
 def plot_rectangle(p, color='k', text=None):
-    x, y = zip(*p)
+    x, y = list(zip(*p))
     plt.plot(list(x) + [x[0]], list(y) + [y[0]], color)
     if text:
         x, y = rectangle_midpoint(p)
@@ -81,7 +81,7 @@ def plot_rectangle(p, color='k', text=None):
 
 def plot_rectangles(rectangles, names=[]):
     if isinstance(rectangles, dict):
-        rectangles = rectangles.values()
+        rectangles = list(rectangles.values())
     for i, r in enumerate(rectangles):
         plot_rectangle(r, text=None if not names else names[i])
     plt.axis('equal')
@@ -93,7 +93,7 @@ def rectangle_midpoint(p):
 
 def plot_treatment_text(plots, treatments):
     # plots and treatments are both dicts
-    for i, r in plots.iteritems():
+    for i, r in plots.items():
         x, y = rectangle_midpoint(r)
         plt.text(x, y, repr(i) + ':' + treatments[i][0] + '.',
                  va='bottom', ha='right', rotation=-45)
@@ -102,7 +102,7 @@ def plot_treatment_text(plots, treatments):
 def plot_everything(xp, yp, plots_used, treatments):
     plt.plot(xp, yp, '.')
     plt.hold(True)
-    plot_rectangles(plots_used.values())
+    plot_rectangles(list(plots_used.values()))
     plot_treatment_text(plots_used, treatments)
 
 

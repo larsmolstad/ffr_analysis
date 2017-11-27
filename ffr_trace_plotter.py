@@ -9,14 +9,14 @@ import matplotlib
 from collections import OrderedDict, namedtuple
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
-import Tkinter as tk
-from Tkinter import LEFT, RIGHT, CENTER, BOTH, TOP, BOTTOM, YES, NO
+import tkinter as tk
+from tkinter import LEFT, RIGHT, CENTER, BOTH, TOP, BOTTOM, YES, NO
 import licor_indexes
 import dlt_indexes
 import findfile
 import get_data
 import app_open
-import cPickle
+import pickle
 import traceback
 import argparse
 import find_regressions
@@ -43,7 +43,7 @@ def timesleep(t):
 def make_table(res, unit):
     # print make_table({'left':{'N2O':1, 'CO2':2}, 'right':{'CO2':3, 'CO':4}})
     def getslope(side, name):
-        if res.has_key(side) and res[side].has_key(name):
+        if side in res and name in res[side]:
             return flux_estimate(name, res[side][name].slope, unit)
         else:
             return float('nan')
@@ -115,7 +115,7 @@ class App(object):
         self.regression_plots = {'N2O': [], 'CO2': [], 'CO': []}
         self.regression_values = {'N2O': 0, 'CO2': 0, 'CO': 0}
         self.regression_signature = {'N2O': 0, 'CO2': 0, 'CO': 0}
-        self.flux_unit_list = [u'\u00B5mol/m2/day', 'kg/ha/yr']
+        self.flux_unit_list = ['\u00B5mol/m2/day', 'kg/ha/yr']
 
         self.filename_str = tk.StringVar()
         self.message_string = tk.StringVar()
@@ -195,7 +195,7 @@ class App(object):
         self.name_frame.pack(fill=BOTH, expand=YES)
 
     def make_name_fields(self, names):
-        if names == self.options.keys():
+        if names == list(self.options.keys()):
             return
         self.options.clear()
         self.make_name_frame()
@@ -230,7 +230,7 @@ class App(object):
 
     def all_on_or_off(self, s):
         all_on = all([self.options[key][s].get() for key in self.options])
-        for _, opt in self.options.iteritems():
+        for _, opt in self.options.items():
             opt[s].set(1 if not all_on else 0)
         self.do_the_plotting()
 
@@ -279,7 +279,7 @@ class App(object):
         return xydata
 
     def subtract_min(self, xydata):
-        for key, opt in self.options.iteritems():
+        for key, opt in self.options.items():
             if opt['subtract_minimum'].get():
                 mn = min([min(x) for x in xydata[key][1::2]])
                 xydata[key][1::2] = [[y - mn for y in ylist]
@@ -287,34 +287,34 @@ class App(object):
         return xydata
 
     def lag_adjust_xydata(self, xydata):
-        if xydata.has_key('N2O'):
+        if 'N2O' in xydata:
             dt = self.get_lag_time()
             xydata['N2O'][::2] = [[t - dt for t in tlist]
                                   for tlist in xydata['N2O'][::2]]
         return xydata
 
     def add_on_regressions(self, xydata):
-        for key, xy in self.regression_plots.iteritems():
-            if xy and xydata.has_key(key):
+        for key, xy in self.regression_plots.items():
+            if xy and key in xydata:
                 xydata[key].extend(xy)
         return xydata
 
     def do_the_plotting(self):
         xydata = copy.deepcopy(self.retrieved_data)
         for key in ['aux', 'side']:
-            if xydata.has_key(key):
+            if key in xydata:
                 xydata.pop(key)
         try:
             xydata = self.add_on_regressions(xydata)
             xydata = self.lag_adjust_xydata(xydata)
             self.message_string.set('')
-            self.make_name_fields(xydata.keys())
+            self.make_name_fields(list(xydata.keys()))
             xydata = self.subtract_min(xydata)
             xydata = self.scale_xydata(xydata)
             self.plot_axis.cla()
             try:
                 self.plot_axis.plot(*self.choose_plot(xydata))
-            except Exception, e:
+            except Exception as e:
                 self.message_string.set(traceback.format_exc())
             self.plot_axis.grid(1)
             matplotlib.rcParams.update({'font.size': 10})
@@ -330,7 +330,7 @@ class App(object):
         # putting the regression lines at the end of the returned list so
         # the color of the time series don't change when the regression
         # lines are plotted
-        for key, opt in self.options.iteritems():
+        for key, opt in self.options.items():
             if opt['plot'].get():
                 new = xydata[key]
                 if self.normalize.get():
@@ -376,7 +376,7 @@ class App(object):
     def find_fluxes(self, do_plot=True):
         time_interval = self.get_regression_time()  # sec that the regression will cover
         ret = ''
-        keys = self.regression_plots.keys()
+        keys = list(self.regression_plots.keys())
         co2_guides = self.use_co2_as_guide.get() and keys.count('CO2')
         res = find_regressions.find_all_slopes(
             self.retrieved_data, time_interval, co2_guides)
@@ -385,10 +385,10 @@ class App(object):
         # 'CO2' and 'N2O' (or other substance names), values
         # (Regression, (x, y))
         for side in ('left', 'right'):
-            for key in res[side] if res.has_key(side) else []:
+            for key in res[side] if side in res else []:
                 self.regression_plots[key] = []
         for side in ('left', 'right'):
-            for key, reg in res[side].iteritems() if res.has_key(side) else []:
+            for key, reg in iter(res[side].items()) if side in res else []:
                 t, y = self.retrieved_data[key][:2]
                 t0, t1 = t[reg.start], t[reg.stop]
                 y0, y1 = reg.intercept + reg.slope * t0, reg.intercept + reg.slope * t1
@@ -405,8 +405,8 @@ class App(object):
         return ret.strip('\t')
 
     def _readfile(self, filename, extra_string=''):
-        with open(filename, 'r') as f:
-            a = cPickle.load(f)
+        with open(filename, 'rb') as f:
+            a = pickle.load(f)
         self.retrieved_data = get_data.parse_saved_data(
             get_data.old2new(a), filename)
         self.filename_str.set('hei')
@@ -427,7 +427,7 @@ class App(object):
         self._readfile(self.thefiles.first())
 
     def next_file(self):
-        f = self.thefiles.next()
+        f = next(self.thefiles)
         extra_string = ' (%d/%d)' % (self.thefiles.index +
                                      1, self.thefiles.nfiles)
         self._readfile(f, extra_string)
@@ -448,7 +448,7 @@ class App(object):
                 self.next_file()
                 self.master.after(10, callback)  # master er root
             else:
-                print 'done'
+                print('done')
                 self.do_the_plotting()
         callback()
 
