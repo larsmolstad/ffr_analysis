@@ -21,15 +21,15 @@ def find_shift_times(data_dict):
         if not (a[0] == 1 and
                 all([x in [1,0] for x in a]) and
                 all([a[i]!=a[i+1] for i in range(len(a)-1)])):
-            print a
-            raise Exception, 'should be alternating 1, 0, 1, 0 ...'
+            print(a)
+            raise Exception('should be alternating 1, 0, 1, 0 ...')
 
     def check_abbaabb_etc(a):
         if not (a[0] != a[1] and
                 a[-1] != a[-2] and
                 all([a[i] == a[i+1] for i in range(1, len(a)-1, 2)])):
-            print a
-            raise Exception, 'should be e.g., [1,2,2,1,1,2,2,1,1...]'
+            print(a)
+            raise Exception('should be e.g., [1,2,2,1,1,2,2,1,1...]')
 
     def find_shift_times_old_data(data_dict):
         # used to start right always, didn't save the side
@@ -40,14 +40,14 @@ def find_shift_times(data_dict):
         sides = ['right'] if t else []
         for i in t[1:]:
             sides.append({'right':'left', 'left':'right'}[sides[-1]])
-        return zip(t,sides)
+        return list(zip(t,sides))
 
     ts = data_dict['side']
     if ts and isinstance(ts[0][1], int):
         return find_shift_times_old_data(data_dict)
     t = [x[0]-data_dict['aux']['t'] for x in ts]
     s = [x[1] for x in ts]
-    side, state = zip(*s)
+    side, state = list(zip(*s))
     # a shift is characterized by opening one valve then closing the
     # other less than one second later (or maybe two, we'll see if I
     # change it)
@@ -58,11 +58,11 @@ def find_shift_times(data_dict):
         s = ('switching time diffs: {}' +
              '\n the first and then every other time shift should be' +
              '< 1sec').format(d)
-        raise Exception, s
+        raise Exception(s)
     check_alternating_1_0(state)
     check_abbaabb_etc(side)
     t = [(t[i]+t[i+1])/2 for i in range(0, len(t)-1, 2)]
-    return zip(t, [nr_side[x] for x in side[0::2]])
+    return list(zip(t, [nr_side[x] for x in side[0::2]]))
 
 def group(t, y, shift_t, cut_before, cut_after):
     """ returns {'left':(t,y,Istartstop),
@@ -89,7 +89,7 @@ def group(t, y, shift_t, cut_before, cut_after):
 def group_all(data_dict, cut_before=2, cut_after=3):
     shift_times = find_shift_times(data_dict)
     a = dict()
-    for key, item in data_dict.iteritems():
+    for key, item in data_dict.items():
         if key in ['aux', 'side', 'Wind']:
             continue
         a[key] = group(item[0], item[1], shift_times, cut_before, cut_after)

@@ -519,7 +519,7 @@ def show_all(df, sols=['water', 'KCl', 'CaCl2']):
     plt.clf()
     tr = plot_numbering.bucket_treatment_numbers()
     for i, key in enumerate(tr):
-        print key
+        print(key)
         plt.hold(True)
         plt.subplot(3, 2, i + 1)
         plt.grid(True)
@@ -544,4 +544,4 @@ def switch_in_df(df, nrs, column_name):
 
 switch_in_df(df, [183, 180], 'CaCl2')
 switch_in_df(df, [207, 204], 'CaCl2')
-print "do show_all(df, 'CaCl2')"
+print("do show_all(df, 'CaCl2')")

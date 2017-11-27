@@ -3,7 +3,7 @@ import sys
 import time
 import math
 import numpy as np
-import cPickle
+import pickle
 import argparse
 sys.path.append(os.path.split(os.path.split(
     os.path.realpath(__file__))[0])[0])  # sorry
@@ -73,7 +73,7 @@ def plot_regressions(data, regressions, plotfun, normalized=True, do_plot=True):
         def nrm(y):
             return stretch(y, a, b)
         plotargs.extend([d[0], nrm(d[1]), color + '.'])
-        for side, rdict in regressions.iteritems():
+        for side, rdict in regressions.items():
             reg = rdict[key]
             t0, y0 = data[key][:2]
             t = [ti for (I1, I2) in reg.Iswitch for ti in t0[I1:I2]]
@@ -127,7 +127,7 @@ def find_all_slopes(filename_or_data, interval, co2_guides=True,
     resdict = divide_left_and_right.group_all(data)
     regressions = {'left': {}, 'right': {}}
     keys = 'CO2 N2O'.split()
-    for side in regressions.keys():
+    for side in list(regressions.keys()):
         tbest = None
         for key in 'CO2 N2O'.split():
             t, y = remove_zeros(*resdict[key][side][:2])
@@ -142,7 +142,7 @@ def find_all_slopes(filename_or_data, interval, co2_guides=True,
             if a is not None:
                 a.Iswitch = Iswitch
                 regressions[side][key] = a
-        if len(regressions[side].keys()) == 0:
+        if len(list(regressions[side].keys())) == 0:
             regressions.pop(side)
     if plotfun is not None:
         plot_regressions(data, regressions, plotfun)
@@ -150,11 +150,11 @@ def find_all_slopes(filename_or_data, interval, co2_guides=True,
 
 
 def write_result_to_file(res, name, f):
-    for side, sideres in res.iteritems():
+    for side, sideres in res.items():
         s = os.path.split(name)[1] + '\t' + side
-        for key, regres in sideres.iteritems():
+        for key, regres in sideres.items():
             s += '\t{0}\t{1}'.format(key, regres.slope)
-        print s
+        print(s)
         f.write(s + '\n')
 
 
@@ -168,7 +168,7 @@ def find_regressions(directory, res_file_name, regression_time):
         for name in files:
             t = time.time()
             if t - t0 > 0.5:
-                print('%d/%d' % (i, n))
+                print(('%d/%d' % (i, n)))
                 t0 = t
             try:
                 data = get_data.get_file_data(name)
@@ -176,22 +176,22 @@ def find_regressions(directory, res_file_name, regression_time):
                 res = find_all_slopes(data, regression_time, G.co2_guides)
                 write_result_to_file(res, name, f)
                 resdict[os.path.split(name)[1]] = res
-            except Exception, e:
+            except Exception as e:
                 import traceback
                 traceback.print_exc()
-                print 'continuing'
+                print('continuing')
                 continue
             i += 1
-    with open(os.path.splitext(res_file_name)[0] + '.pickle', 'w') as f:
-        cPickle.dump(resdict, f)
+    with open(os.path.splitext(res_file_name)[0] + '.pickle', 'wb') as f:
+        pickle.dump(resdict, f)
 
 
 def print_reg(regres):
-    for k, dct in regres.iteritems():
-        print k
-        for subst, reg in dct.iteritems():
-            print subst
-            print reg
+    for k, dct in regres.items():
+        print(k)
+        for subst, reg in dct.items():
+            print(subst)
+            print(reg)
 
 
 if __name__ == '__main__':

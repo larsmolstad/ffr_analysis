@@ -4,7 +4,7 @@ import traceback
 import requests
 import bs4
 import time
-import cPickle as pickle
+import pickle as pickle
 import os
 path = os.path.dirname(os.path.abspath(__file__))#path of this file
 path = os.path.split(path)[0] #parent folder
@@ -20,7 +20,7 @@ def get_yr_soup(dato):
     return bs4.BeautifulSoup(res.text)
 
 
-def get_all_yr_soups(start=(2015, 01, 01, 12, 0, 0, 0, 0, 0)):
+def get_all_yr_soups(start=(2015, 0o1, 0o1, 12, 0, 0, 0, 0, 0)):
     t0 = time.mktime(start)
     t1 = time.time()
 
@@ -32,13 +32,13 @@ def get_all_yr_soups(start=(2015, 01, 01, 12, 0, 0, 0, 0, 0)):
     t0 = time.time()
     for i, t in enumerate(tt):
         ts = t2tstr(t)
-        print ts, i, len(tt), (time.time() - t0) / (i + 1)
+        print(ts, i, len(tt), (time.time() - t0) / (i + 1))
         try:
             y.append([t,  get_yr_soup(ts)])
         except:
             y.append([t, None])
             traceback.print_exc()
-            print 'not this one'
+            print('not this one')
     return y
 
 
@@ -62,7 +62,7 @@ def parse_row(s):
             return float(s)
     kl = int(s.find(scope='row').text.split()[1])
     temps = s.find_all(class_=re.compile('tempera'))
-    temps = [num(x, u'\xb0') for x in temps]  # tar bort gradtegnet
+    temps = [num(x, '\xb0') for x in temps]  # tar bort gradtegnet
     precip = s.find(lambda x: x.text.endswith('mm'))
     precip = num(precip, 'mm')
     h = s.find(lambda x: x.text.endswith('%'))
@@ -79,13 +79,13 @@ def parse_row2(s):
             return float(s)
     v = s.text.split()
     kl = int(v[1])
-    temps = [num(x, u'\xb0') for x in v[3:6]]
+    temps = [num(x, '\xb0') for x in v[3:6]]
     precip = num(v[6])
     hum = num(v[9], '%')
     return kl, temps, precip, hum
 
 
-def find_all_temps(start=(2015, 01, 01, 12, 0, 0, 0, 0, 0)):
+def find_all_temps(start=(2015, 0o1, 0o1, 12, 0, 0, 0, 0, 0)):
     t0 = time.mktime(start)
     t1 = time.time()
 
@@ -96,12 +96,12 @@ def find_all_temps(start=(2015, 01, 01, 12, 0, 0, 0, 0, 0)):
     y = []
     for t in tt:
         ts = t2tstr(t)
-        print ts
+        print(ts)
         try:
             y.append([t] + list(find_day_temp(ts)))
         except:
             traceback.print_exc()
-            print 'not this one'
+            print('not this one')
     return y
 
 
@@ -117,7 +117,7 @@ def fix_y_times(y):
 
 #q = find_day_temp()
 # y = get_all_yr_soups()
-# pickle.dump(y, open(YR_SOUP_NAME, 'w'))
+# pickle.dump(y, open(YR_SOUP_NAME, 'wb'))
 
 
 def all_soups2data(y):
@@ -143,16 +143,16 @@ def update_weather_data():
     d = all_soups2data(s)
     updated_data = combine_data(old_data, d)
     if updated_data != old_data:
-        pickle.dump(updated_data, open(DATA_FILE_NAME, 'w'))
+        pickle.dump(updated_data, open(DATA_FILE_NAME, 'wb'))
 
 
 def save_data(data, old_data):
     pickle.dump(combine_data(data, old_data),
-                open(DATA_FILE_NAME, 'w'))
+                open(DATA_FILE_NAME, 'wb'))
 
 
 def save_data_from_soup(soup):
-    pickle.dump(all_soups2data(soup), open(DATA_FILE_NAME, 'w'))
+    pickle.dump(all_soups2data(soup), open(DATA_FILE_NAME, 'wb'))
 
 
 def get_temps(q):
@@ -174,7 +174,7 @@ def get_temps(q):
 
 #>>> mp.plot(T[:100])
 #>>> mp.plot(t[::24],T[::24])
-#>>> pickle.dump(d, open(DATA_FILE_NAME, 'w'))
+#>>> pickle.dump(d, open(DATA_FILE_NAME, 'wb'))
 #>>> tralleri trallera 
 
 #+end_src

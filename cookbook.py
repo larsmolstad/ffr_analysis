@@ -49,12 +49,12 @@ def show_and_wait():
     if do_show:
         plt.show()
     if do_wait:
-        raw_input('Press Enter ')
+        input('Press Enter ')
 
         
 #%% Get a list of all result files
 filenames = glob.glob(os.path.join(resdir.raw_data_path, '*'))
-print("number of files: %d"%len(filenames))
+print(("number of files: %d"%len(filenames)))
 
 
 # Get the data from file number 1000
@@ -71,7 +71,7 @@ show_and_wait()
 
 #%% simplify working on the repl (command line)
 b = utils.dict2inst(a)
-print(dir(b))
+print((dir(b)))
 # (now you can do b.N2O etc with tab completion)
 
 
@@ -97,7 +97,7 @@ ad = divide_left_and_right.group_all(a)
 plt.cla()
 plt.hold(True)
 rectangles = pr.migmin_field_rectangles()
-pr.plot_rectangles(rectangles.values(), rectangles.keys())
+pr.plot_rectangles(list(rectangles.values()), list(rectangles.keys()))
 show_and_wait()
 
 
@@ -119,14 +119,14 @@ print(df)
 #%% Pandas... Pandas is a python library that gives python R-like
 # dataframes. It takes some time to learn Pandas, although there is an
 # introduction called "10 minutes to Pandas"
-print(df.head())
-print(df.tail())
-print(df.columns)
+print((df.head()))
+print((df.tail()))
+print((df.columns))
 d = df[df.plot_nr==1]
 plt.cla()
 plt.axis('auto')
 plt.plot(d['t'], d['N2O'])
-print d['N2O']
+print(d['N2O'])
 
 
 #%% add in some weather data, calculate fluxes, wrap it up in a function:
@@ -147,19 +147,19 @@ def update(precip_dt=2, rectangles=rectangles):
 
 df, df0 = update()
 
-print df.head()
+print(df.head())
 
 
 #%% A little check that the sorting is ok:
 
 def test_nr(nr):
-    pr.plot_rectangles(rectangles.values(), rectangles.keys())
+    pr.plot_rectangles(list(rectangles.values()), list(rectangles.keys()))
     d = df0[df0.plot_nr==nr]
     plt.plot(d.x, d.y, '.')
 
 nrs = np.unique(df[df.treatment=='Norite'].plot_nr)
 
-print nrs
+print(nrs)
 
 plt.cla()
 
@@ -196,7 +196,7 @@ sr.xlswrite_from_df('excel_filename2', df, True)
 
 
 plt.show()
-raw_input('')
+input('')
 
 # * batch-programmer
 # From dos, powershell or bash:

@@ -6,7 +6,7 @@ for i,t in enumerate('NOLOMNDCDLNMOCDLOMLCDNCM'):
     treatments[i+1] = treatment_names[t]
 
 def get_treatment_plots(T='C'):
-    all = treatments.keys()
+    all = list(treatments.keys())
     all.sort()
     return [i for i in all if treatments[i].startswith(T[0])]
 
@@ -38,7 +38,7 @@ def point_inside_polygon(x,y,poly):
 
 
 def find_plot(x, y, rectangles):
-    for i,p in rectangles.iteritems():
+    for i,p in rectangles.items():
         if point_inside_polygon(x,y,p):
             return i
     return -100 # so I am sure to recognize it even if I add one to make it 1-based and then forget.

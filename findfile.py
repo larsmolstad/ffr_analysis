@@ -1,5 +1,5 @@
-import tkFileDialog
-import tkMessageBox
+import tkinter.filedialog
+import tkinter.messagebox
 import os
 import last_directory
 
@@ -59,7 +59,7 @@ class File_list(object):
         #self.file_selected = thefiles[10]
     def findfile(self, file = None):
         if file is None:
-            file = tkFileDialog.askopenfilename(initialdir=self.lastdir.get())
+            file = tkinter.filedialog.askopenfilename(initialdir=self.lastdir.get())
         file = repath(file)
         # filetypes = [('dat','.dat')])
         self.file_selected = file;
@@ -76,7 +76,7 @@ class File_list(object):
         self.all_files.sort(cmp=self.sorting_fun)
         self.index = self.all_files.index(path_slash(self.current))
         self.nfiles = len(self.all_files)
-    def next(self):
+    def __next__(self):
         if self.index>=len(self.all_files)-1:
             self.update()
         if self.index<len(self.all_files)-1:

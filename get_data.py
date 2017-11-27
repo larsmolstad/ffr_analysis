@@ -2,7 +2,7 @@ import os
 import re
 import math
 import time
-import cPickle
+import pickle
 from collections import OrderedDict
 
 import licor_indexes
@@ -54,9 +54,9 @@ def old2new(data):
             if isinstance(x[0],str):
                 y[x[0]]={'ty':x[1],'dt':x[2]['dt'],'t0':x[2]['t0']}
             else:
-                raise Exception, 'asdf'
-        except Exception,e:
-            print e
+                raise Exception('asdf')
+        except Exception as e:
+            print(e)
             y['aux'].append(x)
     return y
 
@@ -67,7 +67,7 @@ def parse_saved_data(data, filename):
     # For now I made two parsing functions: parse_data and parse_saved_data
     """ converts the data as read from files to a dict with 
     substance-names as keys. Example: 
-    res = parse_saved_data(cPickle.load(open(filename)))
+    res = parse_saved_data(cPickle.load(open(filename, 'rb')))
     print res.keys()
     t,y = res['N2O']
     """
@@ -82,8 +82,8 @@ def parse_saved_data(data, filename):
         return [t,y]
     def smallest_t0(data_dict):
         t0 = 1e99
-        for key, v in data_dict.iteritems():
-            if isinstance(v, dict) and v.has_key('t0') and v['t0']<t0:
+        for key, v in data_dict.items():
+            if isinstance(v, dict) and 't0' in v and v['t0']<t0:
                 t0 = v['t0']
         return t0 if t0<1e98 else 0
     res = OrderedDict()
@@ -111,8 +111,8 @@ def parse_saved_data(data, filename):
 
 
 def get_file_data(filename):
-    with open(filename, 'r') as f:
-         a = cPickle.load(f)
+    with open(filename, 'rb') as f:
+         a = pickle.load(f)
     return parse_saved_data(old2new(a), filename)
 
 
@@ -124,7 +124,7 @@ def selection_fun(x, G):
     if G.stopdate:
         y = y and x[:len(G.stopdate)] <= G.stopdate
     if G.filter_fun:
-        y = filter(G.filter_fun, y)
+        y = list(filter(G.filter_fun, y))
     return y
 
 
@@ -138,10 +138,10 @@ def get_files_data(directory, G, write_filenames = True):
     files = select_files(directory,G)
     n = len(files)
     for i,f in enumerate(files):
-        print "%s  (%d/%d)"%(os.path.split(f)[-1], i, n)
+        print("%s  (%d/%d)"%(os.path.split(f)[-1], i, n))
         try:
             res.append(get_file_data(f))
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
     return res
 

@@ -13,8 +13,8 @@ import re
 import os
 import time
 import xlwt
-import tkMessageBox
-import tkFileDialog
+import tkinter.messagebox
+import tkinter.filedialog
 import sys
 import datetime
 from collections import defaultdict
@@ -66,7 +66,7 @@ last_wp_file = '.sort_results_wp_file'
 
 def getfile(remember_file, title="open"):
     lastdir = last_directory.remember(remember_file)
-    file = tkFileDialog.askopenfilename(initialdir=os.path.split(lastdir.get())[0],
+    file = tkinter.filedialog.askopenfilename(initialdir=os.path.split(lastdir.get())[0],
                                         title=title)
     lastdir.set(file)  # os.path.split(file)[0])
     return file
@@ -92,7 +92,7 @@ def chamber_position(vehicle_pos, side):
 
 
 def all_positions(filenames, sides):
-    q = zip([parse_filename(s)['vehicle_pos'] for s in filenames], sides)
+    q = list(zip([parse_filename(s)['vehicle_pos'] for s in filenames], sides))
     return [chamber_position(vehicle_pos, side)
             for vehicle_pos, side in q]
 
@@ -105,9 +105,9 @@ def dictify(res):
     for i in range(2, len(res), 2):
         try:
             y[res[i]] = res[i + 1]
-        except Exception, e:
+        except Exception as e:
             try:
-                print '\nres[i], res[i+1] = \n', res[i], res[i + 1]
+                print('\nres[i], res[i+1] = \n', res[i], res[i + 1])
             except:
                 pass
             print('\n')
@@ -123,7 +123,7 @@ def make_df(raw_result_list):
     for i, name in enumerate(filenames):
         rdict = parse_filename(name)
         slopes, rdict['side'] = dictify(raw_result_list[i])
-        for key, val in slopes.iteritems():
+        for key, val in slopes.items():
             rdict[key] = val
         pos = rdict['vehicle_pos']
         xy = chamber_position(pos, rdict['side'])
@@ -229,7 +229,7 @@ def res_list(resdict):
     res is a dict of lists
     """
     y = []
-    for plotnr, plotres in resdict.iteritems():
+    for plotnr, plotres in resdict.items():
         for p in plotres:
             x = p
             x['plot_nr'] = plotnr
@@ -257,7 +257,7 @@ def filter_resdict(fun, resdict):
     same as {key:[x for x in lst if fun(x)] for key, lst in resdict.iteritems()}
     """
     res2 = {}
-    for key, reslist in resdict.iteritems():
+    for key, reslist in resdict.items():
         y = [r for r in reslist if fun(r)]
         res2[key] = y
     return res2
@@ -266,7 +266,7 @@ def filter_resdict(fun, resdict):
 def find_new_pos(p0, p):
     def closest(p0, p, yfak):
         x0, y0 = p0
-        x, y = zip(*p)
+        x, y = list(zip(*p))
         d = (x - x0)**2 + (yfak * (y - y0))**2
         return min(d)
     while len(p) and closest(p0, p, 1) < 10:
@@ -323,12 +323,12 @@ def xlswrite(name, result_dict, do_open=False):
         try:
             workbook.save(name)
         except IOError:
-            tkMessageBox.showinfo(
+            tkinter.messagebox.showinfo(
                 "Close the old xls-file, then press ok...........")
         try:
             workbook.save(name)
         except IOError:
-            raise IOError, "You must close the old xls file"
+            raise IOError("You must close the old xls file")
     if do_open:
         os.startfile(name)
 
@@ -378,12 +378,12 @@ def xlswrite2(name, result_dict, do_open=False):
         try:
             workbook.save(name)
         except IOError:
-            tkMessageBox.showinfo(
+            tkinter.messagebox.showinfo(
                 "Close the old xls-file, then press ok...........")
         try:
             workbook.save(name)
         except IOError:
-            raise IOError, "You must close the old xls file"
+            raise IOError("You must close the old xls file")
     if do_open:
         os.startfile(name)
 
@@ -418,7 +418,7 @@ def xlswrite_from_df(name, df, do_open=False):
     try:
         workbook.save(name)
     except IOError:
-        raise IOError, "You must close the old xls file"
+        raise IOError("You must close the old xls file")
     if do_open:
         os.startfile(name)
 
@@ -426,7 +426,7 @@ def xlswrite_from_df(name, df, do_open=False):
 def get_tvxy(resdict, plotnr, substance, tmin=0, tmax=1e99):
     ty = [(x['t'], float(x['slopes'][substance]), x['x'], x['y'])
           for x in sorted_results[plotnr] if tmin < x['t'] < tmax]
-    return zip(*ty)
+    return list(zip(*ty))
 
 
 # def test(start=0, stop=1e99, cumulative=False):
@@ -488,10 +488,10 @@ def show_pos2(results, start, stop, dt=.5, pr=False):
     plot('hold', True)
     plot(x[start], y[start], 'k.')
     if pr:
-        print filenames[start]
+        print(filenames[start])
     for i in range(start + 1, stop):
         if pr:
-            print filenames[i]
+            print(filenames[i])
         plot(x[i - 1], y[i - 1], 'y.', x[i], y[i], 'k.')
         time.sleep(dt)
     plot('hold', False)
@@ -531,7 +531,7 @@ def plot_points_in_rectangles(results, rectangles='default',
 
 
 def pick_data(res, plotnr, name='N2O'):
-    return zip(*[(p['t'], p['slopes'][name]) for p in res[plotnr]])
+    return list(zip(*[(p['t'], p['slopes'][name]) for p in res[plotnr]]))
 
 
 # todo fjerne redundans, bruke pick_data. f
@@ -545,7 +545,7 @@ def plot_plots(resdict, plots, symbol='.', markersize=3, ret=None):
         for p in r:
             x.append((p['t'] - 0 * resdict[plots[0]][0]['t']) / 86400)
             y.append(p['slopes']['N2O'])
-        print('%f' % min(y))
+        print(('%f' % min(y)))
         a.append(x)
         a.append(y)
         a.append(symbol)
@@ -614,7 +614,7 @@ def run_through_all(resdict):
     means = []
     s = 'cmndlo'
     for c in s:
-        print c
+        print(c)
         a = plot_treatment(c, resdict, ret=True)
         y = a[1::3]
         means.append([np.mean(x) for x in y])
@@ -699,7 +699,7 @@ def pl2(resdict, nrs):
 
 
 def numbers(resdict):
-    pl(resdict, range(1, 25), [])
+    pl(resdict, list(range(1, 25)), [])
     for i, p in enumerate(pos):
         time.sleep(1)
         plot('text', p[0], p[1], repr(i + 1))
@@ -771,10 +771,10 @@ def ginput_show_regression(directory, df, plotnrs, plot_first=True,
         plotnrs = [plotnrs]
     #plot('subplot', 211)
     if plot_first > 0:
-        print 'plotting first...'
-        print plotnrs
+        print('plotting first...')
+        print(plotnrs)
         plot_plots(df, plotnrs)
-    print 'now ginput'
+    print('now ginput')
     q = ginput_find_closest_res(df, plotnrs)
     if False:  # not q:
         return False
@@ -807,8 +807,8 @@ def ginput_some_regressions(df, I, reg_plotfun=plt.plot):
             first = False
         except:
             n -= 1
-            print traceback.format_exc()
-            print 'oj'
+            print(traceback.format_exc())
+            print('oj')
 
 
 subplot_dict = {}
@@ -879,13 +879,13 @@ def t_to_daynr(t):
 def find_average_slope_old(resdict, minimum_number_of_measurements_in_a_day=10):
     """ finds average slope versus day on the whole field"""
     y = defaultdict(list)
-    for plotnr, reslist in resdict.iteritems():
+    for plotnr, reslist in resdict.items():
         if plotnr < 0:
             continue
         for r in reslist:
             y[t_to_daynr(r['t'])].append(r['slopes']['N2O'])
     ym = dict()
-    for key, item in y.iteritems():
+    for key, item in y.items():
         if len(item) > minimum_number_of_measurements_in_a_day:
             ym[key] = np.mean(item)
     return ym
@@ -895,7 +895,7 @@ def filter_for_average_slope_old(resdict, lower=0.0001, upper=np.inf):
     """makes a new resdict containing only the results from the days
     where the average slopes were between lower and upper"""
     y = find_average_slope(resdict)
-    y = [(val, key) for (key, val) in y.iteritems()]
+    y = [(val, key) for (key, val) in y.items()]
     daynr = [int(x[1]) for x in y if x[0] > lower and x[0] < upper]
     res2 = filter_resdict(lambda r: (int(r['t'] / 86400) in daynr), resdict)
     return res2
@@ -995,7 +995,7 @@ of the type lambda x:x[fun] or lamdba x:x[fun[0]][fun[1]]"""
 
             def fun(x): return x[a][b]
     y = dict()
-    for key, item in resdict.iteritems():
+    for key, item in resdict.items():
         x = [fun(x) for x in item if fun(x) is not None]
         y[key] = sum(x) / len(x) if len(x) else None
     return y
@@ -1032,13 +1032,13 @@ def plot_barmap(df, offsets=[0, 0], theta=0, thickness=4, alpha=1):
     colors = ['b'] * len(x)
     colordict = {'norite': 'r', 'olivine': 'g', 'larvikite': 'k',
                  'marble': 'w', 'dolomite': 'y', 'control': 'b'}
-    for material, color in colordict.iteritems():
+    for material, color in colordict.items():
         for i in getattr(material_plotnumbers, material):
             if i in keys:
                 colors[keys.index(i)] = color
     plot_bars(x, y, z, thickness, color=colors, alpha=alpha)
     # make the legend
-    matkeys = colordict.keys()
+    matkeys = list(colordict.keys())
     proxies = [plt.Rectangle((0, 0), 1, 1, fc=colordict[material])
                for material in matkeys]
     names = [k[0] for k in matkeys]
