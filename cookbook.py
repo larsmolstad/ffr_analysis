@@ -39,17 +39,11 @@ plt.show()
 plt.axis('equal')
 plt.axis('auto')
 s1 = plt.subplot(2,3,1)
-
-
-#%% Never mind this:
-
-do_show = False
-do_wait = False
-def show_and_wait():
-    if do_show:
-        plt.show()
-    if do_wait:
-        input('Press Enter ')
+x = np.linspace(0, 3*np.pi)
+plt.plot(x, np.sin(x))
+#%%
+plt.clf()
+plt.subplot(1,1,1)
 
         
 #%% Get a list of all result files
@@ -65,9 +59,9 @@ plt.plot(a['N2O'][0], a['N2O'][1], '.')
 # example_file has some fluxes:
 filename = os.path.join(resdir.raw_data_path, example_file)
 a = get_data.get_file_data(filename)
+plt.cla()
 plt.plot(a['N2O'][0], a['N2O'][1], '.')
-show_and_wait()
-
+plt.show()
 
 #%% simplify working on the repl (command line)
 b = utils.dict2inst(a)
@@ -80,7 +74,7 @@ plt.cla()
 a = get_data.get_file_data(filename)
 reg = fr.find_all_slopes(a, interval=100, co2_guides=True, plotfun=plt.plot)
 fr.print_reg(reg)
-show_and_wait()
+plt.show()
 # Here, a can be the filename or the data dict. Interval is the length
 # of time of the regression line. If co2_guides==True, the interval in
 # time where the co2 curve is the steepest is used for the time of
@@ -98,8 +92,7 @@ plt.cla()
 plt.hold(True)
 rectangles = pr.migmin_field_rectangles()
 pr.plot_rectangles(list(rectangles.values()), list(rectangles.keys()))
-show_and_wait()
-
+plt.show()
 
 #%% Sort results according to the rectangles, put them in a Pandas dataframe
 pd.set_option('display.width', 250)
@@ -127,10 +120,12 @@ plt.cla()
 plt.axis('auto')
 plt.plot(d['t'], d['N2O'])
 print(d['N2O'])
+plt.show()
 
-
-#%% add in some weather data, calculate fluxes, wrap it up in a function:
-# (if you have internet, you can do weather_data.data.update() first)
+#%% add in some weather data, calculate fluxes, wrap it up in a
+# function. (if you have internet, you can do
+# weather_data.data.update() first. This will download weather data
+# from yr and save them)
 
 def update(precip_dt=2, rectangles=rectangles):
     df, df0 = sr.make_df_from_slope_file(name, rectangles,
@@ -156,7 +151,8 @@ def test_nr(nr):
     pr.plot_rectangles(list(rectangles.values()), list(rectangles.keys()))
     d = df0[df0.plot_nr==nr]
     plt.plot(d.x, d.y, '.')
-
+    plt.show()
+    
 nrs = np.unique(df[df.treatment=='Norite'].plot_nr)
 
 print(nrs)
@@ -171,13 +167,15 @@ for nr in nrs:
 df2 = sr.filter_for_average_slope_days(df, 0.0005)
 
 # useful:
+
 a = df.groupby('daynr').N2O
 a = a.mean().values[a.count().values>10]
+plt.cla()
 plt.hist(a*1000, bins='auto')
 
 #%%barmaps
 
-_ = sr.barmap_splitted(df, df0, theta=0)
+#_ = sr.barmap_splitted(df, df0, theta=0)
 
 #%%Excel
 

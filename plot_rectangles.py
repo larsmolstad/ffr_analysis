@@ -84,7 +84,20 @@ def plot_rectangles(rectangles, names=[]):
         rectangles = list(rectangles.values())
     for i, r in enumerate(rectangles):
         plot_rectangle(r, text=None if not names else names[i])
-    plt.axis('equal')
+    #plt.axis('equal')
+    # plt.axis('equal') gives me problems when I forget to unset it for later plots
+    # (with axis('auto')), so:
+    xlims = plt.gca().get_xlim()
+    ylims = plt.gca().get_ylim()
+    xd = max(xlims)-min(xlims)
+    yd = max(ylims)-min(ylims)
+    if xd > yd:
+        ycenter = (ylims[0] + ylims[1])/2
+        ylims = [ycenter - xd/2, ycenter + xd/2]
+    else:
+        xcenter = (xlims[0] + xlims[1])/2
+        xlims = [xcenter - yd/2, ycenter + yd/2]
+    plt.plot(xlims, ylims, 'w.')
 
 
 def rectangle_midpoint(p):
