@@ -96,7 +96,7 @@ def plot_rectangles(rectangles, names=[]):
         ylims = [ycenter - xd/2, ycenter + xd/2]
     else:
         xcenter = (xlims[0] + xlims[1])/2
-        xlims = [xcenter - yd/2, ycenter + yd/2]
+        xlims = [xcenter - yd/2, xcenter + yd/2]
     plt.plot(xlims, ylims, 'w.')
 
 
