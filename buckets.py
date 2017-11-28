@@ -103,24 +103,16 @@ def make_df(names, left=None, right=None, subst='N2O', plotter=False,
         right = []
         for i, name in enumerate(names):
             if plotter:
-                #if plotter==plt:
-                #
                 plotter.subplot(subplots[0], subplots[1],
                                 1 + i % (subplots[0] * subplots[1]))
-                #plotter.plot([1, 2, i])
-                #plt.show()
                 plt.cla()
-                #show()
             l, r = regs(name, do_plot=plotter, subst=subst)
-            #plotter.plot([1,2,2])
             left.append(l)
             right.append(r)
             if i % (subplots[0] * subplots[1]) == 0:
                 print(i, end=' ')
-                #plt.plot([1,2,i%13])
                 if plotter == plt:
                     show()
-                #plt.clf()
     sides = []
     slopes = []
     names2 = []
@@ -138,10 +130,9 @@ def make_df(names, left=None, right=None, subst='N2O', plotter=False,
     df['treatment'] = [plot_numbering.bucket_treatment(x) for x in df.plot_nr]
     parsed = [try_parse(os.path.split(x)[1]) for x in df.name]
     df['t'] = [p['t'] for p in parsed]
-#    df['daynr'] = [int(x/86400) for x in df.t]
     df['day'] = [x['date'][:8] for x in parsed]
     df['gN2O_Nperdaym2'] = df.slope.apply(lambda x: calc_flux(x, 10)*0.94)*(50.0/23.5)**2*86400*14*2
-    # grams per day og m2; 10 grader, kammeret tar opp ca 10%
+    # grams per day og m2; 10 grader, kammeret tar opp ca 6%
     # bucket_diam=24; chamber_diam=50; todo sjekke
     return df
 
@@ -367,26 +358,26 @@ remove_redoings(ok_names)
 # bw_names.pop(0)
 # bw_names.pop(5)
 
-df_all = make_df(names=ok_names, plotter=False)  # [24*8:])
-df_all['soil_volume'] = [bucket_depths.soil_volumes[(df_all.ix[i].plot_nr, df_all.ix[i].side)]
-                         for i in df_all.index]
-#left = df_all[df_all.side == 'left']
-#right = df_all[df_all.side == 'right']
+df = make_df(names=ok_names, plotter=False)  # [24*8:])
+df['soil_volume'] = [bucket_depths.soil_volumes[(df.ix[i].plot_nr, df.ix[i].side)]
+                         for i in df.index]
+#left = df[df.side == 'left']
+#right = df[df.side == 'right']
 
 day1 = ('20170823', '20170826')
 day2 = ('20170830', '20170910')
 day3 = ('20171013', '20171230')
 
 
-def pick_days(df_all, days):
-    return df_all[df_all.day >= days[0]][df_all.day <= days[1]]
+def pick_days(df, days):
+    return df[df.day >= days[0]][df.day <= days[1]]
 
 
-df = df_all[df_all.day > '20171000']
-df = pick_days(df_all, day1)
-analyse(df)
+df1 = df[df.day > '20171000']
+df1 = pick_days(df, day1)
+analyse(df1)
 
-plot_all(df)
+plot_all(df1)
 
 
 def barplot_trapz(df):
@@ -448,14 +439,14 @@ def plot_ph_vs_flux(df, ph_df, days, ph_method='CaCl2'):
 ph_method = 'CaCl2'
 plt.clf()
 plt.subplot(211)
-plot_ph_vs_flux(df_all, ph_df, day2, ph_method=ph_method)
+plot_ph_vs_flux(df, ph_df, day2, ph_method=ph_method)
 plt.gca().set_xlabel('')
 plt.gca().set_title('With $\mathrm{NH_4NO_3}$')
 plt.subplot(212)
-plot_ph_vs_flux(df_all, ph_df, day3, ph_method=ph_method)
+plot_ph_vs_flux(df, ph_df, day3, ph_method=ph_method)
 plt.gca().set_title('With $\mathrm{NaNO_3}$')
 
-plot_all(df_all[df_all.day>'20161025'],ylims=False)
+plot_all(df[df.day>'20161025'],ylims=False)
 
 def print_everything(df):
     with pd.option_context('display.max_rows', None, 'display.max_columns', None):
