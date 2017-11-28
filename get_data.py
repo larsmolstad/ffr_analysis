@@ -3,7 +3,7 @@ import re
 import math
 import time
 import pickle
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 import licor_indexes
 import dlt_indexes
@@ -117,20 +117,24 @@ def get_file_data(filename):
 
 
 def selection_fun(x, G):
+    if not isinstance(G, (dict, defaultdict)):
+        G = defaultdict(lambda:False, G.__dict__)
+    if not isinstance(G, defaultdict):
+        G = defaultdict(lambda:False, G)
     y = x.startswith('20') or x.startswith('21') or x.startswith('punkt')
     y = y and os.path.splitext(x)[-1] in ['','.pickle']
-    if G.startdate:
+    if G['startdate']:
         y = y and x[:len(G.startdate)] >= G.startdate
-    if G.stopdate:
+    if G['stopdate']:
         y = y and x[:len(G.stopdate)] <= G.stopdate
-    if G.filter_fun:
+    if G['filter_fun']:
         y = list(filter(G.filter_fun, y))
     return y
 
 
-def select_files(directory,G):
+def select_files(directory, G):
     files = os.listdir(directory)
-    return [os.path.join(directory, x) for x in files if selection_fun(x,G)]
+    return [os.path.join(directory, x) for x in files if selection_fun(x, G)]
 
 
 def get_files_data(directory, G, write_filenames = True):
