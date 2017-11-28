@@ -158,14 +158,12 @@ def write_result_to_file(res, name, f):
         f.write(s + '\n')
 
 
-def find_regressions(directory, res_file_name, regression_time):
-    files = get_data.select_files(directory, G)
+def do_regressions(files, res_file_name, regression_time, co2_guides):
     n = len(files)
-    i = 0
     t0 = time.time()
     resdict = {}
     with open(res_file_name, 'w') as f:
-        for name in files:
+        for i, name in enumerate(files):
             t = time.time()
             if t - t0 > 0.5:
                 print(('%d/%d' % (i, n)))
@@ -173,7 +171,7 @@ def find_regressions(directory, res_file_name, regression_time):
             try:
                 data = get_data.get_file_data(name)
                 # res = find_fluxes(data,regression_time)
-                res = find_all_slopes(data, regression_time, G.co2_guides)
+                res = find_all_slopes(data, regression_time, co2_guides)
                 write_result_to_file(res, name, f)
                 resdict[os.path.split(name)[1]] = res
             except Exception as e:
@@ -181,11 +179,34 @@ def find_regressions(directory, res_file_name, regression_time):
                 traceback.print_exc()
                 print('continuing')
                 continue
-            i += 1
+    return resdict
+
+
+def find_regressions(directory, res_file_name, regression_time, co2_guides, G={}):
+    files = get_data.select_files(directory, G)
+    resdict = do_regressions(files, res_file_name, regression_time, co2_guides)
     with open(os.path.splitext(res_file_name)[0] + '.pickle', 'wb') as f:
         pickle.dump(resdict, f)
 
 
+def update_regressions_file(directory, res_file_name, regression_time, co2_guides, G={}):
+    files = get_data.select_files(directory, G)
+    done_files = [x.split('\t')[0] for x in open(res_file_name, 'r').readlines()]
+    done_files = [os.path.join(directory, x) for x in done_files]
+    files = sorted(set(files)-set(done_files))
+    print(len(files))
+    resdict = do_regressions(files, res_file_name, regression_time, co2_guides)
+    pickle_name = os.path.splitext(res_file_name)[0] + '.pickle'
+    try:
+        old_dict = pickle.load(open(pickle_name), 'rb')
+    except:
+        print('File ', pickle_name , 'not found. Starting empty')
+        old_dict = {}
+    resdict = {**old_dict, **resdict}
+    with open(pickle_name, 'wb') as f:
+        pickle.dump(resdict, f)
+    
+    
 def print_reg(regres):
     for k, dct in regres.items():
         print(k)
@@ -195,4 +216,4 @@ def print_reg(regres):
 
 
 if __name__ == '__main__':
-    find_regressions(G.directory, G.res_file_name, G.regression_time)
+    find_regressions(G.directory, G.res_file_name, G.regression_time, G.co2_guides, G)

@@ -62,7 +62,8 @@ plt.axis('auto')
 s1 = plt.subplot(2,3,1)
 x = np.linspace(0, 3*np.pi)
 plt.plot(x, np.sin(x))
-#%%
+
+#%% 
 plt.clf()
 plt.subplot(1,1,1)
 
@@ -107,6 +108,17 @@ plt.show()
 import divide_left_and_right
 ad = divide_left_and_right.group_all(a)
 
+#%% Do many regressions (more instructions will follow, but see README.txt) 
+
+resfile = os.path.join(resdir.slopes_path, 'slopes3.txt')
+
+# this takes a long time, so I commented it out:
+
+# write regressions to resfile:
+#fr.find_regressions(resdir.raw_data_path, resfile, 100, True) 
+
+# update resfile without redoing regressions:
+#fr.update_regressions_file(resdir.raw_data_path, resfile, 100, True)
 
 #%% Sort results according to the rectangles, put them in a Pandas dataframe
 pd.set_option('display.width', 250)
@@ -219,7 +231,10 @@ def trapz_df(df):
                                                treatment=treatments))
 
     
-    
+print(trapz_df(df))
+
+#Statistics see buckets.py
+
 #%% subplots integration gothrough
 
 #%% ginput
