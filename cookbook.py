@@ -29,6 +29,7 @@ import flux_calculations
 resdir.raw_data_path = 'c:\\zip\\sort_results\\results'
 resdir.slopes_path = 'c:\\zip\\sort_results'
 example_file = '2016-06-16-10-19-50-x599234_725955-y6615158_31496-z0_0-h0_743558650162_both_Plot_9_'
+resdir.slopes_path = 'c:/users/larsmo/downloads'
 
 
 #%% plotting examples
@@ -102,6 +103,7 @@ pd.set_option('display.width', 250)
 # make_df_from_slope_file picks the one that are inside rectangles
 name = os.path.join(resdir.slopes_path, 'slopes3.txt')
 rectangles = pr.migmin_field_rectangles()
+rectangles = pr.agropro_rectangles()
 
 df, df0 = sr.make_df_from_slope_file(name, rectangles,
                                      find_plot.treatments,
@@ -115,7 +117,9 @@ print(df)
 print((df.head()))
 print((df.tail()))
 print((df.columns))
-d = df[df.plot_nr==1]
+pnr = df.plot_nr.values[0]
+print('plotting N2O slopes for plot_nr', pnr)
+d = df[df.plot_nr==pnr]
 plt.cla()
 plt.axis('auto')
 plt.plot(d['t'], d['N2O'])
@@ -138,6 +142,7 @@ def update(precip_dt=2, rectangles=rectangles):
         flux_calculations.calc_flux(df.N2O, df.Tc)  # 2 because 2 N in N2O
     df['CO2_C_mmol_m2day'] = 1000 * 86400 * \
         flux_calculations.calc_flux(df.CO2, df.Tc)
+    df = sr.rearrange_df(df)
     return df, df0
 
 df, df0 = update()
@@ -149,7 +154,7 @@ print(df.head())
 
 def test_nr(nr):
     pr.plot_rectangles(list(rectangles.values()), list(rectangles.keys()))
-    d = df0[df0.plot_nr==nr]
+    d = df[df.plot_nr==nr]
     plt.plot(d.x, d.y, '.')
     plt.show()
     
@@ -175,13 +180,14 @@ plt.hist(a*1000, bins='auto')
 
 #%%barmaps
 
-#_ = sr.barmap_splitted(df, df0, theta=0)
+#_ = sr.barmap_splitted(df, theta=0)
 
 #%%Excel
 
 df.to_excel('excel_filename.xls')
+os.system('excel_filename.xls')
 # or
-sr.xlswrite_from_df('excel_filename2', df, True)
+sr.xlswrite_from_df('excel_filename2.xls', df, True)
 # todo more sheets, names, small rectangles?
 
 #%% trapezoidal integration

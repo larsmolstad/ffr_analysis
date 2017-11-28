@@ -6,9 +6,6 @@ results, sorted_results, resdict = get_results_from_slope_file('slopes.txt',
 """
 # todo a lot of old code here, mostly from the time before I started using Pandas
 
-# todo the whole idea with df and df0 was dumb. Should have a df with
-# everything and a function simplify(df)
-
 import re
 import os
 import time
@@ -147,6 +144,13 @@ def simplity_df(df):
     return df.drop(todrop, axis=1, errors='ignore')
 
 
+def rearrange_df(df):
+    tomove = ['name', 'side', 'vehicle_pos', 'vehicle_x',
+              'vehicle_y', 'vehicle_z', 'used_sides']
+    tomove = [x for x in tomove if x in df.columns]
+    tokeep = [x for x in df.columns if x not in tomove]
+    return df[tokeep + tomove] #df.drop(todrop, axis=1, errors='ignore')
+
 def make_list_with_parsed_filenames(raw_result_list):
     filenames = [x[0] for x in raw_result_list]
     sides = [x[1] for x in raw_result_list]
@@ -199,7 +203,7 @@ def get_result_list_from_slope_file(slope_file,
         a = f.readlines()
     a = [x.strip('\n\r') for x in a]
     reslist = [x.split() for x in a if x]
-    reslist = reslist[start:stop]
+    reslist = reslist[start:stop] if stop>=0 else reslist[start:]
     if index_list is not None:
         reslist = [x[i] for x in index_list]
     for s in reslist:
@@ -216,9 +220,9 @@ def make_df_from_slope_file(name,
     assign_plots(df0, rectangles)
     df0['treatment'] = df0.plot_nr.map(lambda x: treatment_dict[x]
                                        if x in treatment_dict else None)
-    df = simplity_df(df0[df0.plot_nr > 0])
+    df = rearrange_df(df0[df0.plot_nr > 0])
     if remove_redoings_time:
-        df = remove_redoings(df, df0, remove_redoings_time)
+        df = remove_redoings(df, remove_redoings_time)
     return df, df0
 
 
@@ -909,7 +913,7 @@ def filter_for_average_slope_days(df, lower=0.0001, upper=np.inf):
     return df[df.daynr.isin(days)]
 
 
-def find_nonlast_redoings(df, df0, nr, dt=3600):
+def find_nonlast_redoings(df, nr, dt=3600):
     """Finds where the robot has measured in the same plot (and on the
     same side) after less than dt (in seconds).  Ususally, if dt is
     small, this is due to something going wrong, and the measurement
@@ -917,27 +921,31 @@ def find_nonlast_redoings(df, df0, nr, dt=3600):
 
     """
     d = df[df.plot_nr == nr]
-    sides = df0.loc[d.index].side
-    d_left = d[sides == 'left']
-    d_right = d[sides == 'right']
+    #sides = df0.loc[d.index].side
+    d_left = d[d.side == 'left']
+    d_right = d[d.side == 'right']
     left = np.where(np.diff(d_left.t) < dt)
     right = np.where(np.diff(d_right.t) < dt)
     # return left, right, d_left, d_right
     return pd.concat([d_left.iloc[left], d_right.iloc[right]])
 
 
-def remove_redoings(df, df0, dt=3600):
+def remove_redoings(df, dt=3600):
     """
     Returns a dataframe where measurements has been removed that has
     been redone within dt seconds. The intention is to remove
     measurements that have failed. 
 
-    df0 holds the side 
-
     """
     plotnrs = set(df.plot_nr)
-    to_remove = pd.concat([find_nonlast_redoings(df, df0, i) for i in plotnrs])
-    return df.drop(to_remove.index)
+    to_remove = [find_nonlast_redoings(df, i)
+                 for i in plotnrs]
+    if to_remove:
+        to_remove = pd.concat(to_remove)
+        df.drop(to_remove.index)
+        return df
+    else:
+        return df
 
 #+END_SRC
 
@@ -1046,20 +1054,16 @@ def plot_barmap(df, offsets=[0, 0], theta=0, thickness=4, alpha=1):
     return x, y, z, keys, colors, proxies, names
 
 
-def barmap_splitted(df, df0, thickness=2, alpha=1, theta=np.pi / 4,
+def barmap_splitted(df, thickness=2, alpha=1, theta=np.pi / 4,
                     do_clf=True, ret=False):
     if do_clf:
         plt.clf()
         plt.subplot(111, projection='3d')
     # both_sides = df0.vehicle_pos.map(lambda x:x['side']=='both')[df.index]
-    dfboth = df[df0.used_sides == 'both']
+    dfboth = df[df.used_sides == 'both']
     # todo
     heading = dfboth.heading
-    #side = df0.loc[dfboth.index].side
-    # sjekk at jeg har forstaatt dette:
-    # print all(df0.loc[dfboth.index].CO2 == dfboth.CO2)
-    # enklere:
-    side = df0.side[dfboth.index]
+    side = dfboth.side
     nw = (side == 'left') != (heading > -1)
     se = ~nw
     x1, y1, z1, _, colors1, proxies, names = plot_barmap(
