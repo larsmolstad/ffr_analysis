@@ -176,7 +176,7 @@ def all_field_big_rectangles():
 # starting in northern corner
 
 # todo use the small rectangles (and functions above) to make the migmin_field rectangles
-def migmin_field_rectangles():
+def migmin_rectangles():
     plot_indexes = [0, 1, 4, 5, 8, 11, 13, 15, 18, 19, 22, 23, 25, 26, 28, 30, 32,
                     35, 36, 38, 41, 43, 46, 47]
     plots = all_field_big_rectangles()
@@ -208,6 +208,6 @@ if 0:
     w = [x for x in w if x['y'] < maxy - 20]
     xp = [a['x'] for a in w]
     yp = [a['y'] for a in w]
-    plots_used = migmin_field_rectangles()
+    plots_used = migmin_rectangles()
     plot_everything(xp, yp, plots_used, treatments)
     plt.axis('equal')
