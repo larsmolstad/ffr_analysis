@@ -25,11 +25,31 @@ import weather_data
 import flux_calculations
 
 
-#%% Override the default result directories:
+#%%
+
+################### EDIT THESE:
+
+# Override the default result directories:
 resdir.raw_data_path = 'c:\\zip\\sort_results\\results'
 resdir.slopes_path = 'c:\\zip\\sort_results'
+#resdir.slopes_path = 'c:/users/larsmo/downloads'
+
+# Select which rectangles you want:
+rectangles = pr.migmin_rectangles()
+# or
+#rectangles = pr.agropro_rectangles()
+
+#################### END EDIT THESE
+
+
 example_file = '2016-06-16-10-19-50-x599234_725955-y6615158_31496-z0_0-h0_743558650162_both_Plot_9_'
-resdir.slopes_path = 'c:/users/larsmo/downloads'
+
+
+# Plotting the rectangles 
+plt.cla()
+plt.hold(True)
+pr.plot_rectangles(list(rectangles.values()), list(rectangles.keys()))
+plt.show()
 
 
 #%% plotting examples
@@ -88,13 +108,6 @@ import divide_left_and_right
 ad = divide_left_and_right.group_all(a)
 
 
-#%% Plot the rectangles of migmin
-plt.cla()
-plt.hold(True)
-rectangles = pr.migmin_field_rectangles()
-pr.plot_rectangles(list(rectangles.values()), list(rectangles.keys()))
-plt.show()
-
 #%% Sort results according to the rectangles, put them in a Pandas dataframe
 pd.set_option('display.width', 250)
 # The slopes have been stored in slopes3.txt with the command
@@ -102,8 +115,6 @@ pd.set_option('display.width', 250)
 # slopes3.txt has the slopes from all the files in the results folder.
 # make_df_from_slope_file picks the one that are inside rectangles
 name = os.path.join(resdir.slopes_path, 'slopes3.txt')
-rectangles = pr.migmin_field_rectangles()
-rectangles = pr.agropro_rectangles()
 
 df, df0 = sr.make_df_from_slope_file(name, rectangles,
                                      find_plot.treatments,
@@ -191,8 +202,24 @@ sr.xlswrite_from_df('excel_filename2.xls', df, True)
 # todo more sheets, names, small rectangles?
 
 #%% trapezoidal integration
-# see buckets.py
+# see buckets.py, or
 
+def trapz_df(df):
+    index = sorted(set(df.plot_nr))
+    CO2_C_mmol_m2_trapz = []
+    N2O_N_mmol_m2_trapz = []
+    treatments = []
+    for nr in index:
+        d = df[df.plot_nr == nr]
+        CO2_C_mmol_m2_trapz.append(np.trapz(d.CO2_C_mmol_m2day, d.t)/86400)
+        N2O_N_mmol_m2_trapz.append(np.trapz(d.N2O_N_mmol_m2day, d.t)/86400)
+        treatments.append(d.treatment.values[0])
+    return pd.DataFrame(index=index, data=dict(CO2_C_mmol_m2_trapz=CO2_C_mmol_m2_trapz,
+                                               N2O_N_mmol_m2_trapz=N2O_N_mmol_m2_trapz,
+                                               treatment=treatments))
+
+    
+    
 #%% subplots integration gothrough
 
 #%% ginput

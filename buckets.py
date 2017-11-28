@@ -280,15 +280,6 @@ def find_best2(df, start, stop, **kwargs):
 
 
 def analyse(df):
-
-    #means_anova = anova_means(df, barplot='anova of means, each treatment')
-    #print "Anova of means:"
-    #print means_anova
-
-    #fit = ols('gN2O_Nperdaym2 ~ treatment', df).fit()
-
-    #anov_table = sm.stats.anova_lm(fit, type=2)# todo sjekk type
-    #print anov_table
     
     df['nr_side'] = df.plot_nr.apply(lambda x:"%02d"%x ) + '_' + df.side
     nr_side_groups = df.groupby('nr_side')
@@ -301,7 +292,6 @@ def analyse(df):
     df['nr_side_day'] = df.plot_nr.apply(str) + '_' + df.side + '_' + df.day
     nsd_groups = df.groupby('nr_side_day')
     df = df.drop('nr_side_day', axis=1)
-    #nsd_groups = my_group(df, ('plot_nr', 'side', 'day'))
     nsd_df = nsd_groups.mean()
     nsd_df['treatment'] = nsd_groups.last().treatment
     nsd_df['side'] = nsd_groups.last().side
@@ -314,33 +304,15 @@ def analyse(df):
         y = nr_side_groups.get_group(key)
         trp = np.trapz(y.gN2O_Nperdaym2, y.t) / 86400
         x = number_side_df.set_value(key, 'trapz', trp)
-    #barplot_means(df, means=df.groupby('plot_nr').gN2O_Nperdaym2_N_mmol_m2day.mean())
 
-    #mod1 = 'gN2O_Nperdaym2 ~ C(treatment) + C(side)'
-    #modtrapz = 'trapz ~ C(treatment) + C(side)'
-    #mod2 = 'gN2O_Nperdaym2 ~ C(treatment) + C(side) + C(day)'
-
-    #res = ols(mod1, data=df).fit()
-    # print res.params
-
-    #number_side_df_res = ols(mod1, data=number_side_df).fit()
-    # print(number_side_df_res.summary())
-
-    #number_side_trapz_res = ols(modtrapz, data=number_side_df).fit()
-    # print(number_side_trapz_res.summary())
     modtrapz = 'np.log(trapz+0.005) ~ C(treatment) + C(side)'
     number_side_trapz_res = ols(modtrapz, data=number_side_df).fit()
     print(number_side_trapz_res.summary())
-    #nsd_df_res = ols(mod2, data=nsd_df).fit()
-    # print(nsd_df_res.summary())
 
     # plot residuals vs bucket depth
     # number_side_df_res.resid
     df.boxplot('gN2O_Nperdaym2', ['treatment', 'side'], rot=30)  # , ax)
-    show()
 
-    #a = find_best2(nsd_df, 0.00001, 0.9)
-    #a = find_best(nsd_df, 0.000001, 0.1, 10)
     return number_side_df
 
 

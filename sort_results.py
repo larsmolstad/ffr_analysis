@@ -138,7 +138,7 @@ def make_df(raw_result_list):
     return df
 
 
-def simplity_df(df):
+def simplify_df(df):
     todrop = ['name', 'side', 'vehicle_pos', 'vehicle_x',
               'vehicle_y', 'vehicle_z', 'used_sides']
     return df.drop(todrop, axis=1, errors='ignore')
@@ -292,50 +292,6 @@ def last_part_of_name(name):
     return name[i:].replace('_Plot_', '').replace('_', '')
 
 
-def xlswrite(name, result_dict, do_open=False):
-    workbook = xlwt.Workbook()
-    date_format = xlwt.XFStyle()
-    date_format.num_format_str = 'dd/mm/yyyy'
-    keys = find_plot.plots_sorted_by_treatment
-    keys += [k for k in result_dict if k not in keys]
-    tr = find_plot.treatments
-    for compound in ['N2O', 'CO2', 'name', 'utm_coordinates']:
-        w = workbook.add_sheet(compound)
-        for i, key in enumerate(keys):  # enumerate(result_dict.keys()):
-            r = result_dict[key]
-            s = "%s:%s" % (key, tr[key] if key in tr else '')
-            w.write(0, 2 * i, s)
-            # w.write(0, 2*i+1, last_part_of_name(r[0]['name']))
-            for j in range(len(r)):
-                # w.write(j+1, 2*i, r[j]['t'])
-                # w.write(j+1, 2*i, r[j]['t'], date_format)
-                if compound == 'name':
-                    y = r[j]['name']
-                elif compound == 'utm_coordinates':
-                    # print r[j]
-                    x = r[j]['chamber_pos']['x']
-                    y = r[j]['chamber_pos']['y']
-                else:
-                    y = float(r[j]['slopes'][compound])
-                if compound != 'utm_coordinates':
-                    t = datetime.datetime.utcfromtimestamp(r[j]['t'])
-                    w.write(j + 1, 2 * i, t, date_format)
-                else:
-                    w.write(j + 1, 2 * i, x)
-                # float(r[j]['slopes'][compound]))
-                w.write(j + 1, 2 * i + 1, y)
-        try:
-            workbook.save(name)
-        except IOError:
-            tkinter.messagebox.showinfo(
-                "Close the old xls-file, then press ok...........")
-        try:
-            workbook.save(name)
-        except IOError:
-            raise IOError("You must close the old xls file")
-    if do_open:
-        os.startfile(name)
-
 # we want to have empty cells for missing measurements in the
 # spreadsheet.  problem with that: If the same plot is measured twice
 # in a day it might be because all plots are measured twice or because
@@ -343,53 +299,6 @@ def xlswrite(name, result_dict, do_open=False):
 # by days and make a rule for what to keep and what to insert as empty.
 # Must go through the measurements day by day instead of plot by plot
 
-
-def xlswrite2(name, result_dict, do_open=False):
-    reslist = res_list(result_dict)
-    reslist.sort(key=lambda r: r['t'])
-    workbook = xlwt.Workbook()
-    date_format = xlwt.XFStyle()
-    date_format.num_format_str = 'dd/mm/yyyy'
-    keys = find_plot.plots_sorted_by_treatment
-    keys += [k for k in result_dict if k not in keys]
-    reslist = res_list(result_dict)
-    tr = find_plot.treatments
-    for compound in ['N2O', 'CO2', 'name', 'utm_coordinates']:
-        w = workbook.add_sheet(compound)
-        for i, key in enumerate(keys):  # enumerate(result_dict.keys()):
-            r = result_dict[key]
-            s = "%s:%s" % (key, tr[key] if key in tr else '')
-            w.write(0, 2 * i, s)
-            # w.write(0, 2*i+1, last_part_of_name(r[0]['name']))
-            for j in range(len(r)):
-                # w.write(j+1, 2*i, r[j]['t'])
-                # w.write(j+1, 2*i, r[j]['t'], date_format)
-                if compound == 'name':
-                    y = r[j]['name']
-                elif compound == 'utm_coordinates':
-                    # print r[j]
-                    x = r[j]['chamber_pos']['x']
-                    y = r[j]['chamber_pos']['y']
-                else:
-                    y = float(r[j]['slopes'][compound])
-                if compound != 'utm_coordinates':
-                    t = datetime.datetime.utcfromtimestamp(r[j]['t'])
-                    w.write(j + 1, 2 * i, t, date_format)
-                else:
-                    w.write(j + 1, 2 * i, x)
-                # float(r[j]['slopes'][compound]))
-                w.write(j + 1, 2 * i + 1, y)
-        try:
-            workbook.save(name)
-        except IOError:
-            tkinter.messagebox.showinfo(
-                "Close the old xls-file, then press ok...........")
-        try:
-            workbook.save(name)
-        except IOError:
-            raise IOError("You must close the old xls file")
-    if do_open:
-        os.startfile(name)
 
 def xlswrite_from_df(name, df, do_open=False):
     #daynrs = sorted(set(df.daynr))# but sometimes we measure twice per day
@@ -405,8 +314,8 @@ def xlswrite_from_df(name, df, do_open=False):
             plots = sorted(set(d.plot_nr))
             for j, plot_nr  in enumerate(plots):
                 i += 2
-                w.write(0, i+1, treatment)
-                w.write(1, i+1, str(plot_nr))
+                w.write(0, i-1, treatment)
+                w.write(1, i-1, str(plot_nr))
                 d2 = d[d.plot_nr==plot_nr]
                 t = d2.t.values
                 y = d2[compound].values
@@ -522,7 +431,7 @@ def plot_points_in_rectangles(results, rectangles='default',
     plt.cla()
     plt.hold(True)
     if rectangles == 'default':
-        rectangles = plot_rectangles.migmin_field_rectangles()
+        rectangles = plot_rectangles.migmin_rectangles()
     plot_rectangles.plot_rectangles(rectangles)
     show_pos2(results, anim_start, stop, dt=dt, pr=pr)
 
@@ -1082,7 +991,7 @@ def barmap_splitted(df, thickness=2, alpha=1, theta=np.pi / 4,
 
 
 if __name__ == '__main__' and G.xls_file not in ['False', 'None']:
-    rectangles = pr.migmin_field_rectangles()# todo
+    rectangles = pr.migmin_rectangles()# todo
     df, _ = make_df_from_slope_file(G.slope_file,
                                     rectangles,
                                     find_plot.treatments,
@@ -1105,7 +1014,7 @@ if __name__ == '__main__' and G.xls_file not in ['False', 'None']:
 
 """
 unsorted_res = sr.get_results_from_slope_file(name, start=0)
-rectangles = pr.migmin_field_rectangles()
+rectangles = pr.migmin_rectangles()
 grouped_reslist = sr.group_results(unsorted_res, rectangles)
 resdict = sr.list2list_dict(grouped_reslist)
 _ = resdict.pop(-99)
