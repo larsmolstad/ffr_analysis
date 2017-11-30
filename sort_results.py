@@ -1,8 +1,4 @@
 """
-interactively, do this: 
-from sort_results import * 
-results, sorted_results, resdict = get_results_from_slope_file('slopes.txt',
-                                                                rectangles)
 """
 # todo a lot of old code here, mostly from the time before I started using Pandas
 
@@ -19,7 +15,7 @@ import argparse
 from math import sin, cos, pi
 
 import last_directory
-import plot_rectangles as pr
+from migmin import migmin_rectangles
 import find_plot
 from get_data import number_after, parse_filename
 import numpy as np
@@ -991,7 +987,7 @@ def barmap_splitted(df, thickness=2, alpha=1, theta=np.pi / 4,
 
 
 if __name__ == '__main__' and G.xls_file not in ['False', 'None']:
-    rectangles = pr.migmin_rectangles()# todo
+    rectangles = migmin_rectangles.migmin_rectangles()# todo
     df, _ = make_df_from_slope_file(G.slope_file,
                                     rectangles,
                                     find_plot.treatments,
@@ -1011,16 +1007,6 @@ if __name__ == '__main__' and G.xls_file not in ['False', 'None']:
 #     return y
 #
 
-
-"""
-unsorted_res = sr.get_results_from_slope_file(name, start=0)
-rectangles = pr.migmin_rectangles()
-grouped_reslist = sr.group_results(unsorted_res, rectangles)
-resdict = sr.list2list_dict(grouped_reslist)
-_ = resdict.pop(-99)
-resdict = sr.transform_resdict(lambda x,y:x*1000, resdict)
-df = sr.reslist2pandas(grouped_reslist)
-"""
 
 
 # def excel_date(date1):

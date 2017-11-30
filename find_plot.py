@@ -1,20 +1,5 @@
-treatment_names = {'N':'Norite', 'O':'Olivine', 'L':'Larvikite',
-                   'M':'Marble', 'D':'Dolomite', 'C':'Control'}
-treatments = {}
-# this is with the columnwise numbering (not back and forth in an S)
-for i,t in enumerate('NOLOMNDCDLNMOCDLOMLCDNCM'):
-    treatments[i+1] = treatment_names[t]
 
-def get_treatment_plots(T='C'):
-    all = list(treatments.keys())
-    all.sort()
-    return [i for i in all if treatments[i].startswith(T[0])]
-
-plots_sorted_by_treatment = []
-for T in 'CDLMNO':
-    plots_sorted_by_treatment.extend(get_treatment_plots(T))
-    
-# todooooo
+# todo move to polygon_utils
 
 # http://www.ariel.com.au/a/python-point-int-poly.html
 # determine if a point is inside a given polygon or not
