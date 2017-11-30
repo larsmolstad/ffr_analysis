@@ -27,7 +27,7 @@ import flux_calculations
 
 #%%
 
-################### EDIT THESE:
+# EDIT THESE:
 
 # Override the default result directories:
 resdir.raw_data_path = 'c:\\zip\\sort_results\\results'
@@ -41,13 +41,13 @@ treatments = migmin.treatments
 # or
 #rectangles = something.agropro_rectangles()
 
-#################### END EDIT THESE
+# END EDIT THESE
 
 
 example_file = '2016-06-16-10-19-50-x599234_725955-y6615158_31496-z0_0-h0_743558650162_both_Plot_9_'
 
 
-# Plotting the rectangles 
+# Plotting the rectangles
 plt.cla()
 plt.hold(True)
 plot_rectangles(rectangles)
@@ -60,24 +60,24 @@ plot_rectangles(r, tr)
 
 
 #%% plotting examples
-x = [1,2,3,4]
-y = [1,2,2,1]
-plt.plot(x,y)
+x = [1, 2, 3, 4]
+y = [1, 2, 2, 1]
+plt.plot(x, y)
 plt.show()
 plt.axis('equal')
 plt.axis('auto')
-s1 = plt.subplot(2,3,1)
-x = np.linspace(0, 3*np.pi)
+s1 = plt.subplot(2, 3, 1)
+x = np.linspace(0, 3 * np.pi)
 plt.plot(x, np.sin(x))
 
-#%% 
+#%%
 plt.clf()
-plt.subplot(1,1,1)
+plt.subplot(1, 1, 1)
 
-        
+
 #%% Get a list of all result files
 filenames = glob.glob(os.path.join(resdir.raw_data_path, '*'))
-print(("number of files: %d"%len(filenames)))
+print(("number of files: %d" % len(filenames)))
 
 
 # Get the data from file number 1000
@@ -115,14 +115,14 @@ plt.show()
 import divide_left_and_right
 ad = divide_left_and_right.group_all(a)
 
-#%% Do many regressions (more instructions will follow, but see README.txt) 
+#%% Do many regressions (more instructions will follow, but see README.txt)
 
 resfile = os.path.join(resdir.slopes_path, 'slopes3.txt')
 
 # this takes a long time, so I commented it out:
 
 # write regressions to resfile:
-#fr.find_regressions(resdir.raw_data_path, resfile, 100, True) 
+#fr.find_regressions(resdir.raw_data_path, resfile, 100, True)
 
 # update resfile without redoing regressions:
 #fr.update_regressions_file(resdir.raw_data_path, resfile, 100, True)
@@ -150,34 +150,32 @@ print((df.tail()))
 print((df.columns))
 pnr = df.plot_nr.values[0]
 print('plotting N2O slopes for plot_nr', pnr)
-d = df[df.plot_nr==pnr]
+d = df[df.plot_nr == pnr]
 plt.cla()
 plt.axis('auto')
 plt.plot(d['t'], d['N2O'])
 print(d['N2O'])
 plt.show()
 
-#%% add in some weather data, calculate fluxes, wrap it up in a
-# function. (if you have internet, you can do
+#%% finally add in some weather data, calculate fluxes, wrap it up in
+# a function. (if you have internet, you can do
 # weather_data.data.update() first. This will download weather data
 # from yr and save them)
 
-def update(precip_dt=2, rectangles=rectangles, treatments=treatments):
-    df, df0 = sr.make_df_from_slope_file(name,
-                                         rectangles,
-                                         treatments,
-                                         remove_redoings_time=3600)
+weather_data.data.update()
+
+def finalize_df(df, precip_dt=2)
     df['Tc'] = weather_data.data.get_temp(df.t)
     df['precip'] = weather_data.data.get_precip(df.t)
-    df['precip2'] = weather_data.data.get_precip2(df.t, [0, precip_dt])
-    df['N2O_N_mmol_m2day'] = 2 * 1000 * 86400 * \
-        flux_calculations.calc_flux(df.N2O, df.Tc)  # 2 because 2 N in N2O
-    df['CO2_C_mmol_m2day'] = 1000 * 86400 * \
-        flux_calculations.calc_flux(df.CO2, df.Tc)
+    # df['precip2'] = weather_data.data.get_precip2(df.t, [0, precip_dt]) #todo failed
+    N2O_N_mol_secm2 = flux_calculations.calc_flux(df.N2O, df.Tc)
+    df['N2O_N_mmol_m2day'] = 2 * 1000 * 86400 * N2O_N_mol_secm2# 2 because 2 N in N2O
+    CO2_C_mol_secm2 = flux_calculations.calc_flux(df.CO2, df.Tc)
+    df['CO2_C_mmol_m2day'] = 1000 * 86400 * CO2_C_mol_secm2
     df = sr.rearrange_df(df)
-    return df, df0
+    return df
 
-df, df0 = update()
+df = finalize_df(df)
 
 print(df.head())
 
@@ -185,19 +183,16 @@ print(df.head())
 #%% A little check that the sorting is ok:
 
 def test_nr(nr):
-    plot_rectangles(list(rectangles.values()), list(rectangles.keys()))
-    d = df[df.plot_nr==nr]
+    plot_rectangles(rectangles, names=True)
+    d = df[df.plot_nr == nr]
     plt.plot(d.x, d.y, '.')
-    plt.show()
-    
-nrs = np.unique(df[df.treatment=='Norite'].plot_nr)
-
-print(nrs)
 
 plt.cla()
 
-for nr in nrs:
+for nr in sorted(set(df.plot_nr)):
     test_nr(nr)
+    
+plt.show()
 
 #%% Just the days with high fluxes:
 
@@ -206,9 +201,9 @@ df2 = sr.filter_for_average_slope_days(df, 0.0005)
 # useful:
 
 a = df.groupby('daynr').N2O
-a = a.mean().values[a.count().values>10]
+a = a.mean().values[a.count().values > 10]
 plt.cla()
-plt.hist(a*1000, bins='auto')
+plt.hist(a * 1000, bins='auto')
 
 #%%barmaps
 
@@ -225,6 +220,7 @@ sr.xlswrite_from_df('..\excel_filename2.xls', df, True, ['N2O', 'CO2', 'name'])
 #%% trapezoidal integration
 # see buckets.py, or
 
+
 def trapz_df(df):
     index = sorted(set(df.plot_nr))
     CO2_C_mmol_m2_trapz = []
@@ -232,22 +228,21 @@ def trapz_df(df):
     treatments = []
     for nr in index:
         d = df[df.plot_nr == nr]
-        CO2_C_mmol_m2_trapz.append(np.trapz(d.CO2_C_mmol_m2day, d.t)/86400)
-        N2O_N_mmol_m2_trapz.append(np.trapz(d.N2O_N_mmol_m2day, d.t)/86400)
+        CO2_C_mmol_m2_trapz.append(np.trapz(d.CO2_C_mmol_m2day, d.t) / 86400)
+        N2O_N_mmol_m2_trapz.append(np.trapz(d.N2O_N_mmol_m2day, d.t) / 86400)
         treatments.append(d.treatment.values[0])
     return pd.DataFrame(index=index, data=dict(CO2_C_mmol_m2_trapz=CO2_C_mmol_m2_trapz,
                                                N2O_N_mmol_m2_trapz=N2O_N_mmol_m2_trapz,
                                                treatment=treatments))
 
-    
+
 print(trapz_df(df))
 
-#Statistics see buckets.py
+# Statistics see buckets.py
 
 #%% subplots integration gothrough
 
 #%% ginput
-
 
 
 plt.show()
@@ -274,4 +269,4 @@ input('')
 
 # >> python find_regressions.py c:\data --out c:\regressions\slopes.txt
 
-# >> python sort_results.py  -s ..\slopes.txt 
+# >> python sort_results.py  -s ..\slopes.txt
