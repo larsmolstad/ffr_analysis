@@ -18,7 +18,7 @@ import resdir
 import get_data
 import utils
 import find_regressions as fr
-import plot_rectangles as pr
+from polygon_utils import plot_rectangles
 import sort_results as sr
 import find_plot
 import weather_data
@@ -34,10 +34,12 @@ resdir.raw_data_path = 'c:\\zip\\sort_results\\results'
 resdir.slopes_path = 'c:\\zip\\sort_results'
 #resdir.slopes_path = 'c:/users/larsmo/downloads'
 
-# Select which rectangles you want:
-rectangles = pr.migmin_rectangles()
+# Select which rectangles and treatments you want:
+import migmin
+rectangles = migmin.migmin_rectangles()
+treatments = migmin.treatments
 # or
-#rectangles = pr.agropro_rectangles()
+#rectangles = something.agropro_rectangles()
 
 #################### END EDIT THESE
 
@@ -48,8 +50,13 @@ example_file = '2016-06-16-10-19-50-x599234_725955-y6615158_31496-z0_0-h0_743558
 # Plotting the rectangles 
 plt.cla()
 plt.hold(True)
-pr.plot_rectangles(list(rectangles.values()), list(rectangles.keys()))
-plt.show()
+plot_rectangles(rectangles)
+# with treatments:
+plt.cla()
+keys = list(rectangles)
+r = [rectangles[k] for k in keys]
+tr = [treatments[k] for k in keys]
+plot_rectangles(r, tr)
 
 
 #%% plotting examples
@@ -129,7 +136,7 @@ pd.set_option('display.width', 250)
 name = os.path.join(resdir.slopes_path, 'slopes3.txt')
 
 df, df0 = sr.make_df_from_slope_file(name, rectangles,
-                                     find_plot.treatments,
+                                     treatments,
                                      remove_redoings_time=3600)
 
 print(df)
@@ -154,9 +161,10 @@ plt.show()
 # weather_data.data.update() first. This will download weather data
 # from yr and save them)
 
-def update(precip_dt=2, rectangles=rectangles):
-    df, df0 = sr.make_df_from_slope_file(name, rectangles,
-                                         find_plot.treatments,
+def update(precip_dt=2, rectangles=rectangles, treatments=treatments):
+    df, df0 = sr.make_df_from_slope_file(name,
+                                         rectangles,
+                                         treatments,
                                          remove_redoings_time=3600)
     df['Tc'] = weather_data.data.get_temp(df.t)
     df['precip'] = weather_data.data.get_precip(df.t)
@@ -176,7 +184,7 @@ print(df.head())
 #%% A little check that the sorting is ok:
 
 def test_nr(nr):
-    pr.plot_rectangles(list(rectangles.values()), list(rectangles.keys()))
+    plot_rectangles(list(rectangles.values()), list(rectangles.keys()))
     d = df[df.plot_nr==nr]
     plt.plot(d.x, d.y, '.')
     plt.show()
@@ -207,10 +215,10 @@ plt.hist(a*1000, bins='auto')
 
 #%%Excel
 
-df.to_excel('excel_filename.xls')
-os.system('excel_filename.xls')
+df.to_excel('..\excel_filename.xls')
+os.system('..\excel_filename.xls')
 # or
-sr.xlswrite_from_df('excel_filename2.xls', df, True)
+sr.xlswrite_from_df('..\excel_filename2.xls', df, True)
 # todo more sheets, names, small rectangles?
 
 #%% trapezoidal integration

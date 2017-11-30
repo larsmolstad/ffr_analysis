@@ -18,10 +18,9 @@ from plotting_compat import plt
 from flux_calculations import calc_flux
 import pH_data
 
-x = np.linspace(0, 2 * np.pi)
-plt.plot(np.cos(x), np.sin(x))
+res_wildcard_expression = 'c:/zip/sort_results/results/2*'
 # from find_plot import treatments
-from png_plot import plt, show
+#from png_plot import plt, show
 from plot_numbering import bucket_treatments
 import bucket_depths
 pd.set_option('display.width', 250)
@@ -316,7 +315,7 @@ def analyse(df):
     return number_side_df
 
 
-names = glob.glob('c:/zip/sort_results/results/2*')
+names = glob.glob(res_wildcard_expression)
 startdate = '20170823'
 ok_names = [x for x in names if filename_is_ok(x, startdate=startdate)
             and re.search('Measure_[1-9]', x)]
@@ -346,7 +345,7 @@ def pick_days(df, days):
 
 
 df1 = df[df.day > '20171000']
-df1 = pick_days(df, day1)
+#df1 = pick_days(df, day1)
 analyse(df1)
 
 plot_all(df1)
