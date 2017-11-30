@@ -137,7 +137,8 @@ name = os.path.join(resdir.slopes_path, 'slopes3.txt')
 
 df, df0 = sr.make_df_from_slope_file(name, rectangles,
                                      treatments,
-                                     remove_redoings_time=3600)
+                                     remove_redoings_time=3600,
+                                     remove_data_outside_rectangles=True)
 
 print(df)
 
@@ -218,7 +219,7 @@ plt.hist(a*1000, bins='auto')
 df.to_excel('..\excel_filename.xls')
 os.system('..\excel_filename.xls')
 # or
-sr.xlswrite_from_df('..\excel_filename2.xls', df, True)
+sr.xlswrite_from_df('..\excel_filename2.xls', df, True, ['N2O', 'CO2', 'name'])
 # todo more sheets, names, small rectangles?
 
 #%% trapezoidal integration
