@@ -137,9 +137,6 @@ def rearrange_df(df):
     return df[tokeep + tomove] #df.drop(todrop, axis=1, errors='ignore')
 
 
-def assign_plots(df, rectangles):
-    df['plot_nr'] = find_plot.find_plots(df.x, df.y, rectangles)
-
 
 def get_result_list_from_slope_file(slope_file,
                                     start=0,
@@ -172,7 +169,7 @@ def make_df_from_slope_file(name,
                             remove_data_outside_rectangles=True):
     unsorted_res = get_result_list_from_slope_file(name, start=0)
     df0 = make_df(unsorted_res)
-    assign_plots(df0, rectangles)
+    df0['plot_nr'] = find_plot.find_plots(df0, rectangles)
     df0['treatment'] = df0.plot_nr.map(lambda x: treatment_dict[x]
                                        if x in treatment_dict else None)
     df = df0
@@ -268,12 +265,17 @@ def xlswrite_from_df(name, df, do_open=False, columns=['NO', 'CO2']):
                 for rownr, ti in enumerate(t):# todo vectorize?
                     ti = datetime.datetime.utcfromtimestamp(ti)
                     w.write(rownr+2, i-1, ti, date_format)
-                    w.write(rownr+2, i, y[rownr])
-        # try:
-        #     workbook.save(name)
-        # except IOError:
-        #     tkMessageBox.showinfo(
-        #         "Close the old xls-file, then press ok...........")
+                    try:
+                        w.write(rownr+2, i, y[rownr])
+                    except:
+                        # sometimes I get
+                        # Exception: Unexpected data type <class 'numpy.int64'>
+                        # ,so
+                        try:
+                            w.write(rownr+2, i, float(y[rownr]))
+                        except Exception as e:
+                            print (e)
+                            print (float(y[rownr]))
     try:
         workbook.save(name)
     except IOError:
