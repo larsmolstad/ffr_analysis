@@ -72,7 +72,7 @@ def parse_saved_data(data, filename):
     t,y = res['N2O']
     """
     def sumwind(w):
-        if w is None:
+        if w is None or w[0] is None:
             return 0
         else:
             return math.sqrt(sum([x*x for x in w]))
