@@ -109,13 +109,16 @@ def remove_zeros(t, y):
     return t, y
 
 
-def find_all_slopes(filename_or_data, interval, co2_guides=True,
+def find_all_slopes(filename_or_data, interval, crit='steepest', co2_guides=True,
                     plotfun=None):
     """Finds the regression lines for N2O and CO2, for left and right
     side. The parameter "interval" is the width in seconds of the
-    segment over which to perform the regressions.  If
-    co2_guides==True, the segment where the CO2 curve is
-    steepest is used for the N2O regressions.
+    segment over which to perform the regressions. The parameter
+    "crit" can be 'steepest' or 'mse'; regressions will be done where
+    the curves are steepest or where they have the lowest mse,
+    respectively. If co2_guides==True, the interval in time where the
+    co2 curve is the steepest or has the best mse is used for the time
+    of regression for the N2O.
     
     returns {'left':{'CO2':(Regression, (x,y)),'N2O':...}, {'right': ...}}
 
@@ -135,8 +138,7 @@ def find_all_slopes(filename_or_data, interval, co2_guides=True,
             if key != 'CO2' and co2_guides and tbest is not None:
                 a = regression.regress_within(t, y, *tbest)
             else:
-                a = regression.find_best_regression(t, y, interval,
-                                                    'steepest')
+                a = regression.find_best_regression(t, y, interval, crit)
                 if key == 'CO2' and a is not None:
                     tbest = t[a.start], t[a.stop]
             if a is not None:
@@ -166,7 +168,7 @@ def do_regressions(files, res_file_name, regression_time, co2_guides):
         for i, name in enumerate(files):
             t = time.time()
             if t - t0 > 0.5:
-                print(('%d/%d' % (i, n)))
+                print('%d/%d' % (i, n))
                 t0 = t
             try:
                 data = get_data.get_file_data(name)
