@@ -54,7 +54,7 @@ def my_prints(x, maxn=5, levels=4, truncate=100, indent=0, do_ind=1):
     return s
 
 def my_print(x, maxn=5, levels=2, truncate=100):
-    print((my_prints(x, maxn, levels,truncate)))
+    print(my_prints(x, maxn, levels,truncate))
     sys.stderr.flush()
     sys.stdout.flush()
 

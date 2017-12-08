@@ -25,6 +25,7 @@ def number_after(s, letter, decimal_symbol, start=0):
 
 
 def parse_filename(name):
+    name = os.path.split(name)[1]
     date = name.split('x')[0][:-1]
     x = number_after(name, 'x', '_')[0]
     y = number_after(name, 'y', '_')[0]
@@ -43,6 +44,18 @@ def parse_filename(name):
     return {'t':t,'date':date,'name':name,
             'vehicle_pos':{'x':x,'y':y,'z':z,'side':side,'posname':posname,'heading':heading}}
 
+
+def try_parse_filename(s):
+    """
+ parse_filename takes a raw data filename and divides it into
+ date, x- and y-position, heading, etc. This function just returns
+ Fasle if parse_filename fails
+ """
+    try:
+        return parse_filename(s)
+    except:
+        print('Could not parse ', s)
+        return False
 
 def old2new(data):
     # just to convert from older format, where I stored everything in a list.
@@ -128,7 +141,7 @@ def selection_fun(x, G):
     if G['stopdate']:
         y = y and x[:len(G.stopdate)] <= G.stopdate
     if G['filter_fun']:
-        y = list(filter(G.filter_fun, y))
+        y = G.filter_fun(y)
     return y
 
 

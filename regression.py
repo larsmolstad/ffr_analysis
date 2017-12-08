@@ -38,37 +38,10 @@ def mean(x):
     return sum(x) * 1.0 / len(x)
 
 
-def scapr(x, y):
-    """scalar product of x and y"""
-    return sum([x[i] * y[i] for i in range(len(x))])
-
-
-def centralize(x):
-    return [a - mean(x) for a in x]
-
-
-# some different versions of linear regression. Using regression2
-
-def regression(x, y):
-    """ returns b0, b1, seb1, seb2, mse,
-    where seb1 and seb2 are standard errors
-    b0 is intercept, b1 is slope"""
-    n = len(x)
-    xc = centralize(x)
-    yc = centralize(y)
-    mx, my = mean(x), mean(y)
-    xcxc = scapr(xc, xc)
-    xcyc = scapr(xc, yc)
-    b1 = xcyc / xcxc
-    b0 = my - b1 * mx
-    mse = sum([(b0 + b1 * x[i] - y[i])**2 for i in range(n)]) / (n - 2)
-    seb0 = mse * math.sqrt(1.0 / n + (mx**2) / xcxc)
-    seb1 = mse * math.sqrt(1.0 / xcxc)
-    return Regression(b0, b1, seb0, seb1, mse, 0, n - 1)
-
-
 def regression2(x, y, plotfun=False):
-    slope, intercept = np.polyfit(x, y, 1)
+    A = np.vstack([x, np.ones(len(x))]).T
+    slope, intercept = np.linalg.lstsq(A, y)[0]
+    #    slope, intercept = np.polyfit(x, y, 1)
     ymod = intercept + x * slope
     n = len(x)
     mse = sum((ymod - y)**2) / (n - 2)
@@ -83,15 +56,10 @@ def regression2(x, y, plotfun=False):
     return Regression(intercept, slope, se_intercept, se_slope, mse, 0, n - 1)
 
 
-def regression3(x, y):
-    A = np.vstack([x, np.ones(len(x))]).T
-    m, c = np.linalg.lstsq(A, y)[0]
-    return m, c
 
-
-def find_best_regression(x, y, xint, cr='best', jump=1, plotfun=False):
+def find_best_regression(x, y, xint, crit='mse', jump=1, plotfun=False):
     """Finds the best (mse-wise) or steepest regression line (if
-     cr=='steepest') with largest x-difference between first and last
+     crit=='steepest') with largest x-difference between first and last
      point (because of the switching). Multiplying the distance with
      the slope or dividing the mse by the distance -- actually not
      distance: distance - xint*.3. Todo explain why.
@@ -116,8 +84,8 @@ def find_best_regression(x, y, xint, cr='best', jump=1, plotfun=False):
     while j > -1:
         xspan = max(1e-99, (x[j] - x[i] - xint * 0.3))
         reg = regression2(x[i:j], y[i:j])
-        if ((reg.mse * xspan < bestmse_x_span and cr == 'best')
-                or (reg.slope * xspan > bestb1_x_span and cr == 'steepest')):
+        if ((reg.mse * xspan < bestmse_x_span and crit == 'mse')
+                or (reg.slope * xspan > bestb1_x_span and crit == 'steepest')):
             besti, bestj = i, j
             best = reg
             bestmse_x_span = reg.mse * xspan

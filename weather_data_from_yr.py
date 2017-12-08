@@ -17,7 +17,7 @@ def get_yr_soup(dato):
     res = requests.get(
         'https://www.yr.no/sted/Norge/Akershus/%C3%85s/%C3%85s/almanakk.html?dato=' + dato)
     res.raise_for_status()
-    return bs4.BeautifulSoup(res.text)
+    return bs4.BeautifulSoup(res.text, 'lxml')
 
 
 def get_all_yr_soups(start=(2015, 0o1, 0o1, 12, 0, 0, 0, 0, 0),
