@@ -101,6 +101,11 @@ def divide_rectangle(p, n, other_way=False, gaps=(0, 0, 0)):
 
 
 def plot_rectangle(p, color='k', text=None):
+    if callable(p):
+        # if rectangles is not a list of rectangles, rectangle, but a
+        # callable function of the dataframe row, just return
+        print('(Not plottable rectangle)')
+        return
     x, y = list(zip(*p))
     plt.plot(list(x) + [x[0]], list(y) + [y[0]], color)
     if text:
@@ -112,6 +117,7 @@ def plot_rectangles(rectangles, names=True):
     """rectangles can be a dict or a list of rectangles. If rectangles is
 a dict and names==True, the keys are usesd as names. names may also be
 a list"""
+
     if isinstance(rectangles, dict):
         pairs = [(key, rectangles[key]) for key in list(rectangles)]
         rectangles = [x[1] for x in pairs]
@@ -122,8 +128,12 @@ a list"""
     #plt.axis('equal')
     # plt.axis('equal') gives me problems when I forget to unset it for later plots
     # (with axis('auto')), so:
-    xlims = plt.gca().get_xlim()
-    ylims = plt.gca().get_ylim()
+    if any([callable(x) for x in rectangles]):
+        return
+    xx = [p[0] for p in r for r in rectangles]
+    yy = [p[1] for p in r for r in rectangles]
+    xlims = [min(xx), max(xx)]
+    ylims = [min(yy), max(yy)]
     xd = max(xlims)-min(xlims)
     yd = max(ylims)-min(ylims)
     if xd > yd:

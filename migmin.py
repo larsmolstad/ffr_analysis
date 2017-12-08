@@ -12,7 +12,7 @@ import E22
 # starting in north-east corner
 
 def migmin_rectangles():
-    
+
     def all_field_big_rectangles():
         # old and still used version
         large_rectangles = divide_rectangle(E22.main_rectangle, 3, 1)
@@ -28,15 +28,25 @@ def migmin_rectangles():
     return {key + 1: x for key, x in enumerate(plots_used)}
 
 
-treatment_names = {'N':'Norite', 'O':'Olivine', 'L':'Larvikite',
-                       'M':'Marble', 'D':'Dolomite', 'C':'Control'}
+treatment_names = {'N': 'Norite', 'O': 'Olivine', 'L': 'Larvikite',
+                   'M': 'Marble', 'D': 'Dolomite', 'C': 'Control'}
 
 
 # this is with the columnwise numbering (not back and forth in an S)
-treatments = {i+1:treatment_names[t] for i,t in enumerate('NOLOMNDCDLNMOCDLOMLCDNCM')}
-    
+treatments = {i + 1: treatment_names[t]
+              for i, t in enumerate('NOLOMNDCDLNMOCDLOMLCDNCM')}
 
-def agropro_rectangles():# todo move
+
+def data_files_rough_filter(filenames):
+    """filenames is a list of filenames.  
+
+    Returns a list of filenames where the files which we are sure do
+    not belong to the migmin experiment have been taken away
+
+    """
+    return [x for x in filenames if x.find('_Plot_')>-1]
+    
+def agropro_rectangles():  # todo move
     keys = [128, 228, 127, 227, 214, 213, 112, 111, 211, 108, 107,
             332, 331, 330, 329, 429, 424, 323, 423, 322, 321, 316, 315, 415, 305, 401,
             528, 628, 527, 627, 522, 622, 521, 621, 518, 517, 617, 508, 507, 606, 505, 605]

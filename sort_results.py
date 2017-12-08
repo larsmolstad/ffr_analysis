@@ -172,6 +172,8 @@ def make_df_from_slope_file(name,
     df0['plot_nr'] = find_plot.find_plots(df0, rectangles)
     df0['treatment'] = df0.plot_nr.map(lambda x: treatment_dict[x]
                                        if x in treatment_dict else None)
+    translations = {'N2O':'N2O_slope', 'CO':'CO_slope', 'CO2':'CO2_slope'}
+    df0.rename(columns=translations, inplace=True)
     df = df0
     if remove_data_outside_rectangles:
         df = df[df.plot_nr > 0]
@@ -186,7 +188,7 @@ def plot_plots(df, plots, symbol='.', markersize=3, ret=None):
     for key in plots:
         r = df[df.plot_nr == key]
         a.append(r.t / 86400)
-        a.append(r.N2O)
+        a.append(r.N2O_slope)
         a.append(symbol)
     plot(*a, markersize=markersize)
     return a if ret is not None else None
@@ -195,7 +197,7 @@ def plot_plots(df, plots, symbol='.', markersize=3, ret=None):
 def filter_for_average_slope_days(df, lower=0.0001, upper=np.inf):
     """ makes a new dataframe containing only the results from the days
     where the average slopes were between lower and upper"""
-    means = df.groupby('daynr').N2O.mean()
+    means = df.groupby('daynr').N2O_slope.mean()
     days = means[(means < upper) & (means >= lower)].index
     return df[df.daynr.isin(days)]
 
@@ -243,7 +245,7 @@ def remove_redoings(df, dt=3600):
 # Must go through the measurements day by day instead of plot by plot
 
 
-def xlswrite_from_df(name, df, do_open=False, columns=['NO', 'CO2']):
+def xlswrite_from_df(name, df, do_open=False, columns=['N2O_slope', 'CO2_slope']):
     #daynrs = sorted(set(df.daynr))# but sometimes we measure twice per day
     workbook = xlwt.Workbook()
     date_format = xlwt.XFStyle()
