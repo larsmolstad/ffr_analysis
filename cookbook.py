@@ -18,7 +18,10 @@ import time
 import glob
 import numpy as np
 import pandas as pd
+import plotting_compat
 from plotting_compat import plt
+if hasattr(plotting_compat, 'get_ipython'):
+    from plotting_compat import get_ipython
 import resdir
 import get_data
 import utils
@@ -37,6 +40,14 @@ from scipy.stats import norm
 import pH_data
 import bucket_depths
 
+def cla():
+    if not plt.get_backend().endswith('inline'):
+        plt.cla()
+
+def clf():
+    if not plt.get_backend().endswith('inline'):
+        plt.clf()
+        
 # %%
 
 # EDIT THESE:
@@ -90,10 +101,10 @@ example_file = '2016-06-16-10-19-50-x599234_725955-y6615158_31496-z0_0-h0_743558
 
 
 # Plotting the rectangles (not for buckets)
-plt.cla()
+cla()
 plot_rectangles(rectangles)
 # with treatments:
-plt.cla()
+cla()
 keys = list(rectangles)
 r = [rectangles[k] for k in keys]
 tr = [treatments[k] for k in keys]
@@ -112,7 +123,7 @@ x = np.linspace(0, 3 * np.pi)
 plt.plot(x, np.sin(x))
 
 # %%
-plt.clf()
+clf()
 plt.subplot(1, 1, 1)
 
 
@@ -123,7 +134,7 @@ print("number of files: %d" % len(filenames))
 
 # Get the data from file number 1000
 a = get_data.get_file_data(filenames[1000])
-plt.cla()
+cla()
 plt.plot(a['N2O'][0], a['N2O'][1], '.')
 
 # example_file has some fluxes:
@@ -170,6 +181,7 @@ else:
     # update resfile without redoing regressions:
     regr.update_regressions_file(filenames)
 
+
 # %% Sort results according to the rectangles, put them in a Pandas dataframe
 pd.set_option('display.width', 120)
 # The slopes have been stored in the file whose name equals the value of
@@ -182,8 +194,6 @@ df, df0 = sr.make_df_from_slope_file(slope_filename,
                                      treatments,
                                      remove_redoings_time=3600,
                                      remove_data_outside_rectangles=True)
-
-print(df)
 
 # %% Pandas... Pandas is a python library that gives python R-like
 # dataframes. It takes some time to learn Pandas, although there is an
@@ -199,9 +209,9 @@ print(df[df.treatment == 'Control']
 pnr = df.plot_nr.values[0]
 print('plotting N2O slopes for plot_nr', pnr)
 d = df[df.plot_nr == pnr]
-plt.cla()
+cla()
 plt.axis('auto')
-plt.plot(d['t'], d['N2O_slope'])
+plt.plot(d['t'], d['N2O_slope'],'.-')
 print(d['N2O_slope'])
 
 # %% finally add in some weather data, calculate fluxes, wrap it up in
@@ -240,7 +250,7 @@ def test_nrs(df, plot_numbers):
         plt.plot(d.x, d.y, '.')
 
 
-plt.cla()
+cla()
 
 test_nrs(df, sorted(set(df.plot_nr)))
 
@@ -269,7 +279,7 @@ sr.xlswrite_from_df('..\excel_filename3.xls', df, openthefineapp, df.columns)
 
 a = df.groupby('daynr').N2O_slope
 a = a.mean().values[a.count().values > 10]
-plt.cla()
+cla()
 plt.hist(a * 1000, bins='auto')
 
 # %%barmaps
@@ -288,7 +298,9 @@ def trapz_df(df, column='N2O_N_mmol_m2day', factor=1 / 86400):
         trapzvals.append(np.trapz(d[column], d.t) * factor)
         treatments.append(d.treatment.values[0])
     return pd.DataFrame(index=index,
-                        data={'trapz': trapzvals, 'treatment': treatments})
+                        data={'trapz': trapzvals,
+                              'treatment': treatments,
+                                  'plot_nr': index})
 
 
 print(trapz_df(df))
@@ -346,7 +358,7 @@ def set_ylims(lims, nrows=6, mcols=4):
     """changing all the y axis limits to limits. Example set_ylims([0, 0.05])"""
     for i in range(nrows * mcols):
         plt.subplot(nrows, mcols, i + 1)
-        # plt.gca().set_ylim(lims)
+        plt.gca().set_ylim(lims)
 
 
 def plot_treatment(df, treatment, row, t0,
@@ -371,16 +383,14 @@ def plot_treatment(df, treatment, row, t0,
 def plot_all(df, ylims=True, t0=(2017, 1, 1, 0, 0, 0, 0, 0, 0)):
     if isinstance(t0, (list, tuple)):
         t0 = time.mktime(t0)
-    plt.clf()
+    clf()
     tr = sorted(set(df.treatment))
-    print(tr)
     nrows = len(tr)
     for i, t in enumerate(tr):
         plot_treatment(df, t, [i + 1, nrows], t0, i < len(tr) - 1, i == 0)
     if ylims:
         set_ylims([df.N2O_N_mmol_m2day.min(), df.N2O_N_mmol_m2day.max()])
     for i, t in enumerate(tr):
-        print(tr)
         plt.subplot(6, 4, i * 4 + 1)
         plt.gca().set_ylabel(t)
         # mp.plot('text', (min(df.t)-t0)/86400, 0.1, t)
@@ -432,17 +442,58 @@ def barplot_trapz(df, sort_by_side=False):
     return toplotx, toploty
 
 
+clf()
+plt.subplot()
 a, b = barplot_trapz(df, True)
+
+
+# %% Plot pH vs flux
+
+ph_df = pH_data.df
+#ph_df.groupby('nr').last()
+
+
+def add_get_ph(df, ph_df, ph_method='CaCl2'):
+    ph_df['plot_nr'] = ph_df['nr']
+    tralala = ph_df.groupby('nr').last()
+    def get_ph(nr):
+        return tralala[tralala.plot_nr == nr][ph_method].values[0]
+    df['pH'] = df.plot_nr.apply(get_ph)
+
+
+def plot_ph_vs_flux(df_trapz, ph_df, ph_method='CaCl2'):
+    a = df_trapz
+    add_get_ph(a, ph_df)
+    tr = sorted(a.treatment.unique())
+    toplot = []
+    markers = '*o><^.'
+    for i, t in enumerate(tr):
+        toplot.append(list(a.pH[a.treatment == t].values))
+        toplot.append(list(a.trapz[a.treatment == t].values))
+        toplot.append(markers[i])
+    plt.plot(*toplot, markersize=8)
+    plt.legend(tr)
+    plt.gca().set_xlabel('pH (measurement in field %s)' % ph_df.date.max())
+    plt.gca().set_ylabel('$\int_{t_0}^{t_1} \mathrm{flux\  dt}$')
+    plt.grid(True)
+
+cla()
+plot_ph_vs_flux(trapz_df(df), ph_df)
+
 # %% subplots integration gothrough
 
 # %% ginput-examples
 # For this, you first need to enter
-# %matplotlib auto
+# % matplotlib auto
+# or enter the command
+# get_ipython().magic('matplotlib auto')
 # in spyder. This makes the plot come up in a separate window, where they can
 # be clicked on. (The plot window sometimes shows up behind the spyder window.)
 # Enter "%matplotlib inline" when you want the inline plots back.
 # We had
 
+get_ipython().magic('matplotlib auto')
+time.sleep(3)
 
 def test_nrs(df, plot_numbers):
     plot_rectangles(rectangles, names=True)
@@ -454,23 +505,22 @@ def test_nrs(df, plot_numbers):
 
 
 def ginput_show_info(df, fun=None, x='x', y='y'):
-    print('Click on a dot, or click outside of axis to quit')
+    print('Locate the plot window, click on a dot, or double-click (or triple-click) to quit')
+    double_click_time = 0.5
     minimum_distance_index = None
+    t0 = time.time()
     while 1:
         xy = plt.ginput(1)
-        print(repr(xy))
         xy = xy[0]
         previous_one = minimum_distance_index
-        if xy[0] is None:
+        if xy[0] is None or time.time() - t0 < double_click_time:
             break
         distances = np.sqrt((df[x] - xy[0])**2 + (df[y] - xy[1])**2)
         minimum_distance_index = distances.argmin()
-        print(minimum_distance_index)
-        print(distances.loc[minimum_distance_index])
         print(df.loc[minimum_distance_index])
-        print(xy)
         if fun:
             fun(df.loc[minimum_distance_index])
+        t0 = time.time()
     return df.loc[previous_one] if previous_one else None
 
 
@@ -483,7 +533,7 @@ def show_reg_fun(row):
 
 
 def test2(df):
-    plt.clf()
+    clf()
     plt.subplot(2, 1, 1)
     test_nrs(df, sorted(set(df.plot_nr)))
     return ginput_show_info(df, show_reg_fun)
@@ -495,7 +545,7 @@ test2(df)
 
 
 def test2(df):
-    plt.clf()
+    clf()
     plt.subplot(2, 1, 1)
     plt.plot(df.t, df.N2O_slope)
     return ginput_show_info(df, show_reg_fun, x='t', y='N2O_slope')

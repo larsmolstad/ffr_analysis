@@ -29,9 +29,9 @@ treatment_names = {'N': 'Norite', 'O': 'Olivine', 'L': 'Larvikite',
                    'M': 'Marble', 'D': 'Dolomite', 'C': 'Control'}
 
 
-# this is with the columnwise numbering (not back and forth in an S)
+# this is with the columnwise numbering back and forth in an S.
 treatments = {i + 1: treatment_names[t]
-              for i, t in enumerate('NOLOMNDCDLNMOCDLOMLCDNCM')}
+              for i, t in enumerate('NOLOMNDCLDCOMNLDOMLCDNCM')}
 
 
 def data_files_rough_filter(filenames):
