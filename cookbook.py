@@ -9,11 +9,12 @@ Showing some examples of how to deal with the ffr data
 
 # You can step through this file by clicking on the arrow-buttons
 # above. The one that runs current "cell" executes the code highlighted yellow
-# (Cells are code between lines starting with #%%)
+# (Cells are code between lines starting with # %%)
 
 
-#%% Imports:
+# %% Imports:
 import os
+import time
 import glob
 import numpy as np
 import pandas as pd
@@ -21,9 +22,11 @@ from plotting_compat import plt
 import resdir
 import get_data
 import utils
+import regression
 import find_regressions
 from polygon_utils import plot_rectangles
 import sort_results as sr
+import divide_left_and_right
 import weather_data
 import flux_calculations
 import scipy.stats
@@ -34,20 +37,20 @@ from scipy.stats import norm
 import pH_data
 import bucket_depths
 
-#%%
+# %%
 
 # EDIT THESE:
 
 # Select which rectangles, treatments and files you want:
 
-#import migmin
-#rectangles = migmin.migmin_rectangles()
-#treatments = migmin.treatments
-#data_file_filter_function = migmin.data_files_rough_filter
+# import migmin
+# rectangles = migmin.migmin_rectangles()
+# treatments = migmin.treatments
+# data_file_filter_function = migmin.data_files_rough_filter
 
 # or
 
-#rectangles = something.agropro_rectangles()
+# rectangles = something.agropro_rectangles()
 
 # or
 
@@ -60,7 +63,7 @@ data_file_filter_function = buckets.data_files_rough_filter
 # (remember double backslashes)
 resdir.raw_data_path = 'c:\\zip\\sort_results\\results'
 slope_filename = 'c:\\zip\\sort_results\\bucket_slopes.txt'
-#resdir.slopes_path = 'c:/users/larsmo/downloads'
+# resdir.slopes_path = 'c:/users/larsmo/downloads'
 
 # How to do regressions: This makes the "regressor object" regr which will be
 # used further below.  It contains the functions and parameters for doing the
@@ -97,7 +100,7 @@ tr = [treatments[k] for k in keys]
 plot_rectangles(r, tr)
 
 
-#%% some plotting examples
+# %% some plotting examples
 x = [1, 2, 3, 4]
 y = [1, 3, 2, 4]
 plt.plot(x, y)
@@ -108,12 +111,12 @@ s1 = plt.subplot(2, 3, 1)
 x = np.linspace(0, 3 * np.pi)
 plt.plot(x, np.sin(x))
 
-#%%
+# %%
 plt.clf()
 plt.subplot(1, 1, 1)
 
 
-#%% Get a list of all result files
+# %% Get a list of all result files
 filenames = glob.glob(os.path.join(resdir.raw_data_path, '2*'))
 print("number of files: %d" % len(filenames))
 
@@ -122,7 +125,6 @@ print("number of files: %d" % len(filenames))
 a = get_data.get_file_data(filenames[1000])
 plt.cla()
 plt.plot(a['N2O'][0], a['N2O'][1], '.')
-
 
 # example_file has some fluxes:
 filename = os.path.join(resdir.raw_data_path, example_file)
@@ -136,7 +138,7 @@ else:
     print('(does %s exist?)' % filename)
 
 
-#%% Do a regression:
+# %% Do a regression:
 plt.cla()
 data = get_data.get_file_data(filename)
 reg = regr.find_all_slopes(data, plotfun=plt.plot)
@@ -156,7 +158,7 @@ plt.show()
 # ad = divide_left_and_right.group_all(a)
 # )
 
-#%% Do many regressions
+# %% Do many regressions
 
 all_filenames = glob.glob(os.path.join(resdir.raw_data_path, '2*'))
 filenames = data_file_filter_function(all_filenames)
@@ -168,7 +170,7 @@ else:
     # update resfile without redoing regressions:
     regr.update_regressions_file(filenames)
 
-#%% Sort results according to the rectangles, put them in a Pandas dataframe
+# %% Sort results according to the rectangles, put them in a Pandas dataframe
 pd.set_option('display.width', 120)
 # The slopes have been stored in the file whose name equals the value of
 # slope_filename. make_df_from_slope_file picks the ones that are inside
@@ -183,7 +185,7 @@ df, df0 = sr.make_df_from_slope_file(slope_filename,
 
 print(df)
 
-#%% Pandas... Pandas is a python library that gives python R-like
+# %% Pandas... Pandas is a python library that gives python R-like
 # dataframes. It takes some time to learn Pandas, although there is an
 # introduction called "10 minutes to Pandas"
 print(df.head())
@@ -202,7 +204,7 @@ plt.axis('auto')
 plt.plot(d['t'], d['N2O_slope'])
 print(d['N2O_slope'])
 
-#%% finally add in some weather data, calculate fluxes, wrap it up in
+# %% finally add in some weather data, calculate fluxes, wrap it up in
 # a function. (if you have internet, you can do
 # weather_data.data.update() first. This will download weather data
 # from yr and save them)
@@ -228,7 +230,7 @@ df = finalize_df(df)
 print(df.head())
 
 
-#%% A little check that the sorting is ok:
+# %% A little check that the sorting is ok:
 # Look at ginput-examples below to see how we can click on the dots to see
 # where the outliers (if any) are from
 def test_nrs(df, plot_numbers):
@@ -243,12 +245,12 @@ plt.cla()
 test_nrs(df, sorted(set(df.plot_nr)))
 
 
-#%% Just the days with high fluxes:
+# %% Just the days with high fluxes:
 
 df2 = sr.filter_for_average_slope_days(df, 0.0005)
 
 
-#%% Excel.
+# %% Excel.
 # "..\filename.xls" makes filename.xls in the parent directory (..\)
 
 openthefineapp = False
@@ -270,11 +272,11 @@ a = a.mean().values[a.count().values > 10]
 plt.cla()
 plt.hist(a * 1000, bins='auto')
 
-#%%barmaps
+# %%barmaps
 
-#_ = sr.barmap_splitted(df, theta=0)
+# _ = sr.barmap_splitted(df, theta=0)
 
-#%% trapezoidal integration to calculate the emitted N2O over a period of time:
+# %% trapezoidal integration to calculate the emitted N2O over a period of time:
 
 
 def trapz_df(df, column='N2O_N_mmol_m2day', factor=1 / 86400):
@@ -296,7 +298,7 @@ print(trapz_df(df))
 def trapz_buckets(df, column='N2O_N_mmol_m2day', factor=1 / 86400):
     dleft = trapz_df(df[df.side == 'left'], column, factor)
     dleft['side'] = 'left'
-    dright = trapz_df(df[df.side == 'left'], column, factor)
+    dright = trapz_df(df[df.side == 'right'], column, factor)
     dright['side'] = 'right'
     return pd.concat([dleft, dright])
 
@@ -304,18 +306,19 @@ def trapz_buckets(df, column='N2O_N_mmol_m2day', factor=1 / 86400):
 # ordinary least squares regression on the trapz
 # C(treatment) means that treatment is a categorical variable.
 # Doing a log transform with a little addition to improve the normality tests
-
-print('With side as a factor (suitable for buckets):')
+# %%
+print('\nWith side as a factor (suitable for buckets):')
 df_trapz = trapz_buckets(df)
 model = 'np.log(trapz + 0.005) ~ C(treatment) + C(side)'
 ols_trapz_res = ols(model, data=df_trapz).fit()
 print(ols_trapz_res.summary())
-
-print('Without side as a factor')
+# %%
+print('\nWithout side as a factor')
 df_trapz = trapz_df(df)
 model = 'np.log(trapz + 0.005) ~ C(treatment)'
 ols_trapz_res = ols(model, data=df_trapz).fit()
 print(ols_trapz_res.summary())
+# %%
 
 
 def test(startdate='20170000', stopdate='2020'):
@@ -327,14 +330,14 @@ def test(startdate='20170000', stopdate='2020'):
     print(len(df2))
 
 
-#%% plotting buckets or migmin: todo move to another file
+# %% plotting buckets or migmin: todo move to another file
 
 def plotnr(df, nr, t0):
     """ plotting bucket number nr in df, subtracting t0 from the time axis"""
     l = df[df.side == 'left'][df.plot_nr == nr]
     r = df[df.side == 'right'][df.plot_nr == nr]
-    #l = left[df.plot_nr==i]
-    #r = right[df.plot_nr==i]
+    # l = left[df.plot_nr==i]
+    # r = right[df.plot_nr==i]
     t = (l.t - t0) / 86400
     plt.plot(t, l['N2O_N_mmol_m2day'], '.-', t, r['N2O_N_mmol_m2day'], 'r.-')
 
@@ -380,7 +383,7 @@ def plot_all(df, ylims=True, t0=(2017, 1, 1, 0, 0, 0, 0, 0, 0)):
         print(tr)
         plt.subplot(6, 4, i * 4 + 1)
         plt.gca().set_ylabel(t)
-        #mp.plot('text', (min(df.t)-t0)/86400, 0.1, t)
+        # mp.plot('text', (min(df.t)-t0)/86400, 0.1, t)
 
 
 try:
@@ -388,7 +391,7 @@ try:
 except:
     pass
 
-#%% barplots:
+# %% barplots:
 
 
 def barplot_trapz(df, sort_by_side=False):
@@ -407,8 +410,8 @@ def barplot_trapz(df, sort_by_side=False):
     for i, tr in enumerate(treatments):
         b = a[a.treatment == tr]
         if sort_by_side:
-            left = b[a.side == 'left'].trapz.values
-            right = b[a.side == 'right'].trapz.values
+            left = b[b.side == 'left'].trapz.values
+            right = b[b.side == 'right'].trapz.values
             toplotx.extend(list(range(x, x + len(left) + len(right))))
             ticx.append(x + 2)
             x += 2 + len(left) + len(right)
@@ -420,15 +423,19 @@ def barplot_trapz(df, sort_by_side=False):
             ticx.append(x + 2)
             x += 2 + len(both)
             toploty.extend(list(both))
+            toplot_colors = 'b'
     plt.bar(toplotx, toploty, color=toplot_colors)
     plt.gca().set_xticks(ticx)
     plt.gca().set_xticklabels(treatments, rotation=30)
     plt.grid(True)
     plt.gca().set_ylabel('$\mathrm{g/m^2}$  maybe')
+    return toplotx, toploty
 
-#%% subplots integration gothrough
 
-#%% ginput-examples
+a, b = barplot_trapz(df, True)
+# %% subplots integration gothrough
+
+# %% ginput-examples
 # For this, you first need to enter
 # %matplotlib auto
 # in spyder. This makes the plot come up in a separate window, where they can
@@ -447,15 +454,14 @@ def test_nrs(df, plot_numbers):
 
 
 def ginput_show_info(df, fun=None, x='x', y='y'):
-    print('Click on a dot, or double-click slowly to quit')
-    t0 = 0
+    print('Click on a dot, or click outside of axis to quit')
     minimum_distance_index = None
     while 1:
         xy = plt.ginput(1)
         print(repr(xy))
         xy = xy[0]
         previous_one = minimum_distance_index
-        if time.time() - t0 < 0.5 or xy[0] == None:
+        if xy[0] is None:
             break
         distances = np.sqrt((df[x] - xy[0])**2 + (df[y] - xy[1])**2)
         minimum_distance_index = distances.argmin()
@@ -465,7 +471,6 @@ def ginput_show_info(df, fun=None, x='x', y='y'):
         print(xy)
         if fun:
             fun(df.loc[minimum_distance_index])
-        t0 = time.time()
     return df.loc[previous_one] if previous_one else None
 
 
@@ -474,43 +479,44 @@ def show_reg_fun(row):
     plt.cla()
     filename = os.path.join(resdir.raw_data_path, row['name'])
     data = get_data.get_file_data(filename)
-    reg = regr.find_all_slopes(data, plotfun=plt.plot)
+    regr.find_all_slopes(data, plotfun=plt.plot)
 
 
-def test(df):
+def test2(df):
     plt.clf()
     plt.subplot(2, 1, 1)
     test_nrs(df, sorted(set(df.plot_nr)))
     return ginput_show_info(df, show_reg_fun)
 
 
-test(df)
+test2(df)
 
-## kind of the same, but plotting the slopes in the upper subplot
+# kind of the same, but plotting the slopes in the upper subplot
+
+
 def test2(df):
     plt.clf()
-    plt.subplot(2,1,1)
+    plt.subplot(2, 1, 1)
     plt.plot(df.t, df.N2O_slope)
     return ginput_show_info(df, show_reg_fun, x='t', y='N2O_slope')
 
 
-#%% making your own regression function:
+# %% making your own regression function:
 
-## So you want to make your own regression function. We can do this like so (inheriting from the Regressor class):
+# So you want to make your own regression function. We can do this like so (inheriting from the Regressor class):
 
-import regression
 
 class MyRegressor(find_regressions.Regressor):
 
     def find_all_slopes(self, filename_or_data, plotfun=None):
-        """Returns a dict of regressoion objects. 
+        """Returns a dict of regressoion objects.
 
         A regression object has slots named intercept, slope, se_intercept,
         se_slope, mse, start, and stop Each of these is a float. se is
         standard error, mse is mean squared error.
         """
         reg = regression.regression2
-        # regression.regression2 is a function which returns a regression objects
+        # regression.regression2 is a function which returns a regression object
         if isinstance(filename_or_data, str):
             data = get_data.get_file_data(filename_or_data)
         else:
@@ -519,7 +525,7 @@ class MyRegressor(find_regressions.Regressor):
         # data['CO2'][0] is a list of seconds
         # data['CO2'][1] is a list of ppmv values
         # similarly for 'N2O'
-        # Wind is a little bit different; it has not ppmv, but m/s 
+        # Wind is a little bit different; it has not ppmv, but m/s
         # We show here just the simple linear regression using all the data,
         # but wind and self.options is available and may be used in this function,
         print('this is my own regression function')
@@ -537,7 +543,8 @@ class MyRegressor(find_regressions.Regressor):
         regressions['right']['N2O'] = reg(n2o['right'][0], n2o['right'][1])
         return regressions
 
-regr2 = MyRegressor('another_slopes_filename', {'p1': 100, 'p2':3.14})
+
+regr2 = MyRegressor('another_slopes_filename', {'p1': 100, 'p2': 3.14})
 data = get_data.get_file_data(os.path.join(resdir.raw_data_path, example_file))
 reg = regr2.find_all_slopes(data, plotfun=plt.plot)
 

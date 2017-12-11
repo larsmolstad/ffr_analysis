@@ -16,16 +16,20 @@ import time
 
 
 def rotate_polygon(polygon, angle, about=0):
-    """ about is the point the polygon is rotated about, and can be 1) a pair
-    [x,y] of coordinates, 2) an integer (zero based) representing which coner to rotate
-    about, or 3) 'center' or 'c' 
-    
+    """about is the point the polygon is rotated about, and can be 1) a
+    pair [x,y] of coordinates, 2) an integer (zero based) representing
+    which coner to rotate about, or 3) 'center' or 'c'
+
     example: 
-    
-    r = rotate_polygon([[5, 10 , 10, 5], [0, 0, 1, 1]], np.pi/4, 1) % rotates 45 degrees about (10, 0) 
-    r = rotate_polygon([[5, 10 , 10, 5], [0, 0, 1, 1]], np.pi/4, 'c') % rotates 45 degrees about center point 
+
+    % rotates 45 degrees about (10, 0) 
+    r = rotate_polygon([[5, 10 , 10, 5], [0, 0, 1, 1]], np.pi/4, 1) 
+    % rotates 45 degrees about center point
+    r = rotate_polygon([[5, 10 , 10, 5], [0, 0, 1, 1]], np.pi/4, 'c') 
+
     """
-    x, y = np.array(polygon) # makes a copy so I don't destructively modify polygon
+    # makes a copy so I don't destructively modify polygon:
+    x, y = np.array(polygon)
     if about in ('center', 'c'):
         about = (x.mean(), y.mean())
     elif isinstance(about, int):
@@ -51,7 +55,7 @@ def make_rectangle_with_angle(x0, y0, W, H, angle, about=0):
     rectangle with width W and height H. Lower left corner at (x0, y0)
     before rotation by angle about point 'about' (see help(rotate_polygon))
 
-    """ 
+    """
     x = np.array([0, W, W, 0]) + x0
     y = np.array([0, 0, H, H]) + y0
     return rotate_polygon([x, y], angle, about)
@@ -87,7 +91,7 @@ def divide_rectangle(p, n, other_way=False, gaps=(0, 0, 0)):
         x = p1[0] * (1 - f) + p2[0] * f
         y = p1[1] * (1 - f) + p2[1] * f
         return x, y
-    if len(p[0])!=2:# todo rydde opp hvor dette kalles fra
+    if len(p[0]) != 2:  # todo rydde opp hvor dette kalles fra
         p = list(zip(*p))
     r = []
     if other_way:
@@ -125,7 +129,7 @@ a list"""
             names = [x[0] for x in pairs]
     for i, r in enumerate(rectangles):
         plot_rectangle(r, text=None if not names else names[i])
-    #plt.axis('equal')
+    # plt.axis('equal')
     # plt.axis('equal') gives me problems when I forget to unset it for later plots
     # (with axis('auto')), so:
     if any([callable(x) for x in rectangles]):
@@ -134,14 +138,14 @@ a list"""
     yy = [p[1] for p in r for r in rectangles]
     xlims = [min(xx), max(xx)]
     ylims = [min(yy), max(yy)]
-    xd = max(xlims)-min(xlims)
-    yd = max(ylims)-min(ylims)
+    xd = max(xlims) - min(xlims)
+    yd = max(ylims) - min(ylims)
     if xd > yd:
-        ycenter = (ylims[0] + ylims[1])/2
-        ylims = [ycenter - xd/2, ycenter + xd/2]
+        ycenter = (ylims[0] + ylims[1]) / 2
+        ylims = [ycenter - xd / 2, ycenter + xd / 2]
     else:
-        xcenter = (xlims[0] + xlims[1])/2
-        xlims = [xcenter - yd/2, xcenter + yd/2]
+        xcenter = (xlims[0] + xlims[1]) / 2
+        xlims = [xcenter - yd / 2, xcenter + yd / 2]
     plt.plot(xlims, ylims, 'w.')
 
 
@@ -157,10 +161,12 @@ def rectangle_midpoint(p):
 #     #return convex_hull(r.transpose()) no, that's too sensitive
 
 def combine_adjacent_rectangles_of_equal_size(rectangle_list):
-    rectangle_list = [np.array(r) for r in rectangle_list] # in case they are not arrays
-    points = np.concatenate(rectangle_list, axis=1).transpose() #[[x,y], [x, y], ....]
+    # in case they are not arrays
+    rectangle_list = [np.array(r) for r in rectangle_list]
+    # [[x,y], [x, y], ....]
+    points = np.concatenate(rectangle_list, axis=1).transpose()
     midpoint = points.mean(axis=0)
-    dists = [[np.linalg.norm(p-midpoint), i] for i,p in enumerate(points)]
+    dists = [[np.linalg.norm(p - midpoint), i] for i, p in enumerate(points)]
     indexes = [x[1] for x in sorted(dists[:4], reverse=True)]
     # got the four points, now I have to make sure they don't cross
     return np.array(convex_hull(points[indexes])[:-1]).transpose()
@@ -169,8 +175,8 @@ def combine_adjacent_rectangles_of_equal_size(rectangle_list):
 def convex_hull(points):
     """from Mike Loukides at
     https://www.oreilly.com/ideas/an-elegant-solution-to-the-convex-hull-problem
-    
-    """    
+
+    """
     def split(u, v, points):
         # return points on left side of UV
         return [p for p in points if np.cross(p - u, v - u) < 0]
@@ -193,3 +199,22 @@ def convex_hull(points):
     return [v] + extend(u, v, left) + [u] + extend(v, u, right) + [v]
 
 
+
+def point_inside_polygon(x, y, poly):
+# http://www.ariel.com.au/a/python-point-int-poly.html
+# determine if a point is inside a given polygon or not
+# Polygon is a list of (x,y) pairs.
+    n = len(poly)
+    inside = False
+    p1x, p1y = poly[0]
+    for i in range(n + 1):
+        p2x, p2y = poly[i % n]
+        if y > min(p1y, p2y):
+            if y <= max(p1y, p2y):
+                if x <= max(p1x, p2x):
+                    if p1y != p2y:
+                        xinters = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
+                    if p1x == p2x or x <= xinters:
+                        inside = not inside
+        p1x, p1y = p2x, p2y
+    return inside
