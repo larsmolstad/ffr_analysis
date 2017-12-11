@@ -108,14 +108,13 @@ def plot_rectangle(p, color='k', text=None):
     if callable(p):
         # if rectangles is not a list of rectangles, rectangle, but a
         # callable function of the dataframe row, just return
-        print('(Not plottable rectangle)')
-        return
+        return 1
     x, y = list(zip(*p))
     plt.plot(list(x) + [x[0]], list(y) + [y[0]], color)
     if text:
         x, y = rectangle_midpoint(p)
         plt.text(x, y, text, fontsize=8)
-
+    return 0
 
 def plot_rectangles(rectangles, names=True):
     """rectangles can be a dict or a list of rectangles. If rectangles is
@@ -127,8 +126,11 @@ a list"""
         rectangles = [x[1] for x in pairs]
         if names == True:
             names = [x[0] for x in pairs]
+    not_plottable = 0
     for i, r in enumerate(rectangles):
-        plot_rectangle(r, text=None if not names else names[i])
+        not_plottable += plot_rectangle(r, text=None if not names else names[i])
+    if not_plottable:
+        print('%d not plottable rectangle-functions' % not_plottable)
     # plt.axis('equal')
     # plt.axis('equal') gives me problems when I forget to unset it for later plots
     # (with axis('auto')), so:

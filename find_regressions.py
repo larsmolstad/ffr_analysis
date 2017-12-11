@@ -173,7 +173,7 @@ class Regressor(object):
     def update_regressions_file(self, directory_or_files):
         """ this assumes that all files is in the same directory"""
         files = get_filenames(directory_or_files, {})
-        directory = os.path.split(files)[0]
+        directory = os.path.split(files[0])
         done_files = [x.split('\t')[0] for x in open(self.slopes_file_name, 'r').readlines()]
         done_files = [os.path.join(directory, x) for x in done_files]
         files = sorted(set(files)-set(done_files))
