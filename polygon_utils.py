@@ -130,7 +130,7 @@ a list"""
     for i, r in enumerate(rectangles):
         not_plottable += plot_rectangle(r, text=None if not names else names[i])
     if not_plottable:
-        print('%d not plottable rectangle-functions' % not_plottable)
+        print('%d non-plottable rectangle-functions' % not_plottable)
     # plt.axis('equal')
     # plt.axis('equal') gives me problems when I forget to unset it for later plots
     # (with axis('auto')), so:
