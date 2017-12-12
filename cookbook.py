@@ -121,6 +121,7 @@ plt.axis('auto')
 s1 = plt.subplot(2, 3, 1)
 x = np.linspace(0, 3 * np.pi)
 plt.plot(x, np.sin(x))
+plt.show()
 
 # %%
 clf()
@@ -136,21 +137,23 @@ print("number of files: %d" % len(filenames))
 a = get_data.get_file_data(filenames[1000])
 cla()
 plt.plot(a['N2O'][0], a['N2O'][1], '.')
+plt.show()
 
 # example_file has some fluxes:
 filename = os.path.join(resdir.raw_data_path, example_file)
 # checking that it exists first to avoid that this script stops:
 if os.path.isfile(filename):
     a = get_data.get_file_data(filename)
-    plt.cla()
+    cla()
     plt.plot(a['N2O'][0], a['N2O'][1], '.')
+    plt.show()
 else:
     print('skipping example file')
     print('(does %s exist?)' % filename)
 
 
 # %% Do a regression:
-plt.cla()
+cla()
 data = get_data.get_file_data(filename)
 reg = regr.find_all_slopes(data, plotfun=plt.plot)
 
@@ -212,6 +215,7 @@ d = df[df.plot_nr == pnr]
 cla()
 plt.axis('auto')
 plt.plot(d['t'], d['N2O_slope'],'.-')
+plt.show()
 print(d['N2O_slope'])
 
 # %% finally add in some weather data, calculate fluxes, wrap it up in
@@ -253,7 +257,7 @@ def test_nrs(df, plot_numbers):
 cla()
 
 test_nrs(df, sorted(set(df.plot_nr)))
-
+plt.show()
 
 # %% Just the days with high fluxes:
 
@@ -281,7 +285,7 @@ a = df.groupby('daynr').N2O_slope
 a = a.mean().values[a.count().values > 10]
 cla()
 plt.hist(a * 1000, bins='auto')
-
+plt.show()
 # %%barmaps
 
 # _ = sr.barmap_splitted(df, theta=0)
@@ -398,6 +402,7 @@ def plot_all(df, ylims=True, t0=(2017, 1, 1, 0, 0, 0, 0, 0, 0)):
 
 try:
     plot_all(df)
+    plt.show()
 except:
     pass
 
@@ -409,7 +414,7 @@ def barplot_trapz(df, sort_by_side=False):
         a = trapz_buckets(df)
     else:
         a = trapz_df(df)
-    plt.cla()
+    cla()
     # df.sort_index()
     treatments = sorted(a.treatment.unique())
     toplotx = []
@@ -445,7 +450,7 @@ def barplot_trapz(df, sort_by_side=False):
 clf()
 plt.subplot()
 a, b = barplot_trapz(df, True)
-
+plt.show()
 
 # %% Plot pH vs flux
 
@@ -479,6 +484,7 @@ def plot_ph_vs_flux(df_trapz, ph_df, ph_method='CaCl2'):
 
 cla()
 plot_ph_vs_flux(trapz_df(df), ph_df)
+plt.show()'
 
 # %% subplots integration gothrough
 
@@ -526,7 +532,7 @@ def ginput_show_info(df, fun=None, x='x', y='y'):
 
 def show_reg_fun(row):
     plt.subplot(2, 1, 2)
-    plt.cla()
+    cla()
     filename = os.path.join(resdir.raw_data_path, row['name'])
     data = get_data.get_file_data(filename)
     regr.find_all_slopes(data, plotfun=plt.plot)
