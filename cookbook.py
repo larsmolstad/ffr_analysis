@@ -13,6 +13,7 @@ Showing some examples of how to deal with the ffr data
 
 
 # %% Imports:
+
 import os
 import time
 import glob
@@ -54,10 +55,10 @@ def clf():
 
 # Select which rectangles, treatments and files you want:
 
-# import migmin
-# rectangles = migmin.migmin_rectangles()
-# treatments = migmin.treatments
-# data_file_filter_function = migmin.data_files_rough_filter
+import migmin
+rectangles = migmin.migmin_rectangles()
+treatments = migmin.treatments
+data_file_filter_function = migmin.data_files_rough_filter
 
 # or
 
@@ -65,15 +66,17 @@ def clf():
 
 # or
 
-import buckets
-rectangles = buckets.functions
-treatments = buckets.treatments
-data_file_filter_function = buckets.data_files_rough_filter
+#import buckets
+#rectangles = buckets.functions
+#treatments = buckets.treatments
+#data_file_filter_function = buckets.data_files_rough_filter
 
 # Override the default result directories:
 # (remember double backslashes)
+
 resdir.raw_data_path = 'c:\\zip\\sort_results\\results'
-slope_filename = 'c:\\zip\\sort_results\\bucket_slopes.txt'
+slope_filename = 'c:\\zip\\sort_results\\migmin_slopes2.txt'
+
 # resdir.slopes_path = 'c:/users/larsmo/downloads'
 
 # How to do regressions: This makes the "regressor object" regr which will be
@@ -92,7 +95,7 @@ regr = find_regressions.Regressor(slope_filename, options)
 
 # regressions may take a long time. Set redo_regressions to False if you want to
 # just use the slope file without redoing regression
-redo_regressions = True
+redo_regressions = False#True
 
 # END EDIT THESE
 
@@ -112,6 +115,7 @@ plot_rectangles(r, tr)
 
 
 # %% some plotting examples
+cla()
 x = [1, 2, 3, 4]
 y = [1, 3, 2, 4]
 plt.plot(x, y)
@@ -216,7 +220,7 @@ cla()
 plt.axis('auto')
 plt.plot(d['t'], d['N2O_slope'],'.-')
 plt.show()
-print(d['N2O_slope'])
+print(d['N2O_slope'].tail())
 
 # %% finally add in some weather data, calculate fluxes, wrap it up in
 # a function. (if you have internet, you can do
@@ -247,6 +251,7 @@ print(df.head())
 # %% A little check that the sorting is ok:
 # Look at ginput-examples below to see how we can click on the dots to see
 # where the outliers (if any) are from
+
 def test_nrs(df, plot_numbers):
     plot_rectangles(rectangles, names=True)
     for nr in plot_numbers:
@@ -258,6 +263,9 @@ cla()
 
 test_nrs(df, sorted(set(df.plot_nr)))
 plt.show()
+
+# also, for example,
+# test_nrs(df[df.treatment=='Larvikite'], sorted(set(df.plot_nr)))
 
 # %% Just the days with high fluxes:
 
@@ -484,7 +492,7 @@ def plot_ph_vs_flux(df_trapz, ph_df, ph_method='CaCl2'):
 
 cla()
 plot_ph_vs_flux(trapz_df(df), ph_df)
-plt.show()'
+plt.show()
 
 # %% subplots integration gothrough
 

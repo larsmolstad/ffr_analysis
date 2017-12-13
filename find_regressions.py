@@ -140,15 +140,25 @@ class Regressor(object):
 
 
     def do_regressions(self, files):
+
+        def print_info_maybe(i, n, t0, n_on_line):
+            t = time.time()
+            if t - t0 > 2:
+                print('%d/%d   ' % (i, n), end='')
+                t0 = t
+                n_on_line += 1
+                if n_on_line > 8:
+                    n_on_line = 0
+                    print('')
+            return t0, n_on_line
+
         n = len(files)
         t0 = time.time()
         resdict = {}
+        n_on_line = 0
         with open(self.slopes_file_name, 'w') as f:
             for i, name in enumerate(files):
-                t = time.time()
-                if t - t0 > 0.5:
-                    print('%d/%d' % (i, n))
-                    t0 = t
+                t0, n_on_line = print_info_maybe(i, n, t0, n_on_line)
                 try:
                     data = get_data.get_file_data(name)
                     res = self.find_all_slopes(data)
@@ -160,6 +170,7 @@ class Regressor(object):
                     traceback.print_exc()
                     print('continuing')
                     continue
+        print_info_maybe(i, n, 0, 100000)
         return resdict
     
         
@@ -173,7 +184,7 @@ class Regressor(object):
     def update_regressions_file(self, directory_or_files):
         """ this assumes that all files is in the same directory"""
         files = get_filenames(directory_or_files, {})
-        directory = os.path.split(files[0])
+        directory = os.path.split(files[0])[0]
         done_files = [x.split('\t')[0] for x in open(self.slopes_file_name, 'r').readlines()]
         done_files = [os.path.join(directory, x) for x in done_files]
         files = sorted(set(files)-set(done_files))
