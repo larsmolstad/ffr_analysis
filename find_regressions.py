@@ -151,7 +151,7 @@ class Regressor(object):
                     n_on_line = 0
                     print('')
             return t0, n_on_line
-
+        print('Doing regressions')
         n = len(files)
         t0 = time.time()
         resdict = {}

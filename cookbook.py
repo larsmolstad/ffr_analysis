@@ -5,7 +5,7 @@ Showing some examples of how to deal with the ffr data
 """
 
 # First, select this file's directory in the white bar up to the
-# right in Spyder
+# right in Spyder. (Or get "No module named ... " message)
 
 # You can step through this file by clicking on the arrow-buttons
 # above. The one that runs current "cell" executes the code highlighted yellow
@@ -13,12 +13,13 @@ Showing some examples of how to deal with the ffr data
 
 
 # %% Imports:
-
+import sys
 import os
 import time
 import glob
 import numpy as np
 import pandas as pd
+sys.path.append(os.path.join(os.getcwd(), 'prog'))
 import plotting_compat
 from plotting_compat import plt
 if hasattr(plotting_compat, 'get_ipython'):
@@ -509,14 +510,12 @@ plt.show()
 # Enter "%matplotlib inline" when you want the inline plots back.
 # We had
 
-get_ipython().magic('matplotlib auto')
-time.sleep(3)
-
 def test_nrs(df, plot_numbers):
     plot_rectangles(rectangles, names=True)
     for nr in plot_numbers:
         d = df[df.plot_nr == nr]
         plt.plot(d.x, d.y, '.')
+
 
 # We want to click on the dots and see the data associated with them
 
@@ -550,18 +549,21 @@ def show_reg_fun(row):
 
 
 def test2(df):
+    get_ipython().magic('matplotlib auto')
+    time.sleep(3)
     clf()
     plt.subplot(2, 1, 1)
     test_nrs(df, sorted(set(df.plot_nr)))
     return ginput_show_info(df, show_reg_fun)
 
 
-test2(df)
+print('try test2(df) or test3(df) for interactive plotting')
+
 
 # kind of the same, but plotting the slopes in the upper subplot
 
 
-def test2(df):
+def test3(df):
     clf()
     plt.subplot(2, 1, 1)
     plt.plot(df.t, df.N2O_slope)
