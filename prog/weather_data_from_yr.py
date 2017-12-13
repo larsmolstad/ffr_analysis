@@ -7,7 +7,7 @@ import time
 import pickle as pickle
 import os
 path = os.path.dirname(os.path.abspath(__file__))#path of this file
-path = os.path.split(path)[0] #parent folder
+path = os.path.split(os.path.split(path)[0])[0] #grandparent folder
 #these files must currently be put in the parent folder
 #YR_SOUP_NAME = os.path.join(path, 'yr_beautiful_soups.pickle')
 DATA_FILE_NAME = os.path.join(path, 'yr_data.pickle')
