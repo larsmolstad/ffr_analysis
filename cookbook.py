@@ -56,19 +56,19 @@ def clf():
 
 # Select which rectangles, treatments and files you want:
 
-import migmin
-rectangles = migmin.migmin_rectangles()
-treatments = migmin.treatments
-data_file_filter_function = migmin.data_files_rough_filter
-slope_filename = 'c:\\zip\\sort_results\\migmin_slopes.txt'
+# import migmin
+# rectangles = migmin.migmin_rectangles()
+# treatments = migmin.treatments
+# data_file_filter_function = migmin.data_files_rough_filter
+# slope_filename = 'c:\\zip\\sort_results\\migmin_slopes.txt'
 
 # or
 
-#import buckets
-#rectangles = buckets.functions
-#treatments = buckets.treatments
-#data_file_filter_function = buckets.data_files_rough_filter
-#slope_filename = 'c:\\zip\\sort_results\\migmin_slopes2.txt'
+import buckets
+rectangles = buckets.functions
+treatments = buckets.treatments
+data_file_filter_function = buckets.data_files_rough_filter
+slope_filename = 'c:\\zip\\sort_results\\migmin_slopes2.txt'
 
 # or (todo)
 
