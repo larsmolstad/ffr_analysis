@@ -59,10 +59,7 @@ import migmin
 rectangles = migmin.migmin_rectangles()
 treatments = migmin.treatments
 data_file_filter_function = migmin.data_files_rough_filter
-
-# or
-
-# rectangles = something.agropro_rectangles()
+slope_filename = 'c:\\zip\\sort_results\\migmin_slopes.txt'
 
 # or
 
@@ -70,12 +67,16 @@ data_file_filter_function = migmin.data_files_rough_filter
 #rectangles = buckets.functions
 #treatments = buckets.treatments
 #data_file_filter_function = buckets.data_files_rough_filter
+#slope_filename = 'c:\\zip\\sort_results\\migmin_slopes2.txt'
+
+# or (todo)
+
+# rectangles = something.agropro_rectangles()
 
 # Override the default result directories:
 # (remember double backslashes)
 
 resdir.raw_data_path = 'c:\\zip\\sort_results\\results'
-slope_filename = 'c:\\zip\\sort_results\\migmin_slopes2.txt'
 
 # resdir.slopes_path = 'c:/users/larsmo/downloads'
 
@@ -461,7 +462,7 @@ clf()
 plt.subplot()
 a, b = barplot_trapz(df, True)
 plt.show()
-
+print("try a, b = barplot_trapz(df[df.date>'2016'], True)")
 # %% Plot pH vs flux
 
 ph_df = pH_data.df
@@ -600,9 +601,9 @@ class MyRegressor(find_regressions.Regressor):
         resdict = divide_left_and_right.group_all(data)
         co2 = resdict['CO2']
         n2o = resdict['N2O']
-        regressions = dict
-        regressions['left'] = dict
-        regressions['right'] = dict
+        regressions = dict()
+        regressions['left'] = dict()
+        regressions['right'] = dict()
         regressions['left']['CO2'] = reg(co2['left'][0], co2['left'][1])
         regressions['left']['N2O'] = reg(n2o['left'][0], n2o['left'][1])
         regressions['right']['CO2'] = reg(co2['right'][0], co2['right'][1])
@@ -613,8 +614,9 @@ class MyRegressor(find_regressions.Regressor):
 regr2 = MyRegressor('another_slopes_filename', {'p1': 100, 'p2': 3.14})
 data = get_data.get_file_data(os.path.join(resdir.raw_data_path, example_file))
 reg = regr2.find_all_slopes(data, plotfun=plt.plot)
+print(reg)
 
-
+# %%
 # * batch-programmer
 # I will at least temporarily remove some of these to make the code more tidy
 # From dos, powershell or bash:
