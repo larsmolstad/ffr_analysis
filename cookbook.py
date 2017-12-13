@@ -362,8 +362,9 @@ def plotnr(df, nr, t0):
     r = df[df.side == 'right'][df.plot_nr == nr]
     # l = left[df.plot_nr==i]
     # r = right[df.plot_nr==i]
-    t = (l.t - t0) / 86400
-    plt.plot(t, l['N2O_N_mmol_m2day'], '.-', t, r['N2O_N_mmol_m2day'], 'r.-')
+    lt = (l.t - t0) / 86400
+    rt = (r.t - t0) / 86400
+    plt.plot(lt, l['N2O_N_mmol_m2day'], '.-', rt, r['N2O_N_mmol_m2day'], 'r.-')
 
 
 def set_ylims(lims, nrows=6, mcols=4):
@@ -409,6 +410,7 @@ def plot_all(df, ylims=True, t0=(2017, 1, 1, 0, 0, 0, 0, 0, 0)):
 
 
 try:
+
     plot_all(df)
     plt.show()
 except:
