@@ -9,7 +9,6 @@ import os
 import pickle
 import numpy as np
 import pandas as pd
-import resdir
 import weather_data_from_yr
 
 

@@ -147,7 +147,7 @@ class Regressor(object):
                 print('%d/%d   ' % (i, n), end='')
                 t0 = t
                 n_on_line += 1
-                if n_on_line > 8:
+                if n_on_line > 4:
                     n_on_line = 0
                     print('')
             return t0, n_on_line

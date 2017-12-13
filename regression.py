@@ -39,6 +39,8 @@ def mean(x):
 
 
 def regression2(x, y, plotfun=False):
+    x = np.array(x)
+    y = np.array(y)
     A = np.vstack([x, np.ones(len(x))]).T
     slope, intercept = np.linalg.lstsq(A, y)[0]
     #    slope, intercept = np.polyfit(x, y, 1)
