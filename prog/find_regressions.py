@@ -135,7 +135,7 @@ class Regressor(object):
             plot_regressions(data, regressions, plotfun)
         return regressions
 
-    def do_regressions(self, files):
+    def do_regressions(self, files, write_mode='w'):
 
         def print_info_maybe(i, n, t0, n_on_line):
             t = time.time()
@@ -152,7 +152,7 @@ class Regressor(object):
         t0 = time.time()
         resdict = {}
         n_on_line = 0
-        with open(self.slopes_file_name, 'w') as f:
+        with open(self.slopes_file_name, write_mode) as f:
             for i, name in enumerate(files):
                 t0, n_on_line = print_info_maybe(i, n, t0, n_on_line)
                 try:
@@ -179,12 +179,15 @@ class Regressor(object):
         """ this assumes that all files is in the same directory"""
         files = get_filenames(directory_or_files, {})
         directory = os.path.split(files[0])[0]
-        done_files = [x.split('\t')[0] for x in open(
-            self.slopes_file_name, 'r').readlines()]
+        if os.path.isfile(self.slopes_file_name):
+            done_files = [x.split('\t')[0] for x in open(
+                self.slopes_file_name, 'r').readlines()]
+        else:
+            done_files = []
         done_files = [os.path.join(directory, x) for x in done_files]
         files = sorted(set(files) - set(done_files))
         print(len(files))
-        resdict = self.do_regressions(files)
+        resdict = self.do_regressions(files, 'a')
         pickle_name = os.path.splitext(self.slopes_file_name)[0] + '.pickle'
         try:
             old_dict = pickle.load(open(pickle_name), 'rb')

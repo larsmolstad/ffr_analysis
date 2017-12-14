@@ -5,7 +5,9 @@ Showing some examples of how to deal with the ffr data
 """
 
 # First, select this file's directory in the white bar up to the
-# right in Spyder. (Or get "No module named ... " message)
+# right in Spyder. (Or else get "No module named ... " message)
+# You can do this by right-clicking on "cookbook.py" above and choosing #
+# "Set console working directory"
 
 # You can step through this file by clicking on the arrow-buttons
 # above. The one that runs current "cell" executes the code highlighted yellow
@@ -101,6 +103,15 @@ regr = find_regressions.Regressor(slope_filename, options)
 # just use the slope file without redoing regression
 redo_regressions = False  # True
 
+# Choose flux units
+# factor is the conversion factor from mol/s/m2 to the given unit
+flux_units = {'N2O': {'name': 'N2O_N_mmol_m2day', 'factor': 2 * 1000 * 86400},
+              'CO2': {'name': 'CO2_C_mmol_m2day', 'factor': 1000 * 86400}}
+
+# flux_units = {'N2O': {'name': 'N2O_N_mug_m2_h', 'factor': 2 * 14e6 * 3600},
+#               'CO2': {'name': 'CO2_C_mug_m2_h', 'factor': 12e6 * 3600}}
+
+
 # %% END EDIT THESE ############################################################
 
 
@@ -119,17 +130,17 @@ plot_rectangles(r, tr)
 
 
 # %% some plotting examples
-cla()
-x = [1, 2, 3, 4]
-y = [1, 3, 2, 4]
-plt.plot(x, y)
-plt.show()
-plt.axis('equal')
-plt.axis('auto')
-s1 = plt.subplot(2, 3, 1)
-x = np.linspace(0, 3 * np.pi)
-plt.plot(x, np.sin(x))
-plt.show()
+# cla()
+# x = [1, 2, 3, 4]
+# y = [1, 3, 2, 4]
+# plt.plot(x, y)
+# plt.show()
+# plt.axis('equal')
+# plt.axis('auto')
+# s1 = plt.subplot(2, 3, 1)
+# x = np.linspace(0, 3 * np.pi)
+# plt.plot(x, np.sin(x))
+# plt.show()
 
 # %%
 clf()
@@ -164,9 +175,9 @@ else:
 cla()
 data = get_data.get_file_data(filename)
 reg = regr.find_all_slopes(data, plotfun=plt.plot)
-
-find_regressions.print_reg(reg)
 plt.show()
+find_regressions.print_reg(reg)
+
 # (we may also say reg = regr.find_all_slope(filename))
 # Interval is the length of time of the regression line. crit can be 'steepest'
 # or 'mse'; regressions will be done where the curves are steepest or where
@@ -238,11 +249,14 @@ def finalize_df(df, precip_dt=2):
     df['Tc'] = weather_data.data.get_temp(df.t)
     df['precip'] = weather_data.data.get_precip(df.t)
     # df['precip2'] = weather_data.data.get_precip2(df.t, [0, precip_dt]) #todo failed
-    N2O_N_mol_secm2 = flux_calculations.calc_flux(df.N2O_slope, df.Tc)
-    df['N2O_N_mmol_m2day'] = 2 * 1000 * 86400 * \
-        N2O_N_mol_secm2  # 2 because 2 N in N2O
+    N2O_mol_secm2 = flux_calculations.calc_flux(df.N2O_slope, df.Tc)
     CO2_C_mol_secm2 = flux_calculations.calc_flux(df.CO2_slope, df.Tc)
-    df['CO2_C_mmol_m2day'] = 1000 * 86400 * CO2_C_mol_secm2
+    df['N2O_mol_m2s'] = N2O_mol_secm2
+    df['CO2_mol_m2s'] = CO2_C_mol_secm2
+    Nunits = flux_units['N2O']
+    Cunits = flux_units['CO2']
+    df[Nunits['name']] = Nunits['factor'] *  N2O_mol_secm2
+    df[Cunits['name']] = Cunits['factor'] *  CO2_C_mol_secm2
     df = sr.rearrange_df(df)
     return df
 
@@ -305,7 +319,14 @@ plt.show()
 # %% trapezoidal integration to calculate the emitted N2O over a period of time:
 
 
-def trapz_df(df, column='N2O_N_mmol_m2day', factor=1 / 86400):
+def trapz_df(df, column='N2O_mol_m2s', factor=14*2)
+    if column== 'default':
+        column=flux_units['N2O']['name']
+    if factor == 'default':
+        factor=14/flux_units['N2O']['factor']):
+        # this bring us from flux_unit['N2O']['name'] to g/m2/sec
+        # since flux_units['N2O']['factor'] takes us from
+        # mol/s/m2 to flux_unit['N2O']['name']
     index = sorted(set(df.plot_nr))
     trapzvals = []
     treatments = []
@@ -323,7 +344,9 @@ print(trapz_df(df))
 
 
 # for buckets we want to test for effect of side:
-def trapz_buckets(df, column='N2O_N_mmol_m2day', factor=1 / 86400):
+def trapz_buckets(df,
+             column=flux_units['N2O']['name'],
+             factor=14/flux_units['N2O']['factor']):
     dleft = trapz_df(df[df.side == 'left'], column, factor)
     dleft['side'] = 'left'
     dright = trapz_df(df[df.side == 'right'], column, factor)
@@ -368,7 +391,8 @@ def plotnr(df, nr, t0):
     # r = right[df.plot_nr==i]
     lt = (l.t - t0) / 86400
     rt = (r.t - t0) / 86400
-    plt.plot(lt, l['N2O_N_mmol_m2day'], '.-', rt, r['N2O_N_mmol_m2day'], 'r.-')
+    name = flux_units['N2O']['name']
+    plt.plot(lt, l[name], '.-', rt, r[name], 'r.-')
 
 
 def set_ylims(lims, nrows=6, mcols=4):
@@ -406,7 +430,8 @@ def plot_all(df, ylims=True, t0=(2017, 1, 1, 0, 0, 0, 0, 0, 0)):
     for i, t in enumerate(tr):
         plot_treatment(df, t, [i + 1, nrows], t0, i < len(tr) - 1, i == 0)
     if ylims:
-        set_ylims([df.N2O_N_mmol_m2day.min(), df.N2O_N_mmol_m2day.max()])
+        name = flux_units['N2O']['name']
+        set_ylims([df[name].min(), df[name].max()])
     for i, t in enumerate(tr):
         plt.subplot(6, 4, i * 4 + 1)
         plt.gca().set_ylabel(t)
@@ -553,7 +578,7 @@ def show_reg_fun(row):
     regr.find_all_slopes(data, plotfun=plt.plot)
 
 
-def test2(df):
+def ginput_check_points(df):
     get_ipython().magic('matplotlib auto')
     time.sleep(3)
     clf()
@@ -562,16 +587,13 @@ def test2(df):
     return ginput_show_info(df, show_reg_fun)
 
 
-print('try test2(df) or test3(df) for interactive plotting')
-
-
 # kind of the same, but plotting the slopes in the upper subplot
 
 
-def test3(df):
+def ginput_check_regres(df):
     clf()
     plt.subplot(2, 1, 1)
-    plt.plot(df.t, df.N2O_slope)
+    plt.plot(df.t, df.N2O_slope, '.')
     return ginput_show_info(df, show_reg_fun, x='t', y='N2O_slope')
 
 
@@ -623,6 +645,17 @@ data = get_data.get_file_data(os.path.join(resdir.raw_data_path, example_file))
 reg = regr2.find_all_slopes(data, plotfun=plt.plot)
 print(reg)
 
+
+print("""
+Commands you may want to try:
+df2 = df[(df.date>'20171201')&(df.date<'20181010')]
+plot_all(df2)
+plt.clf();plt.subplot(1,1,1)
+plot_ph_vs_flux(trapz_df(df), ph_df)
+ginput_check_points(df2)
+ginput_check_regres(df2)
+ginput_check_regres(df[df.plot_nr==1])
+"""
 # %%
 # * batch-programmer
 # I will at least temporarily remove some of these to make the code more tidy
