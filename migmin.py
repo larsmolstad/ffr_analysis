@@ -1,5 +1,6 @@
 """
-
+Functions to map raw data filenames to plot numbers for the migmin experiment.
+Also maps plot numbers to treatments.
 """
 # todo use the small rectangles to make the migmin_field rectangles
 
@@ -43,7 +44,7 @@ treatments = {i + 1: treatment_names[t]
 
 
 def data_files_rough_filter(filenames):
-    """filenames is a list of filenames.  
+    """filenames is a list of filenames.
 
     Returns a list of filenames where the files which we are sure do
     not belong to the migmin experiment have been taken away
@@ -56,7 +57,7 @@ def agropro_rectangles():  # todo move
     keys = [128, 228, 127, 227, 214, 213, 112, 111, 211, 108, 107,
             332, 331, 330, 329, 429, 424, 323, 423, 322, 321, 316,
             315, 415, 305, 401, 528, 628, 527, 627, 522, 622, 521,
-                621, 518, 517, 617, 508, 507, 606, 505, 605]
+            621, 518, 517, 617, 508, 507, 606, 505, 605]
     small = small_rectangles()
     return {key: small[key] for key in keys}
 

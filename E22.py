@@ -7,13 +7,15 @@ ymin = 6615133.59
 angle = 0.7376
 
 
-main_rectangle = polygon_utils.make_rectangle_with_angle(45.5 + xmin, -11.5 + ymin, 86.5, 83, angle)
+main_rectangle = polygon_utils.make_rectangle_with_angle(
+    45.5 + xmin, -11.5 + ymin, 86.5, 83, angle)
 
 
 def rectangles():
     # nw = northwest etc
     # pne is closest to the buildings
-    pnw, pne, psw = (np.array(main_rectangle).transpose()[i] for i in [3, 2, 0])
+    pnw, pne, psw = (np.array(main_rectangle).transpose()
+                     [i] for i in [3, 2, 0])
     # unit vectors
     une = (pne - pnw) / np.linalg.norm(pne - pnw)
     use = (psw - pnw) / np.linalg.norm(psw - pnw)
@@ -37,4 +39,3 @@ def rectangles():
             p[(i + 1) * 100 + j + 1] = local_to_p([[w0, v0], [w1, v0],
                                                    [w1, v1], [w0, v1]])
     return p
-

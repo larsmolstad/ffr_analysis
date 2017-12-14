@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-import math
 import numpy as np
 import pickle
 sys.path.append(os.path.split(os.path.split(
@@ -9,7 +8,6 @@ sys.path.append(os.path.split(os.path.split(
 
 import regression
 import licor_indexes
-import dlt_indexes
 import get_data
 import divide_left_and_right
 
@@ -26,7 +24,7 @@ class G:  # (G for global) # todo get rid of
 
 
 def plot_regressions(data, regressions, plotfun, normalized=True, do_plot=True):
-    """ plotting the n2o and co2 with regression lines. 
+    """ plotting the n2o and co2 with regression lines.
     The CO2 is scaled to match the N2O"""
     def min_and_max(x): return min(x), max(x)
 
@@ -60,12 +58,11 @@ def plot_regressions(data, regressions, plotfun, normalized=True, do_plot=True):
     plotargs.extend(make_plotargs('N2O', 'r', 1, 0))
     ymin = min_n2o
     ymax = max_n2o
-    span = ymax - ymin
     if do_plot:
         plotfun(*plotargs)
     else:
         return plotargs
-        #plotfun('set_ylim', ymin-span*.1, ymax+span*.1)
+        # plotfun('set_ylim', ymin-span*.1, ymax+span*.1)
 
 
 def remove_zeros(t, y):
@@ -86,9 +83,9 @@ def write_result_to_file(res, name, f):
 
 def get_filenames(directory_or_files, G):
     if isinstance(directory_or_files, (list, tuple)):
-         return directory_or_files
+        return directory_or_files
     else:
-        return get_data.select_files(directory, G)
+        return get_data.select_files(directory_or_files, G)
 
 
 class Regressor(object):
@@ -96,7 +93,6 @@ class Regressor(object):
     def __init__(self, slopes_file_name, options):
         self.options = options
         self.slopes_file_name = slopes_file_name
-        
 
     def find_all_slopes(self, filename_or_data, plotfun=None):
         """Finds the regression lines for N2O and CO2, for left and right
@@ -107,9 +103,9 @@ class Regressor(object):
         respectively. If co2_guides==True, the interval in time where the
         co2 curve is the steepest or has the best mse is used for the time
         of regression for the N2O.
-        
+
         returns {'left':{'CO2':(Regression, (x,y)),'N2O':...}, {'right': ...}}
-    
+
         """
         if isinstance(filename_or_data, str):
             data = get_data.get_file_data(filename_or_data)
@@ -126,7 +122,8 @@ class Regressor(object):
                 if key != 'CO2' and self.options['co2_guides'] and tbest is not None:
                     a = regression.regress_within(t, y, *tbest)
                 else:
-                    a = regression.find_best_regression(t, y, self.options['interval'], self.options['crit'])
+                    a = regression.find_best_regression(
+                        t, y, self.options['interval'], self.options['crit'])
                     if key == 'CO2' and a is not None:
                         tbest = t[a.start], t[a.stop]
                 if a is not None:
@@ -137,7 +134,6 @@ class Regressor(object):
         if plotfun is not None:
             plot_regressions(data, regressions, plotfun)
         return regressions
-
 
     def do_regressions(self, files):
 
@@ -172,29 +168,28 @@ class Regressor(object):
                     continue
         print_info_maybe(i, n, 0, 100000)
         return resdict
-    
-        
+
     def find_regressions(self, directory_or_files):
         files = get_filenames(directory_or_files, {})
         resdict = self.do_regressions(files)
         with open(os.path.splitext(self.slopes_file_name)[0] + '.pickle', 'wb') as f:
             pickle.dump(resdict, f)
-    
-    
+
     def update_regressions_file(self, directory_or_files):
         """ this assumes that all files is in the same directory"""
         files = get_filenames(directory_or_files, {})
         directory = os.path.split(files[0])[0]
-        done_files = [x.split('\t')[0] for x in open(self.slopes_file_name, 'r').readlines()]
+        done_files = [x.split('\t')[0] for x in open(
+            self.slopes_file_name, 'r').readlines()]
         done_files = [os.path.join(directory, x) for x in done_files]
-        files = sorted(set(files)-set(done_files))
+        files = sorted(set(files) - set(done_files))
         print(len(files))
         resdict = self.do_regressions(files)
         pickle_name = os.path.splitext(self.slopes_file_name)[0] + '.pickle'
         try:
             old_dict = pickle.load(open(pickle_name), 'rb')
         except:
-            print('File ', pickle_name , 'not found. Starting empty')
+            print('File ', pickle_name, 'not found. Starting empty')
             old_dict = {}
         resdict = {**old_dict, **resdict}
         with open(pickle_name, 'wb') as f:
@@ -202,15 +197,15 @@ class Regressor(object):
 
     def __repr__(self):
         return "Regressor with \nslopes_file_name=%s\noptions=%s"\
-            %(self.slopes_file_name, repr(self.options)) 
-    
+            % (self.slopes_file_name, repr(self.options))
+
+
 def print_reg(regres):
     for k, dct in regres.items():
         print(k)
         for subst, reg in dct.items():
             print(subst)
             print(reg)
-
 
 
 # def do_regressions(files, res_file_name, interval, crit, co2_guides):
@@ -235,7 +230,6 @@ def print_reg(regres):
 #                 print('continuing')
 #                 continue
 #     return resdict
-
 
 
 # def find_regressions(directory_or_files,
@@ -283,7 +277,7 @@ def print_reg(regres):
 #     respectively. If co2_guides==True, the interval in time where the
 #     co2 curve is the steepest or has the best mse is used for the time
 #     of regression for the N2O.
-    
+
 #     returns {'left':{'CO2':(Regression, (x,y)),'N2O':...}, {'right': ...}}
 
 #     """
@@ -313,4 +307,3 @@ def print_reg(regres):
 #     if plotfun is not None:
 #         plot_regressions(data, regressions, plotfun)
 #     return regressions
-

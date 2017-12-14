@@ -1,6 +1,4 @@
-import math
 import numpy as np
-from collections import namedtuple
 from bisect_find import bisect_find
 
 # storing the regression results in a namedtuple
@@ -48,7 +46,6 @@ def regression2(x, y, plotfun=False):
     n = len(x)
     mse = sum((ymod - y)**2) / (n - 2)
     mx = mean(x)
-    my = mean(y)
     xc = x - mx
     xcxc = np.dot(xc, xc)
     se_intercept = mse * np.sqrt(1.0 / n + mx**2 / xcxc)
@@ -56,7 +53,6 @@ def regression2(x, y, plotfun=False):
     if plotfun:
         plotfun(x, y, '.', x, intercept + slope * x)
     return Regression(intercept, slope, se_intercept, se_slope, mse, 0, n - 1)
-
 
 
 def find_best_regression(x, y, xint, crit='mse', jump=1, plotfun=False):
@@ -115,4 +111,3 @@ def regress_within(x, y, x1, x2, plotfun=False):
         plotfun(x, y, '.', xin, reg.intercept + xin * reg.slope)
     reg.set_start_and_stop(i, j)
     return reg
-

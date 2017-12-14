@@ -1,5 +1,6 @@
 import polygon_utils
 
+
 def find_plot(df_row, rectangles):
     # In the list rectangles, every element rectangles[i] is either
     # a) a list of points representing corners of a polygon, or
@@ -20,4 +21,3 @@ def find_plot(df_row, rectangles):
 
 def find_plots(df, rectangles):
     return [find_plot(df.loc[i], rectangles) for i in df.index]
-

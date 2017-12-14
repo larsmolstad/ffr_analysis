@@ -42,17 +42,18 @@ from scipy.stats import norm
 import pH_data
 import bucket_depths
 
+
 def cla():
     if not plt.get_backend().endswith('inline'):
         plt.cla()
 
+
 def clf():
     if not plt.get_backend().endswith('inline'):
         plt.clf()
-        
-# %%
 
-# EDIT THESE:
+
+# %% EDIT THESE ##############################################################:
 
 # Select which rectangles, treatments and files you want:
 
@@ -68,7 +69,7 @@ import buckets
 rectangles = buckets.functions
 treatments = buckets.treatments
 data_file_filter_function = buckets.data_files_rough_filter
-slope_filename = 'c:\\zip\\sort_results\\migmin_slopes2.txt'
+slope_filename = 'c:\\zip\\sort_results\\buckets.txt'
 
 # or (todo)
 
@@ -81,25 +82,26 @@ resdir.raw_data_path = 'c:\\zip\\sort_results\\results'
 
 # resdir.slopes_path = 'c:/users/larsmo/downloads'
 
-# How to do regressions: This makes the "regressor object" regr which will be
-# used further below.  It contains the functions and parameters for doing the
-# regressions.  The parameters are collected in the dict named options;
-# organizing the code this way makes it easier to replace the regression
-# function with your own functions. Here, the options have:
-# 'interval': the length of the regression interval (seconds)
-# 'crit': how to choose the best interval within the run (for example the best
-# 100 seconds within 180 seconds). 'crit' can be 'steepest' or 'mse' (mean squared error)
-# 'co2_guides': wether or not the N2O regression will be done on the same interval
-# as the CO2 regression.
+# How to do regressions: This makes the "regressor object" regr which
+# will be used further below.  It contains the functions and
+# parameters for doing the regressions.  The parameters are collected
+# in the dict named options. (Organizing the code this way makes it
+# easier to replace the regression function with your own functions.)
+# Here, the options have: 'interval': the length of the regression
+# interval (seconds) 'crit': how to choose the best interval within
+# the run (for example the best 100 seconds within 180
+# seconds). 'crit' can be 'steepest' or 'mse' (mean squared error)
+# 'co2_guides': wether or not the N2O regression will be done on the
+# same interval as the CO2 regression.
 
 options = {'interval': 100, 'crit': 'steepest', 'co2_guides': True}
 regr = find_regressions.Regressor(slope_filename, options)
 
 # regressions may take a long time. Set redo_regressions to False if you want to
 # just use the slope file without redoing regression
-redo_regressions = False#True
+redo_regressions = False  # True
 
-# END EDIT THESE
+# %% END EDIT THESE ############################################################
 
 
 example_file = '2016-06-16-10-19-50-x599234_725955-y6615158_31496-z0_0-h0_743558650162_both_Plot_9_'
@@ -220,7 +222,7 @@ print('plotting N2O slopes for plot_nr', pnr)
 d = df[df.plot_nr == pnr]
 cla()
 plt.axis('auto')
-plt.plot(d['t'], d['N2O_slope'],'.-')
+plt.plot(d['t'], d['N2O_slope'], '.-')
 plt.show()
 print(d['N2O_slope'].tail())
 
@@ -314,7 +316,7 @@ def trapz_df(df, column='N2O_N_mmol_m2day', factor=1 / 86400):
     return pd.DataFrame(index=index,
                         data={'trapz': trapzvals,
                               'treatment': treatments,
-                                  'plot_nr': index})
+                              'plot_nr': index})
 
 
 print(trapz_df(df))
@@ -467,12 +469,13 @@ print("try a, b = barplot_trapz(df[df.date>'2016'], True)")
 # %% Plot pH vs flux
 
 ph_df = pH_data.df
-#ph_df.groupby('nr').last()
+# ph_df.groupby('nr').last()
 
 
 def add_get_ph(df, ph_df, ph_method='CaCl2'):
     ph_df['plot_nr'] = ph_df['nr']
     tralala = ph_df.groupby('nr').last()
+
     def get_ph(nr):
         return tralala[tralala.plot_nr == nr][ph_method].values[0]
     df['pH'] = df.plot_nr.apply(get_ph)
@@ -494,6 +497,7 @@ def plot_ph_vs_flux(df_trapz, ph_df, ph_method='CaCl2'):
     plt.gca().set_ylabel('$\int_{t_0}^{t_1} \mathrm{flux\  dt}$')
     plt.grid(True)
 
+
 cla()
 plot_ph_vs_flux(trapz_df(df), ph_df)
 plt.show()
@@ -509,6 +513,7 @@ plt.show()
 # be clicked on. (The plot window sometimes shows up behind the spyder window.)
 # Enter "%matplotlib inline" when you want the inline plots back.
 # We had
+
 
 def test_nrs(df, plot_numbers):
     plot_rectangles(rectangles, names=True)
