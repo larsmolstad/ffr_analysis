@@ -6,13 +6,11 @@ import time
 import copy
 import itertools
 import matplotlib
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
 import tkinter as tk
 from tkinter import LEFT, RIGHT, CENTER, BOTH, TOP, BOTTOM, YES, NO
-import licor_indexes
-import dlt_indexes
 import findfile
 import get_data
 import app_open
@@ -21,7 +19,8 @@ import traceback
 import argparse
 import find_regressions
 
-defaultfile = ['d:/temp/New_folder/results/results/2015-06-15-14-38-05-x599226_260722-y6615166_83654-z0_0_right_Plot_9_']
+defaultfile = [
+    'd:/temp/New_folder/results/results/2015-06-15-14-38-05-x599226_260722-y6615166_83654-z0_0_right_Plot_9_']
 resfile = 'slopes.txt'
 
 if __name__ == '__main__':
@@ -50,7 +49,6 @@ def make_table(res, unit):
     substances = ['N2O', 'CO2', 'CO']
     n = max([len(x) for x in substances])
     m = 10
-    sides = ['left', 'right']
     s = '{:{n}s} {:>{m}s} {:>{m}s}'.format('', 'left', 'right', n=n, m=m)
     for name in substances:
         left = getslope('left', name)
@@ -166,15 +164,21 @@ class App(object):
         self.rowi += 1
         temp = tk.Label(self.filename_frame, textvariable=self.filename_str)
         temp.grid(row=0, column=0, stick='w')
-        #grid2(tk.Label,  3,0, textvariable = filename_str)
-        self.grid2(tk.Button, 1,0, text='File', command=self.readfile, width = 5)
-        self.grid2(tk.Button, 1,1, text='<<', command=self.first_file, width = 5)
-        self.grid2(tk.Button, 1,2, text='<', command=self.previous_file, width = 5)
-        self.grid2(tk.Button, 1,3, text='>', command=self.next_file, width = 5)
-        self.grid2(tk.Button, 1,4, text='>>', command=self.last_file, width = 5)
-        self.grid2(tk.Button, 1,5, text='Run', command=self.run_regression, width = 5)
-        self.grid2(tk.Button, 1,6, text='Stop', command=self.stop_running_regressions, width = 5)
-        self.grid2(tk.Button, 1,7, text='Resfile', command=self.tidy_result_file, width = 8)
+        # grid2(tk.Label,  3,0, textvariable = filename_str)
+        self.grid2(tk.Button, 1, 0, text='File',
+                   command=self.readfile, width=5)
+        self.grid2(tk.Button, 1, 1, text='<<',
+                   command=self.first_file, width=5)
+        self.grid2(tk.Button, 1, 2, text='<',
+                   command=self.previous_file, width=5)
+        self.grid2(tk.Button, 1, 3, text='>', command=self.next_file, width=5)
+        self.grid2(tk.Button, 1, 4, text='>>', command=self.last_file, width=5)
+        self.grid2(tk.Button, 1, 5, text='Run',
+                   command=self.run_regression, width=5)
+        self.grid2(tk.Button, 1, 6, text='Stop',
+                   command=self.stop_running_regressions, width=5)
+        self.grid2(tk.Button, 1, 7, text='Resfile',
+                   command=self.tidy_result_file, width=8)
         self.show_legend.set(1)
         self.regression_time_string.set('50')
         self.lag_time_string.set('0')
@@ -350,7 +354,6 @@ class App(object):
         self.find_fluxes(False)
 
     def get_regression_time(self):
-        default_t = 30
         a = self.regression_time_string.get()
         try:
             t = float(a)
@@ -438,7 +441,7 @@ class App(object):
     def last_file(self):
         self._readfile(self.thefiles.last())
 
-    def run_regression():
+    def run_regression(self):
         self.running_regressions = True
         self.thefiles.update()
 

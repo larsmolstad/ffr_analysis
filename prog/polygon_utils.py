@@ -1,5 +1,5 @@
 """Utilities to make, plot, move, rotate and divide rectangles and
- other 4-polygons (maybe other polygons also).  
+ other 4-polygons (maybe other polygons also).
 
 Used for defining and plotting the geometry of the plots in E22.
 
@@ -7,12 +7,8 @@ A 4-polygon (for example a rectangle) is represented by the corners as
 [[x1, x2, x3, x4], [y1, y2, y3, y4]]
 
 """
-import os
 from plotting_compat import plt
-from get_data import parse_filename
-import math
 import numpy as np
-import time
 
 
 def rotate_polygon(polygon, angle, about=0):
@@ -116,6 +112,7 @@ def plot_rectangle(p, color='k', text=None):
         plt.text(x, y, text, fontsize=8)
     return 0
 
+
 def plot_rectangles(rectangles, names=True):
     """rectangles can be a dict or a list of rectangles. If rectangles is
 a dict and names==True, the keys are usesd as names. names may also be
@@ -124,11 +121,12 @@ a list"""
     if isinstance(rectangles, dict):
         pairs = [(key, rectangles[key]) for key in list(rectangles)]
         rectangles = [x[1] for x in pairs]
-        if names == True:
+        if names is True:
             names = [x[0] for x in pairs]
     not_plottable = 0
     for i, r in enumerate(rectangles):
-        not_plottable += plot_rectangle(r, text=None if not names else names[i])
+        not_plottable += plot_rectangle(r,
+                                        text=None if not names else names[i])
     if not_plottable:
         print('%d non-plottable rectangle-functions' % not_plottable)
     # plt.axis('equal')
@@ -201,11 +199,10 @@ def convex_hull(points):
     return [v] + extend(u, v, left) + [u] + extend(v, u, right) + [v]
 
 
-
 def point_inside_polygon(x, y, poly):
-# http://www.ariel.com.au/a/python-point-int-poly.html
-# determine if a point is inside a given polygon or not
-# Polygon is a list of (x,y) pairs.
+    # http://www.ariel.com.au/a/python-point-int-poly.html
+    # determine if a point is inside a given polygon or not
+    # Polygon is a list of (x,y) pairs.
     n = len(poly)
     inside = False
     p1x, p1y = poly[0]

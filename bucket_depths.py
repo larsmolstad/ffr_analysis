@@ -52,14 +52,16 @@ raw_data = {(1, 'right'): [5.5, 5.9, 5.6],
             (24, 'right'): [6, 6.6, 6.7],
             (24, 'left'): [6.5, 6.1, 6]}
 
-top_gaps = {key:np.mean(x) for key, x in raw_data.items()}
+top_gaps = {key: np.mean(x) for key, x in raw_data.items()}
+
 
 def volume(gap):
     h = bucket_height - gap
-    dtop = (upper_bucket_diameter*gap + lower_bucket_diameter*h)/bucket_height
-    rtop = dtop/2
-    rbot = lower_bucket_diameter/2
-    return np.pi/3*h*(rtop**3 - rbot**3)/(rtop - rbot)
+    dtop = (upper_bucket_diameter * gap +
+            lower_bucket_diameter * h) / bucket_height
+    rtop = dtop / 2
+    rbot = lower_bucket_diameter / 2
+    return np.pi / 3 * h * (rtop**3 - rbot**3) / (rtop - rbot)
 
-soil_volumes = {key:volume(x) for key, x in top_gaps.items()}
 
+soil_volumes = {key: volume(x) for key, x in top_gaps.items()}

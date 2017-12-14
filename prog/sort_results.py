@@ -1,25 +1,20 @@
 """
 """
 
-import re
 import os
-import time
 import xlwt
 import tkinter.messagebox
 import tkinter.filedialog
-import sys
 import datetime
-from collections import defaultdict
 import argparse
 from math import sin, cos, pi
 
 import last_directory
 from migmin import migmin_rectangles
 import find_plot
-from get_data import number_after, parse_filename
+from get_data import parse_filename
 import numpy as np
 import pandas as pd
-import scipy.integrate
 import resdir
 from plotting_compat import plt
 plot = plt.plot
@@ -36,7 +31,7 @@ description = """
 Sorts the slopes according to position and writes the results to excel
 Examples
 python sort_results.py
-python sort_results.py -s slopes.txt 
+python sort_results.py -s slopes.txt
 python sort_results.py -s ..\slopes.txt --out resultfile.xls
 """
 
@@ -55,7 +50,7 @@ if __name__ == '__main__':
 def tk_getfilename(remember_file, title="open"):
     lastdir = last_directory.remember(remember_file)
     file = tkinter.filedialog.askopenfilename(initialdir=os.path.split(lastdir.get())[0],
-                                        title=title)
+                                              title=title)
     lastdir.set(file)  # os.path.split(file)[0])
     return file
 
@@ -100,7 +95,6 @@ def dictify(res):
 def make_df(raw_result_list):
     filenames = [x[0] for x in raw_result_list]
     sides = [x[1] for x in raw_result_list]
-    p = all_positions(filenames, sides)
     y = []
     for i, name in enumerate(filenames):
         rdict = parse_filename(name)
@@ -119,7 +113,7 @@ def make_df(raw_result_list):
         rdict['daynr'] = np.floor(rdict['t'] / 86400)
         y.append(rdict)
     df = pd.DataFrame(y).drop('vehicle_pos', axis=1)
-    #df['id'] = df.index
+    # df['id'] = df.index
     return df
 
 
@@ -134,8 +128,7 @@ def rearrange_df(df):
               'vehicle_y', 'vehicle_z', 'used_sides']
     tomove = [x for x in tomove if x in df.columns]
     tokeep = [x for x in df.columns if x not in tomove]
-    return df[tokeep + tomove] #df.drop(todrop, axis=1, errors='ignore')
-
+    return df[tokeep + tomove]  # df.drop(todrop, axis=1, errors='ignore')
 
 
 def get_result_list_from_slope_file(slope_file,
@@ -154,9 +147,9 @@ def get_result_list_from_slope_file(slope_file,
         a = f.readlines()
     a = [x.strip('\n\r') for x in a]
     reslist = [x.split() for x in a if x]
-    reslist = reslist[start:stop] if stop>=0 else reslist[start:]
+    reslist = reslist[start:stop] if stop >= 0 else reslist[start:]
     if index_list is not None:
-        reslist = [x[i] for x in index_list]
+        reslist = [x[i] for i in index_list]
     for s in reslist:
         str2num_line(s)
     return reslist
@@ -172,7 +165,7 @@ def make_df_from_slope_file(name,
     df0['plot_nr'] = find_plot.find_plots(df0, rectangles)
     df0['treatment'] = df0.plot_nr.map(lambda x: treatment_dict[x]
                                        if x in treatment_dict else None)
-    translations = {'N2O':'N2O_slope', 'CO':'CO_slope', 'CO2':'CO2_slope'}
+    translations = {'N2O': 'N2O_slope', 'CO': 'CO_slope', 'CO2': 'CO2_slope'}
     df0.rename(columns=translations, inplace=True)
     df = df0
     if remove_data_outside_rectangles:
@@ -210,7 +203,7 @@ def find_nonlast_redoings(df, nr, dt=3600):
 
     """
     d = df[df.plot_nr == nr]
-    #sides = df0.loc[d.index].side
+    # sides = df0.loc[d.index].side
     d_left = d[d.side == 'left']
     d_right = d[d.side == 'right']
     left = np.where(np.diff(d_left.t) < dt)
@@ -223,7 +216,7 @@ def remove_redoings(df, dt=3600):
     """
     Returns a dataframe where measurements has been removed that has
     been redone within dt seconds. The intention is to remove
-    measurements that have failed. 
+    measurements that have failed.
 
     """
     plotnrs = set(df.plot_nr)
@@ -246,38 +239,38 @@ def remove_redoings(df, dt=3600):
 
 
 def xlswrite_from_df(name, df, do_open=False, columns=['N2O_slope', 'CO2_slope']):
-    #daynrs = sorted(set(df.daynr))# but sometimes we measure twice per day
+    # daynrs = sorted(set(df.daynr))# but sometimes we measure twice per day
     workbook = xlwt.Workbook()
     date_format = xlwt.XFStyle()
     date_format.num_format_str = 'dd/mm/yyyy'
     treatments = sorted(set(df.treatment))
-    for compound in columns:# todo name (not in df so need df0) and x and y
+    for compound in columns:  # todo name (not in df so need df0) and x and y
         w = workbook.add_sheet(compound)
         i = 0
         for treatment in treatments:
-            d = df[df.treatment==treatment]
+            d = df[df.treatment == treatment]
             plots = sorted(set(d.plot_nr))
-            for j, plot_nr  in enumerate(plots):
+            for j, plot_nr in enumerate(plots):
                 i += 2
-                w.write(0, i-1, treatment)
-                w.write(1, i-1, str(plot_nr))
-                d2 = d[d.plot_nr==plot_nr]
+                w.write(0, i - 1, treatment)
+                w.write(1, i - 1, str(plot_nr))
+                d2 = d[d.plot_nr == plot_nr]
                 t = d2.t.values
                 y = d2[compound].values
-                for rownr, ti in enumerate(t):# todo vectorize?
+                for rownr, ti in enumerate(t):  # todo vectorize?
                     ti = datetime.datetime.utcfromtimestamp(ti)
-                    w.write(rownr+2, i-1, ti, date_format)
+                    w.write(rownr + 2, i - 1, ti, date_format)
                     try:
-                        w.write(rownr+2, i, y[rownr])
+                        w.write(rownr + 2, i, y[rownr])
                     except:
                         # sometimes I get
                         # Exception: Unexpected data type <class 'numpy.int64'>
                         # ,so
                         try:
-                            w.write(rownr+2, i, float(y[rownr]))
+                            w.write(rownr + 2, i, float(y[rownr]))
                         except Exception as e:
-                            print (e)
-                            print (float(y[rownr]))
+                            print(e)
+                            print(float(y[rownr]))
     try:
         workbook.save(name)
     except IOError:
@@ -290,12 +283,9 @@ if __name__ == '__main__' and G.xls_file not in ['False', 'None']:
     lastfile = '.sort_result_lastfile'
     if not G.slope_file:
         G.slope_file = tk_getfilename(lastfile, "Select slope file")
-    rectangles = migmin_rectangles.migmin_rectangles()# todo
+    rectangles = migmin_rectangles.migmin_rectangles()  # todo
     df, _ = make_df_from_slope_file(G.slope_file,
                                     rectangles,
                                     find_plot.treatments,
                                     remove_redoings_time=3600)
     xlswrite_from_df(G.xls_file, df, True)
-
-
-

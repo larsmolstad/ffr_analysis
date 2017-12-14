@@ -1,4 +1,3 @@
-import re
 import numpy as np
 import traceback
 import requests
@@ -6,10 +5,10 @@ import bs4
 import time
 import pickle as pickle
 import os
-path = os.path.dirname(os.path.abspath(__file__))#path of this file
-path = os.path.split(os.path.split(path)[0])[0] #grandparent folder
-#these files must currently be put in the parent folder
-#YR_SOUP_NAME = os.path.join(path, 'yr_beautiful_soups.pickle')
+path = os.path.dirname(os.path.abspath(__file__))  # path of this file
+path = os.path.split(os.path.split(path)[0])[0]  # grandparent folder
+# these files must currently be put in the parent folder
+# YR_SOUP_NAME = os.path.join(path, 'yr_beautiful_soups.pickle')
 DATA_FILE_NAME = os.path.join(path, 'yr_data.pickle')
 
 
@@ -21,7 +20,7 @@ def get_yr_soup(dato):
 
 
 def get_all_yr_soups(start=(2015, 0o1, 0o1, 12, 0, 0, 0, 0, 0),
-                     stop = None):
+                     stop=None):
     t0 = time.mktime(start)
     if stop is None:
         t1 = time.time()
@@ -117,7 +116,6 @@ def update_weather_data():
         pickle.dump(updated_data, open(DATA_FILE_NAME, 'wb'))
 
 
-
 # def save_data_from_soup(soup):
 #     pickle.dump(all_soups2data(soup), open(DATA_FILE_NAME, 'wb'))
 #
@@ -176,8 +174,6 @@ def update_weather_data():
 #     h = s.find(lambda x: x.text.endswith('%'))
 #     h = num(h, '%')
 #     return kl, temps, precip, h
-
-
 
 
 #q = find_day_temp()

@@ -5,10 +5,8 @@ data.update()# downloads new data from yr
 data.get_precip(time.time()-86400) # for example
 data.get_temp(time.mktime((2017,12,24,20,30,0,0,0,0))) # temperature christmas eve 2017 at 8:30pm
 """
-import os
 import pickle
 import numpy as np
-import pandas as pd
 import weather_data_from_yr
 
 
@@ -22,9 +20,10 @@ class Weather_data(object):
 
     def update(self):
         weather_data_from_yr.update_weather_data()
-        
+
     def make_assignments(self):
-        self.data = pickle.load(open(weather_data_from_yr.DATA_FILE_NAME, 'rb'))
+        self.data = pickle.load(
+            open(weather_data_from_yr.DATA_FILE_NAME, 'rb'))
         x = [np.array(x) for x in self.get_temps_and_precip(self.data)]
         self.all_times, self.all_temps, self.all_precips = x
 
@@ -74,5 +73,6 @@ class Weather_data(object):
             else:
                 p[i] = np.mean(self.precip[I0:I1])
         return p
+
 
 data = Weather_data()

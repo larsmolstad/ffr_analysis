@@ -1,8 +1,10 @@
 def open(filepath):
-    import subprocess, os, sys
+    import subprocess
+    import os
+    import sys
     if sys.platform.startswith('darwin'):
-       subprocess.call(('open', filepath))
+        subprocess.call(('open', filepath))
     elif os.name == 'nt':
-    	 os.startfile(filepath)
+        os.startfile(filepath)
     elif os.name == 'posix':
-    	 subprocess.call(('xdg-open', filepath))
+        subprocess.call(('xdg-open', filepath))
