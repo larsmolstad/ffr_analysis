@@ -10,7 +10,7 @@ import argparse
 from math import sin, cos, pi
 
 import last_directory
-from migmin import migmin_rectangles
+from migmin import rectangles as migmin_rectangles # todo hvorfor er denne her
 import find_plot
 from get_data import parse_filename
 import numpy as np
