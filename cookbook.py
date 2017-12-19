@@ -21,6 +21,7 @@ import time
 import glob
 import numpy as np
 import pandas as pd
+pd.options.mode.chained_assignment = None 
 sys.path.append(os.path.join(os.getcwd(), 'prog'))
 import plotting_compat
 from plotting_compat import plt
@@ -43,46 +44,29 @@ import statsmodels.api as sm
 from scipy.stats import norm
 import pH_data
 import bucket_depths
+plt.rcParams['figure.figsize'] = (10, 6)
 
 
-def cla():
-    if not plt.get_backend().endswith('inline'):
-        plt.cla()
-
-
-def clf():
-    if not plt.get_backend().endswith('inline'):
-        plt.clf()
-
-
-# %% EDIT THESE ##############################################################:
+# %% #################  EDIT THESE PARAMETERS: ################################
 
 # Select which rectangles, treatments and files you want:
 
-# import migmin
-# rectangles = migmin.migmin_rectangles()
-# treatments = migmin.treatments
-# data_file_filter_function = migmin.data_files_rough_filter
-# slope_filename = 'c:\\zip\\sort_results\\migmin_slopes.txt'
+# import migmin as experiment
+# slope_filename = 'Y:\\MINA\\Miljøvitenskap\\Jord\\FFR\\ffr_analysis\\migmin_slopes.txt'
+# #slope_filename = 'c:\\zip\\sort_results\\migmin_slopes.txt'
 
 # or
 
-import buckets
-rectangles = buckets.functions
-treatments = buckets.treatments
-data_file_filter_function = buckets.data_files_rough_filter
-slope_filename = 'c:\\zip\\sort_results\\buckets.txt'
+import buckets as experiment
+slope_filename = 'Y:\\MINA\\Miljøvitenskap\\Jord\\FFR\\ffr_analysis\\buckets_deleteme.txt'
 
 # or (todo)
 
 # rectangles = something.agropro_rectangles()
-
 # Override the default result directories:
 # (remember double backslashes)
 
-resdir.raw_data_path = 'c:\\zip\\sort_results\\results'
-
-# resdir.slopes_path = 'c:/users/larsmo/downloads'
+resdir.raw_data_path = 'Y:\\MINA\\Miljøvitenskap\\Jord\\FFR\\results'
 
 # How to do regressions: This makes the "regressor object" regr which
 # will be used further below.  It contains the functions and
@@ -105,17 +89,31 @@ redo_regressions = False  # True
 
 # Choose flux units
 # factor is the conversion factor from mol/s/m2 to the given unit
-flux_units = {'N2O': {'name': 'N2O_N_mmol_m2day', 'factor': 2 * 1000 * 86400},
-              'CO2': {'name': 'CO2_C_mmol_m2day', 'factor': 1000 * 86400}}
+# flux_units = {'N2O': {'name': 'N2O_N_mmol_m2day', 'factor': 2 * 1000 * 86400},
+#              'CO2': {'name': 'CO2_C_mmol_m2day', 'factor': 1000 * 86400}}
 
-# flux_units = {'N2O': {'name': 'N2O_N_mug_m2_h', 'factor': 2 * 14e6 * 3600},
-#               'CO2': {'name': 'CO2_C_mug_m2_h', 'factor': 12e6 * 3600}}
+flux_units = {'N2O': {'name': 'N2O_N_mug_m2h', 'factor': 2 * 14 * 1e6 * 3600},
+               'CO2': {'name': 'CO2_C_mug_m2h', 'factor': 12 * 1e6 * 3600}}
 
+start_and_stopdate = ['20160531', '2018']
 
-# %% END EDIT THESE ############################################################
+# %% ################### END EDIT THESE PARAMETERS ############################
 
+rectangles = experiment.rectangles
+treatments = experiment.treatments
+data_file_filter_function = experiment.data_files_rough_filter
 
 example_file = '2016-06-16-10-19-50-x599234_725955-y6615158_31496-z0_0-h0_743558650162_both_Plot_9_'
+
+
+def cla():
+    if not plt.get_backend().endswith('inline'):
+        plt.cla()
+
+
+def clf():
+    if not plt.get_backend().endswith('inline'):
+        plt.clf()
 
 
 # Plotting the rectangles (not for buckets)
@@ -127,7 +125,7 @@ keys = list(rectangles)
 r = [rectangles[k] for k in keys]
 tr = [treatments[k] for k in keys]
 plot_rectangles(r, tr)
-
+plt.show()
 
 # %% some plotting examples
 # cla()
@@ -151,7 +149,7 @@ plt.subplot(1, 1, 1)
 filenames = glob.glob(os.path.join(resdir.raw_data_path, '2*'))
 print("number of files: %d" % len(filenames))
 
-
+print("\nSome examples:")
 # Get the data from file number 1000
 a = get_data.get_file_data(filenames[1000])
 cla()
@@ -217,27 +215,33 @@ df, df0 = sr.make_df_from_slope_file(slope_filename,
                                      remove_redoings_time=3600,
                                      remove_data_outside_rectangles=True)
 
+df0 = df0[(df0.date >= start_and_stopdate[0]) & (df0.date <= start_and_stopdate[1])]
+
+df = df[(df.date >= start_and_stopdate[0]) & (df.date <= start_and_stopdate[1])]
+
+df0.sort_values('date', inplace=True)#todo flytte
+df.sort_values('date', inplace=True)
+
 # %% Pandas... Pandas is a python library that gives python R-like
 # dataframes. It takes some time to learn Pandas, although there is an
 # introduction called "10 minutes to Pandas"
-print(df.head())
-print(df.tail())
-print(df.columns)
+# print(df.head())
+# print(df.tail())
+# print(df.columns)
 print(df.date.min())
 print(df.date.max())
-print(df[['t', 'x', 'y', 'plot_nr']].head(10))
-print(df[df.treatment == 'Control']
-      [['t', 'x', 'y', 'plot_nr', 'treatment']].head(10))
-pnr = df.plot_nr.values[0]
-print('plotting N2O slopes for plot_nr', pnr)
-d = df[df.plot_nr == pnr]
-cla()
-plt.axis('auto')
-plt.plot(d['t'], d['N2O_slope'], '.-')
-plt.show()
-print(d['N2O_slope'].tail())
+# print(df[['t', 'x', 'y', 'plot_nr']].head(10))
+# print(df[df.treatment == 'Control'][['t', 'x', 'y', 'plot_nr', 'treatment']].head(10))
+# pnr = df.plot_nr.values[0]
+# print('plotting N2O slopes for plot_nr', pnr)
+# d = df[df.plot_nr == pnr]
+# cla()
+# plt.axis('auto')
+# plt.plot(d['t'], d['N2O_slope'], '.-')
+# plt.show()
+# print(d['N2O_slope'].tail())
 
-# %% finally add in some weather data, calculate fluxes, wrap it up in
+## %% finally add in some weather data, calculate fluxes, wrap it up in
 # a function. (if you have internet, you can do
 # weather_data.data.update() first. This will download weather data
 # from yr and save them)
@@ -251,6 +255,9 @@ def finalize_df(df, precip_dt=2):
     # df['precip2'] = weather_data.data.get_precip2(df.t, [0, precip_dt]) #todo failed
     N2O_mol_secm2 = flux_calculations.calc_flux(df.N2O_slope, df.Tc)
     CO2_C_mol_secm2 = flux_calculations.calc_flux(df.CO2_slope, df.Tc)
+    if experiment.name == 'buckets':
+        N2O_mol_secm2 = N2O_mol_secm2 * (50/23.5)**2 * 0.94
+        CO2_C_mol_secm2 = CO2_C_mol_secm2 * (50/23.5)**2 *0.94
     df['N2O_mol_m2s'] = N2O_mol_secm2
     df['CO2_mol_m2s'] = CO2_C_mol_secm2
     Nunits = flux_units['N2O']
@@ -263,7 +270,7 @@ def finalize_df(df, precip_dt=2):
 
 df = finalize_df(df)
 
-print(df.head())
+# print(df.head())
 
 
 # %% A little check that the sorting is ok:
@@ -302,16 +309,9 @@ towrite = ['N2O_slope', 'CO2_slope', 'name']
 sr.xlswrite_from_df('..\excel_filename2.xls', df, openthefineapp, towrite)
 # or if you want it all:
 sr.xlswrite_from_df('..\excel_filename3.xls', df, openthefineapp, df.columns)
-
+print('Excel files written to parent directory')
 # todo more sheets, names, small rectangles?
 
-# useful:
-
-a = df.groupby('daynr').N2O_slope
-a = a.mean().values[a.count().values > 10]
-cla()
-plt.hist(a * 1000, bins='auto')
-plt.show()
 # %%barmaps
 
 # _ = sr.barmap_splitted(df, theta=0)
@@ -334,13 +334,9 @@ def trapz_df(df, column='N2O_mol_m2s', factor=14*2):
                               'plot_nr': index})
 
 
-print(trapz_df(df))
-
-
 # for buckets we want to test for effect of side:
-def trapz_buckets(df,
-             column=flux_units['N2O']['name'],
-             factor=14/flux_units['N2O']['factor']):
+def trapz_buckets(df, column='N2O_mol_m2s', factor=14*2):
+    # factor = 14*2 gives grams N
     dleft = trapz_df(df[df.side == 'left'], column, factor)
     dleft['side'] = 'left'
     dright = trapz_df(df[df.side == 'right'], column, factor)
@@ -352,18 +348,22 @@ def trapz_buckets(df,
 # C(treatment) means that treatment is a categorical variable.
 # Doing a log transform with a little addition to improve the normality tests
 # %%
-print('\nWith side as a factor (suitable for buckets):')
-df_trapz = trapz_buckets(df)
-model = 'np.log(trapz + 0.005) ~ C(treatment) + C(side)'
-ols_trapz_res = ols(model, data=df_trapz).fit()
-print(ols_trapz_res.summary())
+# print('\nWith side as a factor (was suitable for buckets):')
+# df_trapz = trapz_buckets(df)
+# model = 'np.log(trapz + 0.005) ~ C(treatment) + C(side)'
+# ols_trapz_res = ols(model, data=df_trapz).fit()
+# print(ols_trapz_res.summary())
 # %%
 print('\nWithout side as a factor')
 df_trapz = trapz_df(df)
 model = 'np.log(trapz + 0.005) ~ C(treatment)'
 ols_trapz_res = ols(model, data=df_trapz).fit()
 print(ols_trapz_res.summary())
+
+print(df_trapz)
+print('(trapz is g/m2)')
 # %%
+
 
 
 def test(startdate='20170000', stopdate='2020'):
@@ -379,8 +379,8 @@ def test(startdate='20170000', stopdate='2020'):
 
 def plotnr(df, nr, t0):
     """ plotting bucket number nr in df, subtracting t0 from the time axis"""
-    l = df[df.side == 'left'][df.plot_nr == nr]
-    r = df[df.side == 'right'][df.plot_nr == nr]
+    l = df[(df.side == 'left') & (df.plot_nr == nr)]
+    r = df[(df.side == 'right') & (df.plot_nr == nr)]
     # l = left[df.plot_nr==i]
     # r = right[df.plot_nr==i]
     lt = (l.t - t0) / 86400
@@ -416,6 +416,7 @@ def plot_treatment(df, treatment, row, t0,
 
 
 def plot_all(df, ylims=True, t0=(2017, 1, 1, 0, 0, 0, 0, 0, 0)):
+    units = flux_units['N2O']['name']
     if isinstance(t0, (list, tuple)):
         t0 = time.mktime(t0)
     clf()
@@ -430,7 +431,8 @@ def plot_all(df, ylims=True, t0=(2017, 1, 1, 0, 0, 0, 0, 0, 0)):
         plt.subplot(6, 4, i * 4 + 1)
         plt.gca().set_ylabel(t)
         # mp.plot('text', (min(df.t)-t0)/86400, 0.1, t)
-
+    print('\n(%s from %s to %s)' % (name, df.date.min(), df.date.max()))
+    
 
 try:
 
@@ -482,7 +484,8 @@ def barplot_trapz(df, sort_by_side=False):
 
 clf()
 plt.subplot()
-a, b = barplot_trapz(df, True)
+do_split = experiment.name == 'buckets'
+a, b = barplot_trapz(df, do_split)
 plt.show()
 print("try a, b = barplot_trapz(df[df.date>'2016'], True)")
 # %% Plot pH vs flux
@@ -633,23 +636,34 @@ class MyRegressor(find_regressions.Regressor):
         regressions['right']['N2O'] = reg(n2o['right'][0], n2o['right'][1])
         return regressions
 
-
-regr2 = MyRegressor('another_slopes_filename', {'p1': 100, 'p2': 3.14})
-data = get_data.get_file_data(os.path.join(resdir.raw_data_path, example_file))
-reg = regr2.find_all_slopes(data, plotfun=plt.plot)
-print(reg)
+# Then you can try this:
+# regr2 = MyRegressor('another_slopes_filename', {'p1': 100, 'p2': 3.14})
+# data = get_data.get_file_data(os.path.join(resdir.raw_data_path, example_file))
+# reg = regr2.find_all_slopes(data, plotfun=plt.plot)
+# print(reg)
 
 
 print("""
+      
 Commands you may want to try:
-df2 = df[(df.date>'20171201')&(df.date<'20181010')]
+    
+df2 = df[(df.date>'20171030')&(df.date<'20181010')]
 plot_all(df2)
+plt.show()
+a, b = barplot_trapz(df2, True)
+plt.show()
 plt.clf();plt.subplot(1,1,1)
 plot_ph_vs_flux(trapz_df(df), ph_df)
+plt.show()
+model = 'np.log(trapz + 0.005) ~ C(treatment)'
+ols_trapz_res = ols(model, data=trapz_df(df2)).fit()
+print(ols_trapz_res.summary())
 ginput_check_points(df2)
 ginput_check_regres(df2)
 ginput_check_regres(df[df.plot_nr==1])
-"""
+
+
+""")
 # %%
 # * batch-programmer
 # I will at least temporarily remove some of these to make the code more tidy

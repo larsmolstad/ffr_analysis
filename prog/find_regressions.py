@@ -147,6 +147,9 @@ class Regressor(object):
                     n_on_line = 0
                     print('')
             return t0, n_on_line
+        if not files:
+            print('\nNo regressions to do\n')
+            return {}
         print('Doing regressions')
         n = len(files)
         t0 = time.time()
