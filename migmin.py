@@ -3,6 +3,7 @@ Functions to map raw data filenames to plot numbers for the migmin experiment.
 Also maps plot numbers to treatments.
 """
 # todo use the small rectangles to make the migmin_field rectangles
+import os
 
 from polygon_utils import *
 import E22
@@ -11,7 +12,9 @@ import E22
 # some of the plots are not numbered the same way always in the result
 # files (due to waypoint list errors).
 
-def migmin_rectangles():
+name = 'migmin'
+
+def make_rectangles():
 
     def all_field_big_rectangles():
         # old and still used version
@@ -27,6 +30,8 @@ def migmin_rectangles():
     plots = all_field_big_rectangles()
     plots_used = [plots[i] for i in plot_indexes]
     return {key + 1: x for key, x in enumerate(plots_used)}
+
+rectangles = make_rectangles()
 # my numbering was 18, 19, 22, 23, 25, 26, 28, 30,
 
 
@@ -42,7 +47,7 @@ treatment_names = {'N': 'Norite', 'O': 'Olivine', 'L': 'Larvikite',
 treatments = {i + 1: treatment_names[t]
               for i, t in enumerate('NOLOMNDCLDCOMNLDOMLCDNCM')}
 
-
+broken = []
 def data_files_rough_filter(filenames):
     """filenames is a list of filenames.
 
@@ -50,6 +55,7 @@ def data_files_rough_filter(filenames):
     not belong to the migmin experiment have been taken away
 
     """
-    return [x for x in filenames if x.find('_Plot_') > -1]
+    return [x for x in filenames if 
+            x.find('_Plot_') > -1 and os.path.split(x)[1] not in broken]
 
 
