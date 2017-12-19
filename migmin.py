@@ -53,15 +53,3 @@ def data_files_rough_filter(filenames):
     return [x for x in filenames if x.find('_Plot_') > -1]
 
 
-def agropro_rectangles():  # todo move
-    keys = [128, 228, 127, 227, 214, 213, 112, 111, 211, 108, 107,
-            332, 331, 330, 329, 429, 424, 323, 423, 322, 321, 316,
-            315, 415, 305, 401, 528, 628, 527, 627, 522, 622, 521,
-            621, 518, 517, 617, 508, 507, 606, 505, 605]
-    small = small_rectangles()
-    return {key: small[key] for key in keys}
-
-# treatments = {}
-
-# for i,t in enumerate(
-#     treatments[i+1] = treatment_names[t]

@@ -319,14 +319,8 @@ plt.show()
 # %% trapezoidal integration to calculate the emitted N2O over a period of time:
 
 
-def trapz_df(df, column='N2O_mol_m2s', factor=14*2)
-    if column== 'default':
-        column=flux_units['N2O']['name']
-    if factor == 'default':
-        factor=14/flux_units['N2O']['factor']):
-        # this bring us from flux_unit['N2O']['name'] to g/m2/sec
-        # since flux_units['N2O']['factor'] takes us from
-        # mol/s/m2 to flux_unit['N2O']['name']
+def trapz_df(df, column='N2O_mol_m2s', factor=14*2):
+    # factor = 14*2 gives grams N
     index = sorted(set(df.plot_nr))
     trapzvals = []
     treatments = []
