@@ -155,16 +155,28 @@ def get_result_list_from_slope_file(slope_file,
     return reslist
 
 
+def find_treatment_names(treatment_dict):
+    return list(set([x for y in treatment_dict.values()
+                     for x in y]))
+
 def make_df_from_slope_file(name,
                             rectangles,
                             treatment_dict,
                             remove_redoings_time=3600,
                             remove_data_outside_rectangles=True):
+    def get_treatments(nr, name):
+        try:
+            return treatment_dict[nr][name]
+        except KeyError:
+            return None
     unsorted_res = get_result_list_from_slope_file(name, start=0)
     df0 = make_df(unsorted_res)
     df0['plot_nr'] = find_plot.find_plots(df0, rectangles)
-    df0['treatment'] = df0.plot_nr.map(lambda x: treatment_dict[x]
-                                       if x in treatment_dict else None)
+    treatment_names = find_treatment_names(treatment_dict)
+    for name in treatment_names:
+        df0[name] = [get_treatments(i, name) for i in df0.plot_nr]
+    #df0['treatment'] = df0.plot_nr.map(lambda x: treatment_dict[x]
+    #                                   if x in treatment_dict else None)
     translations = {'N2O': 'N2O_slope', 'CO': 'CO_slope', 'CO2': 'CO2_slope'}
     df0.rename(columns=translations, inplace=True)
     df = df0
@@ -238,17 +250,17 @@ def remove_redoings(df, dt=3600):
 # Must go through the measurements day by day instead of plot by plot
 
 
-def xlswrite_from_df(name, df, do_open=False, columns=['N2O_slope', 'CO2_slope']):
+def xlswrite_from_df(name, df, do_open=False, columns=['N2O_slope', 'CO2_slope'], sort_by='rock_type'):
     # daynrs = sorted(set(df.daynr))# but sometimes we measure twice per day
     workbook = xlwt.Workbook()
     date_format = xlwt.XFStyle()
     date_format.num_format_str = 'dd/mm/yyyy'
-    treatments = sorted(set(df.treatment))
+    treatments = sorted(set(df[sort_by]))
     for compound in columns:  # todo name (not in df so need df0) and x and y
         w = workbook.add_sheet(compound)
         i = 0
         for treatment in treatments:
-            d = df[df.treatment == treatment]
+            d = df[df[sort_by] == treatment]
             plots = sorted(set(d.plot_nr))
             for j, plot_nr in enumerate(plots):
                 i += 2
