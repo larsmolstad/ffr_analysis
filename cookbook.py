@@ -45,43 +45,41 @@ from scipy.stats import norm
 import pH_data
 import bucket_depths
 plt.rcParams['figure.figsize'] = (10, 6)
-
+current_path = os.getcwd()
 
 # %% #################  EDIT THESE PARAMETERS: ################################
 
 # Select which rectangles, treatments and files you want:
 
 # import migmin as experiment
-# slope_filename = 'Y:\\MINA\\Miljøvitenskap\\Jord\\FFR\\ffr_analysis\\migmin_slopes.txt'
-# #slope_filename = 'c:\\zip\\sort_results\\migmin_slopes.txt'
 
 # or
 
-import buckets as experiment
-slope_filename = 'Y:\\MINA\\Miljøvitenskap\\Jord\\FFR\\ffr_analysis\\buckets_deleteme.txt'
+# import buckets as experiment
 
 # or (todo)
 
+import agropro as experiment
 # rectangles = something.agropro_rectangles()
 # Override the default result directories:
 # (remember double backslashes)
 
+slopes_filename = experiment.slopes_filename
 resdir.raw_data_path = 'Y:\\MINA\\Miljøvitenskap\\Jord\\FFR\\results'
-
-# How to do regressions: This makes the "regressor object" regr which
-# will be used further below.  It contains the functions and
-# parameters for doing the regressions.  The parameters are collected
-# in the dict named options. (Organizing the code this way makes it
-# easier to replace the regression function with your own functions.)
-# Here, the options have: 'interval': the length of the regression
-# interval (seconds) 'crit': how to choose the best interval within
-# the run (for example the best 100 seconds within 180
-# seconds). 'crit' can be 'steepest' or 'mse' (mean squared error)
-# 'co2_guides': wether or not the N2O regression will be done on the
-# same interval as the CO2 regression.
+resdir.raw_data_path = '..\\results'
+# How to do regressions: This makes the "regressor object" regr which will be
+# used further below.  It contains the functions and parameters for doing the
+# regressions.  The parameters are collected in the dict named
+# options. (Organizing the code this way makes it easier to replace the
+# regression function with your own functions.)  Here, the options have:
+# 'interval': the length of the regression interval (seconds) 'crit': how to
+# choose the best interval within the run (for example the best 100 seconds
+# within 180 seconds). 'crit' can be 'steepest' or 'mse' (mean squared error)
+# 'co2_guides': wether or not the N2O regression will be done on the same
+# interval as the CO2 regression.
 
 options = {'interval': 100, 'crit': 'steepest', 'co2_guides': True}
-regr = find_regressions.Regressor(slope_filename, options)
+regr = find_regressions.Regressor(slopes_filename, options)
 
 # regressions may take a long time. Set redo_regressions to False if you want to
 # just use the slope file without redoing regression
@@ -99,10 +97,12 @@ start_and_stopdate = ['20160531', '2018']
 
 # %% ################### END EDIT THESE PARAMETERS ############################
 
+slopes_filename = utils.ensure_absolute_path(slopes_filename)
 rectangles = experiment.rectangles
 treatments = experiment.treatments
 data_file_filter_function = experiment.data_files_rough_filter
 
+treatment_names = sr.find_treatment_names(treatments)
 example_file = '2016-06-16-10-19-50-x599234_725955-y6615158_31496-z0_0-h0_743558650162_both_Plot_9_'
 
 
@@ -123,7 +123,7 @@ plot_rectangles(rectangles)
 cla()
 keys = list(rectangles)
 r = [rectangles[k] for k in keys]
-tr = [treatments[k] for k in keys]
+tr = ['_'.join(treatments[k].values()) for k in keys]# todo
 plot_rectangles(r, tr)
 plt.show()
 
@@ -209,7 +209,7 @@ pd.set_option('display.width', 120)
 # rectangles
 
 
-df, df0 = sr.make_df_from_slope_file(slope_filename,
+df, df0 = sr.make_df_from_slope_file(slopes_filename,
                                      rectangles,
                                      treatments,
                                      remove_redoings_time=3600,
@@ -267,7 +267,6 @@ def finalize_df(df, precip_dt=2):
     df = sr.rearrange_df(df)
     return df
 
-
 df = finalize_df(df)
 
 # print(df.head())
@@ -318,20 +317,23 @@ print('Excel files written to parent directory')
 
 # %% trapezoidal integration to calculate the emitted N2O over a period of time:
 
-
+q = [0]
 def trapz_df(df, column='N2O_mol_m2s', factor=14*2):
     # factor = 14*2 gives grams N
     index = sorted(set(df.plot_nr))
     trapzvals = []
-    treatments = []
+    treatments = {name:[] for name in treatment_names}
     for nr in index:
         d = df[df.plot_nr == nr]
         trapzvals.append(np.trapz(d[column], d.t) * factor)
-        treatments.append(d.treatment.values[0])
-    return pd.DataFrame(index=index,
-                        data={'trapz': trapzvals,
-                              'treatment': treatments,
-                              'plot_nr': index})
+        for name in treatment_names:
+            treatments[name].append(d[name].values[0])
+    data = {'trapz': trapzvals,
+            'plot_nr': index}
+    for name in treatment_names:
+        data[name] = treatments[name]
+    q[0] = data
+    return pd.DataFrame(index=index, data = data)
 
 
 # for buckets we want to test for effect of side:
@@ -356,7 +358,10 @@ def trapz_buckets(df, column='N2O_mol_m2s', factor=14*2):
 # %%
 print('\nWithout side as a factor')
 df_trapz = trapz_df(df)
-model = 'np.log(trapz + 0.005) ~ C(treatment)'
+model = 'np.log(trapz + 0.005) ~ C(rock_type)'
+if len(treatment_names)==3:
+    model = 'np.log(trapz + 0.5) ~ C(rock_type) + C(fertilizer) + C(mixture)'
+    #model = 'np.log(trapz + 0.5) ~ C(rock_type) + C(fertilizer) + C(mixture) + C(rock_type)*C(fertilizer) + C(rock_type)*C(mixture) + C(fertilizer)*C(mixture)'
 ols_trapz_res = ols(model, data=df_trapz).fit()
 print(ols_trapz_res.summary())
 
@@ -396,13 +401,13 @@ def set_ylims(lims, nrows=6, mcols=4):
         plt.gca().set_ylim(lims)
 
 
-def plot_treatment(df, treatment, row, t0,
+def plot_treatment(df, rock_type, row, t0,
                    delete_xticks=False, title=False):
-    """ plotting all plots with given treatment in a row of subplots,
+    """ plotting all plots with given rock_type in a row of subplots,
     subtracting t0 from the time axis.
     row is a list, e.g. [3,6], meaning row 3 of 6"""
 
-    nr = sorted(set(df[df.treatment == treatment].plot_nr))
+    nr = sorted(set(df[df.rock_type == rock_type].plot_nr))
     for i, n in enumerate(nr):
         plt.subplot(row[1], len(nr), i + 1 + (row[0] - 1) * len(nr))
         plotnr(df, n, t0)
@@ -435,7 +440,6 @@ def plot_all(df, ylims=True, t0=(2017, 1, 1, 0, 0, 0, 0, 0, 0)):
     
 
 try:
-
     plot_all(df)
     plt.show()
 except:
@@ -451,14 +455,14 @@ def barplot_trapz(df, sort_by_side=False):
         a = trapz_df(df)
     cla()
     # df.sort_index()
-    treatments = sorted(a.treatment.unique())
+    rock_types = sorted(a.rock_type.unique())
     toplotx = []
     toploty = []
     toplot_colors = []
     ticx = []
     x = 1
-    for i, tr in enumerate(treatments):
-        b = a[a.treatment == tr]
+    for i, tr in enumerate(rock_types):
+        b = a[a.rock_type == tr]
         if sort_by_side:
             left = b[b.side == 'left'].trapz.values
             right = b[b.side == 'right'].trapz.values
@@ -476,7 +480,7 @@ def barplot_trapz(df, sort_by_side=False):
             toplot_colors = 'b'
     plt.bar(toplotx, toploty, color=toplot_colors)
     plt.gca().set_xticks(ticx)
-    plt.gca().set_xticklabels(treatments, rotation=30)
+    plt.gca().set_xticklabels(rock_types, rotation=30)
     plt.grid(True)
     plt.gca().set_ylabel('$\mathrm{g/m^2}$  maybe')
     return toplotx, toploty
@@ -506,12 +510,12 @@ def add_get_ph(df, ph_df, ph_method='CaCl2'):
 def plot_ph_vs_flux(df_trapz, ph_df, ph_method='CaCl2'):
     a = df_trapz
     add_get_ph(a, ph_df)
-    tr = sorted(a.treatment.unique())
+    tr = sorted(a.rock_type.unique())
     toplot = []
     markers = '*o><^.'
     for i, t in enumerate(tr):
-        toplot.append(list(a.pH[a.treatment == t].values))
-        toplot.append(list(a.trapz[a.treatment == t].values))
+        toplot.append(list(a.pH[a.rock_type == t].values))
+        toplot.append(list(a.trapz[a.rock_type == t].values))
         toplot.append(markers[i])
     plt.plot(*toplot, markersize=8)
     plt.legend(tr)
@@ -520,9 +524,10 @@ def plot_ph_vs_flux(df_trapz, ph_df, ph_method='CaCl2'):
     plt.grid(True)
 
 
-cla()
-plot_ph_vs_flux(trapz_df(df), ph_df)
-plt.show()
+if experiment.name in ['migmin', 'buckets']:
+    cla()
+    plot_ph_vs_flux(trapz_df(df), ph_df)
+    plt.show()
 
 # %% subplots integration gothrough
 
@@ -642,7 +647,6 @@ class MyRegressor(find_regressions.Regressor):
 # reg = regr2.find_all_slopes(data, plotfun=plt.plot)
 # print(reg)
 
-
 print("""
       
 Commands you may want to try:
@@ -655,7 +659,7 @@ plt.show()
 plt.clf();plt.subplot(1,1,1)
 plot_ph_vs_flux(trapz_df(df), ph_df)
 plt.show()
-model = 'np.log(trapz + 0.005) ~ C(treatment)'
+model = 'np.log(trapz + 0.005) ~ C(rock_type)'
 ols_trapz_res = ols(model, data=trapz_df(df2)).fit()
 print(ols_trapz_res.summary())
 ginput_check_points(df2)

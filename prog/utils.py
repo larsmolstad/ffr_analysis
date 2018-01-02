@@ -1,3 +1,4 @@
+import os
 import sys
 import subprocess
 import re
@@ -220,3 +221,32 @@ def named_tuplify(dct, name='NT', recursive=1000):
     keys = list(dct.keys())
     A = namedtuple(name, keys)
     return(A(*[named_tuplify(dct[key], recursive=recursive - 1) for key in keys]))
+
+
+def raise_error_if_not_exist(dir_or_filename):
+    
+    if not os.path.exists(dir_or_filename):
+        raise Exception('%s does not exist' % dir_or_filename)
+  
+
+def ensure_absolute_path(name, newbase='.', maybe_new=True):
+    """If name is not an absolute path, return [newbase]/name. newbase may
+    be absolute or relative to current path.  Raises error if
+    resulting path does not exist, except for, if maybe_new is True,
+    the last part of the path/filename
+    newbase may be a list or tuple which will be joined by os.path.join.
+    """
+    if isinstance(newbase, (list, tuple)):
+        newbase = os.path.join(*newbase)
+    if not os.path.isabs(newbase):
+        newbase = os.path.join(os.getcwd(),
+                               newbase if newbase is not '.' else '')
+    if not os.path.isabs(name):
+        name = os.path.join(newbase, name)
+    if maybe_new:
+        parent = os.path.split(name)[0]
+        raise_error_if_not_exist(parent)
+    else:
+        raise_error_if_not_exist(name)
+    return os.path.normpath(name)
+        

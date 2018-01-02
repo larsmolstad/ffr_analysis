@@ -13,6 +13,7 @@ import E22
 # files (due to waypoint list errors).
 
 name = 'migmin'
+slopes_filename = '../migmin_slopes.txt'
 
 def make_rectangles():
 
@@ -44,10 +45,17 @@ treatment_names = {'N': 'Norite', 'O': 'Olivine', 'L': 'Larvikite',
 #               for i, t in enumerate('NOLOMNDCDLNMOCDLOMLCDNCM')}
 
 # this is with the columnwise numbering back and forth in an S.
-treatments = {i + 1: treatment_names[t]
-              for i, t in enumerate('NOLOMNDCLDCOMNLDOMLCDNCM')}
+# todo make clearer
+
+treatments = {'rock_type':
+              {i + 1:treatment_names[t]
+                   for i, t in enumerate('NOLOMNDCLDCOMNLDOMLCDNCM')}}
+
+treatments = {i + 1: {'rock_type':treatment_names[t]}
+                for i, t in enumerate('NOLOMNDCLDCOMNLDOMLCDNCM')}
 
 broken = []
+
 def data_files_rough_filter(filenames):
     """filenames is a list of filenames.
 
