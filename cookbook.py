@@ -308,7 +308,7 @@ df.to_excel(excel_filenames[0])
 if openthefineapp:
     os.system(excel_filenames[0])
 # or
-towrite = ['N2O_slope', 'CO2_slope', 'name']
+towrite = ['N2O_slope', 'CO2_slope', 'filename']
 sr.xlswrite_from_df(excel_filenames[1], df, openthefineapp, towrite)
 # or if you want it all:
 sr.xlswrite_from_df(excel_filenames[2], df, openthefineapp, df.columns)
@@ -605,7 +605,7 @@ def ginput_show_info(df, fun=None, x='x', y='y'):
 def show_reg_fun(row):
     plt.subplot(2, 1, 2)
     cla()
-    filename = os.path.join(resdir.raw_data_path, row['name'])
+    filename = os.path.join(resdir.raw_data_path, row['filename'])
     data = get_data.get_file_data(filename)
     regr.find_all_slopes(data, plotfun=plt.plot)
 

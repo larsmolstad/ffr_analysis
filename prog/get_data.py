@@ -41,7 +41,7 @@ def parse_filename(name):
     t = time.mktime(time.strptime(date, '%Y-%m-%d-%H-%M-%S'))
     date = date.replace('-', '')
     date = '{}-{}'.format(date[:8], date[8:])
-    return {'t': t, 'date': date, 'name': name,
+    return {'t': t, 'date': date, 'filename': name,
             'vehicle_pos': {'x': x, 'y': y, 'z': z, 'side': side, 'posname': posname, 'heading': heading}}
 
 

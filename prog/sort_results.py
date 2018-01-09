@@ -137,7 +137,7 @@ def make_df(raw_result_list):
 
 
 def simplify_df(df):
-    todrop = ['name', 'side', 'vehicle_pos', 'vehicle_x',
+    todrop = ['filename', 'side', 'vehicle_pos', 'vehicle_x',
               'vehicle_y', 'vehicle_z', 'used_sides']
     return df.drop(todrop, axis=1, errors='ignore')
 
