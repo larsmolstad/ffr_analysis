@@ -37,13 +37,13 @@ import sort_results as sr
 import divide_left_and_right
 import weather_data
 import flux_calculations
-import scipy.stats
-from statsmodels.formula.api import ols, rlm
-from statsmodels.stats.anova import anova_lm
-import statsmodels.api as sm
-from scipy.stats import norm
+# import scipy.stats
+from statsmodels.formula.api import ols#, rlm
+# from statsmodels.stats.anova import anova_lm
+# import statsmodels.api as sm
+# from scipy.stats import norm
 import pH_data
-import bucket_depths
+# import bucket_depths
 plt.rcParams['figure.figsize'] = (10, 6)
 current_path = os.getcwd()
 
@@ -51,22 +51,22 @@ current_path = os.getcwd()
 
 # Select which rectangles, treatments and files you want:
 
-# import migmin as experiment
+import migmin as experiment
 
 # or
 
 # import buckets as experiment
 
-# or (todo)
+# or
 
-import agropro as experiment
-# rectangles = something.agropro_rectangles()
+#import agropro as experiment
+
 # Override the default result directories:
 # (remember double backslashes)
 
 slopes_filename = experiment.slopes_filename
 resdir.raw_data_path = 'Y:\\MINA\\Miljøvitenskap\\Jord\\FFR\\results'
-resdir.raw_data_path = '..\\results'
+resdir.raw_data_path = '..\\..\\results'
 # How to do regressions: This makes the "regressor object" regr which will be
 # used further below.  It contains the functions and parameters for doing the
 # regressions.  The parameters are collected in the dict named
@@ -83,8 +83,8 @@ regr = find_regressions.Regressor(slopes_filename, options)
 
 # regressions may take a long time. Set redo_regressions to False if you want to
 # just use the slope file without redoing regression
-redo_regressions = False  # True
-
+redo_regressions =  False
+options_exceptions_file = 'exceptions.xls'
 # Choose flux units
 # factor is the conversion factor from mol/s/m2 to the given unit
 # flux_units = {'N2O': {'name': 'N2O_N_mmol_m2day', 'factor': 2 * 1000 * 86400},
@@ -93,8 +93,9 @@ redo_regressions = False  # True
 flux_units = {'N2O': {'name': 'N2O_N_mug_m2h', 'factor': 2 * 14 * 1e6 * 3600},
                'CO2': {'name': 'CO2_C_mug_m2h', 'factor': 12 * 1e6 * 3600}}
 
-start_and_stopdate = ['20160531', '2018']
+start_and_stopdate = ['201710', '3']
 
+excel_filename_start = experiment.name
 # %% ################### END EDIT THESE PARAMETERS ############################
 
 slopes_filename = utils.ensure_absolute_path(slopes_filename)
@@ -151,7 +152,8 @@ print("number of files: %d" % len(filenames))
 
 print("\nSome examples:")
 # Get the data from file number 1000
-a = get_data.get_file_data(filenames[1000])
+n = max(len(filenames)-1, 1000)
+a = get_data.get_file_data(filenames[n])
 cla()
 plt.plot(a['N2O'][0], a['N2O'][1], '.')
 plt.show()
@@ -171,12 +173,13 @@ else:
 
 # %% Do a regression:
 cla()
-data = get_data.get_file_data(filename)
-reg = regr.find_all_slopes(data, plotfun=plt.plot)
+reg = regr.find_all_slopes(filename, plotfun=plt.plot)
 plt.show()
 find_regressions.print_reg(reg)
 
-# (we may also say reg = regr.find_all_slope(filename))
+# (another way:
+# data = get_data.get_file_data(filename)
+# reg = regr.find_all_slope(data))
 # Interval is the length of time of the regression line. crit can be 'steepest'
 # or 'mse'; regressions will be done where the curves are steepest or where
 # they have the lowest mse, respectively. If co2_guides==True, the interval in
@@ -192,7 +195,7 @@ find_regressions.print_reg(reg)
 # %% Do many regressions
 
 all_filenames = glob.glob(os.path.join(resdir.raw_data_path, '2*'))
-filenames = data_file_filter_function(all_filenames)
+filenames = data_file_filter_function(all_filenames, *start_and_stopdate)
 print('number of raw data files:', len(filenames))
 # this may take a long time:
 if redo_regressions:
@@ -207,7 +210,6 @@ pd.set_option('display.width', 120)
 # The slopes have been stored in the file whose name equals the value of
 # slope_filename. make_df_from_slope_file picks the ones that are inside
 # rectangles
-
 
 df, df0 = sr.make_df_from_slope_file(slopes_filename,
                                      rectangles,
@@ -300,14 +302,16 @@ df2 = sr.filter_for_average_slope_days(df, 0.0005)
 # "..\filename.xls" makes filename.xls in the parent directory (..\)
 
 openthefineapp = False
-df.to_excel('..\excel_filename.xls')
+excel_filenames = ['..\\'+excel_filename_start + '_' + s + '.xls' 
+                   for s in 'df slopes all_columns'.split()]
+df.to_excel(excel_filenames[0])
 if openthefineapp:
-    os.system('..\excel_filename.xls')
+    os.system(excel_filenames[0])
 # or
 towrite = ['N2O_slope', 'CO2_slope', 'name']
-sr.xlswrite_from_df('..\excel_filename2.xls', df, openthefineapp, towrite)
+sr.xlswrite_from_df(excel_filenames[1], df, openthefineapp, towrite)
 # or if you want it all:
-sr.xlswrite_from_df('..\excel_filename3.xls', df, openthefineapp, df.columns)
+sr.xlswrite_from_df(excel_filenames[2], df, openthefineapp, df.columns)
 print('Excel files written to parent directory')
 # todo more sheets, names, small rectangles?
 
@@ -430,7 +434,7 @@ def plot_all(df, ylims=True, t0=(2017, 1, 1, 0, 0, 0, 0, 0, 0)):
     for i, t in enumerate(tr):
         plot_treatment(df, t, [i + 1, nrows], t0, i < len(tr) - 1, i == 0)
     if ylims:
-        name = flux_units['N2O']['name']
+        name = units
         set_ylims([df[name].min(), df[name].max()])
     for i, t in enumerate(tr):
         plt.subplot(6, 4, i * 4 + 1)
@@ -528,7 +532,33 @@ if experiment.name in ['migmin', 'buckets']:
     cla()
     plot_ph_vs_flux(trapz_df(df), ph_df)
     plt.show()
+    
+# %% plot_date
+    
+def plot_date(df,date,sort_by=['mixture', 'fertilizer', 'rock_type']):
+    justdate = df.date.map(lambda x:x[:8])
+    d = df[justdate==date]
+    d = d.sort_values(by=sort_by)
+    y = d.N2O_slope
+    plt.bar(range(len(y)), y)
+    plt.gca().set_xticks(range(len(y)))
+    xlabs = []
+    for i in d.index:
+        di = d.loc[i]
+        xlabs.append(repr(di.plot_nr) + ' ' + ' '.join([di[s] for s in sort_by]))
+    plt.gca().set_xticklabels(xlabs, rotation=60)
+    return d
 
+if experiment.name in ['migmin', 'buckets']:
+    treatments = ['rock_type']
+else:
+    treatments = ['mixture', 'fertilizer', 'rock_type']
+    
+#plot_date(df,'20160923')
+print('For the last day:')
+d = plot_date(df, df.date.max(), treatments)
+#d = plot_date(df,'20160923', treatments)
+print( d[['N2O_N_mug_m2h', 'plot_nr'] + treatments])
 # %% subplots integration gothrough
 
 # %% ginput-examples

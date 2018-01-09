@@ -61,7 +61,12 @@ def parse_row(s):
 
 
 def soup2data(soup):
-    tbl = soup.find_all(class_="yr-table yr-table-hourly yr-popup-area")
+    try:
+        tbl= soup.find_all(class_="yr-table yr-table-hourly yr-popup-area")
+    except Exception:
+        import treaceback
+        traceback.print_exc()
+        raise Exception('are you connected to the internet?')
     q = tbl[0].find_all(scope='row')
     rows = [x.parent for x in q]
     return [parse_row(x) for x in rows]
@@ -96,8 +101,11 @@ def save_data(data, old_data):
 
 
 def get_stored_data():
-    return pickle.load(open(DATA_FILE_NAME, 'rb'))
-
+    try:
+        return pickle.load(open(DATA_FILE_NAME, 'rb'))
+    except FileNotFoundError:
+        print("weather date file %s not found, starting empty"%DATA_FILE_NAME)
+        return []
 
 def make_data_file(start=(2015, 1, 1, 12, 0, 0, 0, 0, 0),
                    stop=(2015, 1, 2, 12, 0, 0, 0, 0, 0)):

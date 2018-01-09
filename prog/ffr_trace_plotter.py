@@ -393,7 +393,7 @@ class App(object):
         for side in ('left', 'right'):
             for key, reg in iter(res[side].items()) if side in res else []:
                 t, y = self.retrieved_data[key][:2]
-                t0, t1 = t[reg.start], t[reg.stop]
+                t0, t1 = reg.start, reg.stop
                 y0, y1 = reg.intercept + reg.slope * t0, reg.intercept + reg.slope * t1
                 self.regression_plots[key].extend([[t0, t1], [y0, y1]])
                 #                self.regression_signature[key] = y[0]

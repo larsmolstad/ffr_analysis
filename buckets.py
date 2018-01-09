@@ -42,7 +42,7 @@ treatments = {i + 1: {'rock_type':treatment_names[t]}
 
 known_broken = ['2017-11-03-14-19-34-x599304_71927-y6615238_67215-z0_0-h0_393826348891_both_Measure_13_']
 
-def data_files_rough_filter(filenames):
+def data_files_rough_filter(filenames, startdate, stopdate):
     """filenames is a list of filenames.
 
     Returns a list of filenames where the files which we are sure do
@@ -52,7 +52,7 @@ def data_files_rough_filter(filenames):
     def test(name):
         name = os.path.split(name)[1]
         broken = name in known_broken
-        date_ok = name.startswith('2') and name > '2017-08-27'
+        date_ok = startdate <= name.replace('-','') <= stopdate #'2017-08-27'
         text_ok = name.find('Measure') > -1 or name.find('Plot_bw') > -1
         return date_ok and text_ok and not broken
     return [x for x in filenames if test(x)]

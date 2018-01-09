@@ -75,11 +75,11 @@ def all_positions(filenames, sides):
 
 
 def dictify(res):
-    # res is like [name, side,'CO',number,'CO2',number,'N2O',number]
-    # {res[i]:res[i+1] for i in range(1,len(res),2)}
+    # res is like [name, side, options, 'CO',number,'CO2',number,'N2O',number]
+    # {res[i]:res[i+1] for i in range(2,len(res),2)}
     # to better find errors in the result files:
     y = {}
-    for i in range(2, len(res), 2):
+    for i in range(3, len(res), 2):
         try:
             y[res[i]] = res[i + 1]
         except Exception as e:
@@ -89,16 +89,35 @@ def dictify(res):
                 pass
             print('\n')
             raise(e)
-    return y, res[1]
+    return y
 
-
+def remove_overruled_raw_results(raw_result_list):
+    """keepeing the last one of the lines with equal filename and side
+(but not options) from the slopes file"""
+    x = reversed(raw_result_list)
+    done = []
+    y = []
+    for i, line in enumerate(x):
+        new = line[:2] 
+        if not new in done:
+            done.append(new)
+            y.append(line)
+    y.reverse()
+    return y
+            
 def make_df(raw_result_list):
+    print('%d lines from slope file'%len(raw_result_list))
+    raw_result_list = remove_overruled_raw_results(raw_result_list)
+    print('%d lines left after removal of duplicates'%len(raw_result_list))
     filenames = [x[0] for x in raw_result_list]
     sides = [x[1] for x in raw_result_list]
+    options = [x[2] for x in raw_result_list]
     y = []
     for i, name in enumerate(filenames):
         rdict = parse_filename(name)
-        slopes, rdict['side'] = dictify(raw_result_list[i])
+        slopes = dictify(raw_result_list[i])
+        rdict['side'] = sides[i]
+        rdict['options'] = options[i]
         for key, val in slopes.items():
             rdict[key] = val
         pos = rdict['vehicle_pos']
@@ -139,14 +158,14 @@ def get_result_list_from_slope_file(slope_file,
         reslist[i] is like [filename, side, name, number, name, number ...]
     """
     def str2num_line(s):
-        # reslist[i] is like [filename, side, name, number, name, number ...]
+        # reslist[i] is like [filename, side, options, name, number, name, number ...]
         # this converts the numbers from strings to floats: (in place)
-        for i in range(3, len(s), 2):
+        for i in range(4, len(s), 2):
             s[i] = float(s[i])
     with open(slope_file) as f:
         a = f.readlines()
     a = [x.strip('\n\r') for x in a]
-    reslist = [x.split() for x in a if x]
+    reslist = [x.split('\t') for x in a if x]
     reslist = reslist[start:stop] if stop >= 0 else reslist[start:]
     if index_list is not None:
         reslist = [x[i] for i in index_list]

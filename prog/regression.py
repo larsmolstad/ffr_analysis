@@ -8,6 +8,7 @@ from bisect_find import bisect_find
 
 
 class Regression():
+    
     def __init__(self, intercept, slope, se_intercept, se_slope, mse, start, stop):
         self.intercept = intercept
         self.slope = slope
