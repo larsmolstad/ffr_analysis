@@ -5,12 +5,13 @@ import numpy as np
 import pickle
 sys.path.append(os.path.split(os.path.split(
     os.path.realpath(__file__))[0])[0])  # sorry
-
 import regression
 import licor_indexes
 import get_data
 import divide_left_and_right
+import bisect_find
 
+regression_errors = []
 
 class G:  # (G for global) # todo get rid of
     res_file_name = 'slopes.txt'
@@ -43,8 +44,10 @@ def plot_regressions(data, regressions, plotfun, normalized=True, do_plot=True):
             t0, y0 = data[key][:2]
             t = [ti for (I1, I2) in reg.Iswitch for ti in t0[I1:I2]]
             y = [yi for (I1, I2) in reg.Iswitch for yi in y0[I1:I2]]
-            t = t[reg.start:reg.stop]
-            y = y[reg.start:reg.stop]
+            i0 = bisect_find.bisect_find(t, reg.start, nearest=True)
+            i1 = bisect_find.bisect_find(t, reg.stop, nearest=True)
+            t = t[i0:i1]
+            y = y[i0:i1]
             plotargs.extend([t, nrm(y), color + 'o',
                              t, nrm(reg.intercept + reg.slope * np.array(t)),
                              color])
@@ -56,8 +59,6 @@ def plot_regressions(data, regressions, plotfun, normalized=True, do_plot=True):
     b = (min_n2o * max_co2 - max_n2o * min_co2) / max(1e-10, max_n2o - min_n2o)
     plotargs.extend(make_plotargs('CO2', 'b', a, b))
     plotargs.extend(make_plotargs('N2O', 'r', 1, 0))
-    ymin = min_n2o
-    ymax = max_n2o
     if do_plot:
         plotfun(*plotargs)
     else:
@@ -73,9 +74,10 @@ def remove_zeros(t, y):
     return t, y
 
 
-def write_result_to_file(res, name, f):
+def write_result_to_file(res, name, options, f):
     for side, sideres in res.items():
         s = os.path.split(name)[1] + '\t' + side
+        s += '\t' + repr(options).replace('\t',' ')
         for key, regres in sideres.items():
             s += '\t{0}\t{1}'.format(key, regres.slope)
         f.write(s + '\n')
@@ -87,6 +89,7 @@ def get_filenames(directory_or_files, G):
     else:
         return get_data.select_files(directory_or_files, G)
 
+dbg = []
 
 class Regressor(object):
 
@@ -112,22 +115,37 @@ class Regressor(object):
         else:
             data = filename_or_data
         resdict = divide_left_and_right.group_all(data)
+        # residct is like {'CO2': x1, 'N2O': x2, ...} 
+        # where x1 and x2 is like{'left':(t,y,Istartstop), 'right':(t,y,Istartstop)}
+        # and Istartstop is [(Istart, Istop), (Istart, Istop)...]
+        # (Istartstop are indexes determining
+        # which part of the data has been used for the regression for one side)
         regressions = {'left': {}, 'right': {}}
         keys = ['CO2',  'N2O']
         for side in list(regressions.keys()):
             tbest = None
+            options = self.options
+            if side in options:
+                options = options[side]
             for key in keys:
                 t, y = remove_zeros(*resdict[key][side][:2])
-                Iswitch = resdict[key][side][2]
-                if key != 'CO2' and self.options['co2_guides'] and tbest is not None:
+                if key in options:
+                    options = options(key)
+                if len(t)==0:
+                    a = None
+                elif 'slope' in options: #manually set
+                    a = regression.Regression(t[0], options['slope'], 0,0,0, t[0], t[-1])
+                elif 'start' in options:
+                    a = regression.regress_within(t, y, options['start'], options['stop'])
+                elif key != 'CO2' and self.options['co2_guides'] and tbest is not None:
                     a = regression.regress_within(t, y, *tbest)
                 else:
                     a = regression.find_best_regression(
                         t, y, self.options['interval'], self.options['crit'])
                     if key == 'CO2' and a is not None:
-                        tbest = t[a.start], t[a.stop]
+                        tbest = a.start, a.stop
                 if a is not None:
-                    a.Iswitch = Iswitch
+                    a.Iswitch = resdict[key][side][2]
                     regressions[side][key] = a
             if len(list(regressions[side].keys())) == 0:
                 regressions.pop(side)
@@ -147,34 +165,38 @@ class Regressor(object):
                     n_on_line = 0
                     print('')
             return t0, n_on_line
+        
         if not files:
             print('\nNo regressions to do\n')
-            return {}
+            return dict(), []
         print('Doing regressions')
         n = len(files)
         t0 = time.time()
         resdict = {}
         n_on_line = 0
+        errors = []
         with open(self.slopes_file_name, write_mode) as f:
             for i, name in enumerate(files):
                 t0, n_on_line = print_info_maybe(i, n, t0, n_on_line)
                 try:
                     data = get_data.get_file_data(name)
                     res = self.find_all_slopes(data)
-                    write_result_to_file(res, name, f)
+                    write_result_to_file(res, name, self.options, f)
                     resdict[os.path.split(name)[1]] = res
                 except Exception as e:
-                    print(name)
                     import traceback
-                    traceback.print_exc()
-                    print('continuing')
-                    continue
+                    errors.append([name, traceback.format_exc()])
+                    #continue
         print_info_maybe(i, n, 0, 100000)
-        return resdict
+        print('Regression done on %d files with %d errors'%(len(files), len(errors)))
+        if len(errors):
+            regression_errors.append(errors)
+            print('See find_regressions.regression_errors[-1]')
+        return resdict, errors
 
     def find_regressions(self, directory_or_files):
         files = get_filenames(directory_or_files, {})
-        resdict = self.do_regressions(files)
+        resdict, errors = self.do_regressions(files)
         with open(os.path.splitext(self.slopes_file_name)[0] + '.pickle', 'wb') as f:
             pickle.dump(resdict, f)
 
@@ -182,15 +204,19 @@ class Regressor(object):
         """ this assumes that all files is in the same directory"""
         files = get_filenames(directory_or_files, {})
         directory = os.path.split(files[0])[0]
+        lines = [x.split('\t') for x in
+                 open(self.slopes_file_name, 'r').readlines()]
         if os.path.isfile(self.slopes_file_name):
-            done_files = [x.split('\t')[0] for x in open(
-                self.slopes_file_name, 'r').readlines()]
+            done = [(x[0], x[2]) for x in lines]# this is name and options
         else:
-            done_files = []
-        done_files = [os.path.join(directory, x) for x in done_files]
-        files = sorted(set(files) - set(done_files))
-        print(len(files))
-        resdict = self.do_regressions(files, 'a')
+            done = []
+        done = [(os.path.join(directory, x[0]), x[1]) for x in done]
+        must_be_done = [(x, repr(self.options)) for x in files]
+        rest = sorted(set(must_be_done) - set(done))
+        q = (len(must_be_done), len(must_be_done)-len(rest))
+        print('Regressions: %d files, %d already done with the same options'%q)
+        files = [x[0] for x in rest]
+        resdict, errors = self.do_regressions(files, 'a')
         pickle_name = os.path.splitext(self.slopes_file_name)[0] + '.pickle'
         try:
             old_dict = pickle.load(open(pickle_name), 'rb')

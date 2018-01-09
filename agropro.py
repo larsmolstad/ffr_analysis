@@ -63,7 +63,7 @@ treatments = {int(x[0]): {'mixture': x[1],
 # for treatment in ['rock_type', 'mixture', 'fertilizer']:
 #    df[treatment] = [agropro_treatments.treatments[i][treatment] for i in df.plo
 
-def agropro_rectangles():  # todo move
+def agropro_rectangles():  
     keys = [128, 228, 127, 227, 214, 213, 112, 111, 211, 108, 107,
             332, 331, 330, 329, 429, 424, 323, 423, 322, 321, 316,
             315, 415, 305, 401, 528, 628, 527, 627, 522, 622, 521,
@@ -75,13 +75,15 @@ rectangles = agropro_rectangles()
 
 broken = []
 
-def data_files_rough_filter(filenames):
+def data_files_rough_filter(filenames, start_and_stopdate):
     """filenames is a list of filenames.
 
     Returns a list of filenames where the files which we are sure do
     not belong to the migmin experiment have been taken away
 
     """
-    return [x for x in filenames if 
-            x.find('_Plot_') > -1 and os.path.split(x)[1] not in broken]
+    return [x for x in filenames if
+            start_and_stopdate[0] < x.replace('-', '') < start_and_stopdate[1] and
+            x.find('_Plot_') > -1 and
+            os.path.split(x)[1] not in broken]
 

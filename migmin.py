@@ -56,14 +56,16 @@ treatments = {i + 1: {'rock_type':treatment_names[t]}
 
 broken = []
 
-def data_files_rough_filter(filenames):
+def data_files_rough_filter(filenames, startdate, stopdate):
     """filenames is a list of filenames.
 
     Returns a list of filenames where the files which we are sure do
     not belong to the migmin experiment have been taken away
 
     """
-    return [x for x in filenames if 
-            x.find('_Plot_') > -1 and os.path.split(x)[1] not in broken]
-
+    def is_ok(name):
+        s = os.path.split(name)[1]
+        date_ok = startdate <= s.replace('-','') <= stopdate
+        return date_ok and name.find('_Plot_') > -1 and s not in broken
+    return [x for x in filenames if is_ok(x)]
 

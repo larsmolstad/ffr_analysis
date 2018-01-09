@@ -22,8 +22,11 @@ class Weather_data(object):
         weather_data_from_yr.update_weather_data()
 
     def make_assignments(self):
-        self.data = pickle.load(
-            open(weather_data_from_yr.DATA_FILE_NAME, 'rb'))
+        try:
+            self.data = pickle.load(
+                open(weather_data_from_yr.DATA_FILE_NAME, 'rb'))
+        except FileNotFoundError:
+            self.data = []
         x = [np.array(x) for x in self.get_temps_and_precip(self.data)]
         self.all_times, self.all_temps, self.all_precips = x
 
