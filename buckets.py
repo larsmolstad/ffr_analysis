@@ -23,7 +23,7 @@ def bucket_plot_identifier_fun(nr):
         return int(re.findall('\d+', name)[0])
 
     def fun(df):
-        return get_old_plot_nr(df['name']) == nr
+        return get_old_plot_nr(df['filename']) == nr
 
     return fun
 
