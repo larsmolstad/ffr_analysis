@@ -103,6 +103,7 @@ def parse_saved_data(data, filename):
                 t0 = v['t0']
         return t0 if t0 < 1e98 else 0
     res = OrderedDict()
+    res['filename'] = os.path.split(filename)[1]
     t0 = smallest_t0(data) * 0
     for key in data:
         if key == 'dlt':

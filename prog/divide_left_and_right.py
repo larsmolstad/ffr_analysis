@@ -94,7 +94,7 @@ def group_all(data_dict, cut_before=2, cut_after=3):
     shift_times = find_shift_times(data_dict)
     a = dict()
     for key, item in data_dict.items():
-        if key in ['aux', 'side', 'Wind']:
+        if key in ['aux', 'side', 'Wind', 'filename']:
             continue
         a[key] = group(item[0], item[1], shift_times, cut_before, cut_after)
     return a
