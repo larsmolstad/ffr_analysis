@@ -65,21 +65,23 @@ import migmin as experiment
 # (remember double backslashes)
 
 slopes_filename = experiment.slopes_filename
-resdir.raw_data_path = 'Y:\\MINA\\Miljøvitenskap\\Jord\\FFR\\results'
+exception_list_filename = '..\\..\\exceptions.xlsx'
+# resdir.raw_data_path = 'Y:\\MINA\\Miljøvitenskap\\Jord\\FFR\\results'
 resdir.raw_data_path = '..\\..\\results'
-# How to do regressions: This makes the "regressor object" regr which will be
-# used further below.  It contains the functions and parameters for doing the
-# regressions.  The parameters are collected in the dict named
-# options. (Organizing the code this way makes it easier to replace the
-# regression function with your own functions.)  Here, the options have:
-# 'interval': the length of the regression interval (seconds) 'crit': how to
-# choose the best interval within the run (for example the best 100 seconds
-# within 180 seconds). 'crit' can be 'steepest' or 'mse' (mean squared error)
-# 'co2_guides': wether or not the N2O regression will be done on the same
-# interval as the CO2 regression.
+# How to do regressions: The next two lines makes the "regressor
+# object" regr which will be used further below.  It contains the
+# functions and parameters for doing the regressions.  The parameters
+# are collected in the dict named options. (Organizing the code this
+# way makes it easier to replace the regression function with your own
+# functions.)  Here, the options have: 'interval': the length of the
+# regression interval (seconds) 'crit': how to choose the best
+# interval within the run (for example the best 100 seconds within 180
+# seconds). 'crit' can be 'steepest' or 'mse' (mean squared error)
+# 'co2_guides': wether or not the N2O regression will be done on the
+# same interval as the CO2 regression.
 
 options = {'interval': 100, 'crit': 'steepest', 'co2_guides': True}
-regr = find_regressions.Regressor(slopes_filename, options)
+regr = find_regressions.Regressor(slopes_filename, options, exception_list_filename)
 
 # regressions may take a long time. Set redo_regressions to False if you want to
 # just use the slope file without redoing regression
@@ -93,7 +95,7 @@ options_exceptions_file = 'exceptions.xls'
 flux_units = {'N2O': {'name': 'N2O_N_mug_m2h', 'factor': 2 * 14 * 1e6 * 3600},
                'CO2': {'name': 'CO2_C_mug_m2h', 'factor': 12 * 1e6 * 3600}}
 
-start_and_stopdate = ['201710', '3']
+start_and_stopdate = ['201712', '3']
 
 excel_filename_start = experiment.name
 # %% ################### END EDIT THESE PARAMETERS ############################
@@ -204,7 +206,7 @@ else:
     # update resfile without redoing regressions:
     regr.update_regressions_file(filenames)
 
-
+stopp
 # %% Sort results according to the rectangles, put them in a Pandas dataframe
 pd.set_option('display.width', 120)
 # The slopes have been stored in the file whose name equals the value of
@@ -558,7 +560,7 @@ else:
 print('For the last day:')
 d = plot_date(df, df.date.max(), treatments)
 #d = plot_date(df,'20160923', treatments)
-print( d[['N2O_N_mug_m2h', 'plot_nr'] + treatments])
+print(d[['N2O_N_mug_m2h', 'plot_nr'] + treatments])
 # %% subplots integration gothrough
 
 # %% ginput-examples
