@@ -75,15 +75,16 @@ rectangles = agropro_rectangles()
 
 broken = []
 
-def data_files_rough_filter(filenames, start_and_stopdate):
+def data_files_rough_filter(filenames, startdate='0000', stopdate='9999'):
     """filenames is a list of filenames.
 
     Returns a list of filenames where the files which we are sure do
     not belong to the migmin experiment have been taken away
 
     """
-    return [x for x in filenames if
-            start_and_stopdate[0] < x.replace('-', '') < start_and_stopdate[1] and
-            x.find('_Plot_') > -1 and
-            os.path.split(x)[1] not in broken]
-
+    def is_ok(x):
+        x = os.path.split(x)[1]
+        return startdate < x.replace('-', '')  < stopdate and \
+                x.find('_Plot_') > -1 and x not in broken
+                
+    return [x for x in filenames if is_ok(x)]

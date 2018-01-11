@@ -81,7 +81,7 @@ def group(t, y, shift_t, cut_before, cut_after):
     for i, (ts, side) in enumerate(shift_t):
         # print min(t), max(t), ts, cut_before
         # print times
-        I1 = search_sorted(t, ts + cut_before)
+        I1 = search_sorted(t, ts + cut_after)
         I2 = search_sorted(t, times[i + 1] - cut_before) + 1
         # print I1, I2
         ty[side][0].extend(list(t[I1:I2]))
