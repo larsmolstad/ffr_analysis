@@ -51,7 +51,7 @@ current_path = os.getcwd()
 
 # Select which rectangles, treatments and files you want:
 
-import migmin as experiment
+# import migmin as experiment
 
 # or
 
@@ -59,7 +59,7 @@ import migmin as experiment
 
 # or
 
-#import agropro as experiment
+import agropro as experiment
 
 # Override the default result directories:
 # (remember double backslashes)
@@ -78,15 +78,16 @@ resdir.raw_data_path = '..\\..\\results'
 # interval within the run (for example the best 100 seconds within 180
 # seconds). 'crit' can be 'steepest' or 'mse' (mean squared error)
 # 'co2_guides': wether or not the N2O regression will be done on the
-# same interval as the CO2 regression.
+# same interval as the CO2 regression. Se the excel ex_options file
+# for more options
 
 options = {'interval': 100, 'crit': 'steepest', 'co2_guides': True}
+
 regr = find_regressions.Regressor(slopes_filename, options, exception_list_filename)
 
 # regressions may take a long time. Set redo_regressions to False if you want to
 # just use the slope file without redoing regression
 redo_regressions =  False
-options_exceptions_file = 'exceptions.xls'
 # Choose flux units
 # factor is the conversion factor from mol/s/m2 to the given unit
 # flux_units = {'N2O': {'name': 'N2O_N_mmol_m2day', 'factor': 2 * 1000 * 86400},
@@ -95,7 +96,7 @@ options_exceptions_file = 'exceptions.xls'
 flux_units = {'N2O': {'name': 'N2O_N_mug_m2h', 'factor': 2 * 14 * 1e6 * 3600},
                'CO2': {'name': 'CO2_C_mug_m2h', 'factor': 12 * 1e6 * 3600}}
 
-start_and_stopdate = ['201712', '3']
+start_and_stopdate = ['201701', '3']
 
 excel_filename_start = experiment.name
 # %% ################### END EDIT THESE PARAMETERS ############################
@@ -109,21 +110,15 @@ treatment_names = sr.find_treatment_names(treatments)
 example_file = '2016-06-16-10-19-50-x599234_725955-y6615158_31496-z0_0-h0_743558650162_both_Plot_9_'
 
 
-def cla():
-    if not plt.get_backend().endswith('inline'):
-        plt.cla()
-
-
-def clf():
-    if not plt.get_backend().endswith('inline'):
-        plt.clf()
-
+#we'll do this a lot:
+def with_raw_dir(filename):
+    return os.path.join(resdir.raw_data_path, filename)
 
 # Plotting the rectangles (not for buckets)
-cla()
+plt.cla()
 plot_rectangles(rectangles)
 # with treatments:
-cla()
+plt.cla()
 keys = list(rectangles)
 r = [rectangles[k] for k in keys]
 tr = ['_'.join(treatments[k].values()) for k in keys]# todo
@@ -131,7 +126,7 @@ plot_rectangles(r, tr)
 plt.show()
 
 # %% some plotting examples
-# cla()
+# plt.cla()
 # x = [1, 2, 3, 4]
 # y = [1, 3, 2, 4]
 # plt.plot(x, y)
@@ -144,7 +139,7 @@ plt.show()
 # plt.show()
 
 # %%
-clf()
+plt.clf()
 plt.subplot(1, 1, 1)
 
 
@@ -153,19 +148,28 @@ filenames = glob.glob(os.path.join(resdir.raw_data_path, '2*'))
 print("number of files: %d" % len(filenames))
 
 print("\nSome examples:")
-# Get the data from file number 1000
-n = max(len(filenames)-1, 1000)
-a = get_data.get_file_data(filenames[n])
-cla()
-plt.plot(a['N2O'][0], a['N2O'][1], '.')
+
+def plot_raw(filename, key='N2O'):
+    "key may be 'N2O', 'CO2', 'Wind'"
+    if not os.path.isfile(filename):
+        filename = with_raw_dir(filename)
+    a = get_data.get_file_data(filename)
+    plt.plot(a[key][0], a[key][1], '.')
+    return a
+# Get the data from file number 1000 (or the last one if there are
+# less than 1000 files)
+n = 1000 if len(filenames)>1000 else len(filenames)
+plt.cla()
+a = plot_raw(filenames[n])
 plt.show()
 
+    
 # example_file has some fluxes:
-filename = os.path.join(resdir.raw_data_path, example_file)
+filename = with_raw_dir(example_file)
 # checking that it exists first to avoid that this script stops:
 if os.path.isfile(filename):
     a = get_data.get_file_data(filename)
-    cla()
+    plt.cla()
     plt.plot(a['N2O'][0], a['N2O'][1], '.')
     plt.show()
 else:
@@ -174,11 +178,10 @@ else:
 
 
 # %% Do a regression:
-cla()
-reg = regr.find_all_slopes(filename, plotfun=plt.plot)
+plt.cla()
+reg = regr.find_all_slopes(filename, do_plot=True)
 plt.show()
 find_regressions.print_reg(reg)
-
 # (another way:
 # data = get_data.get_file_data(filename)
 # reg = regr.find_all_slope(data))
@@ -206,7 +209,13 @@ else:
     # update resfile without redoing regressions:
     regr.update_regressions_file(filenames)
 
-stopp
+def plot_error_number(n, key='N2O'):
+    name, err = find_regressions.regression_errors[-1][n]
+    print('--------- name was: %s\nerror was:\n%s\n----------'%(name,err))
+    a = plot_raw(name)
+    print('shifting:', a['side'])
+    return name, a
+
 # %% Sort results according to the rectangles, put them in a Pandas dataframe
 pd.set_option('display.width', 120)
 # The slopes have been stored in the file whose name equals the value of
@@ -228,7 +237,8 @@ df.sort_values('date', inplace=True)
 
 # %% Pandas... Pandas is a python library that gives python R-like
 # dataframes. It takes some time to learn Pandas, although there is an
-# introduction called "10 minutes to Pandas"
+# introduction called "10 minutes to Pandas". Try read that -- you should 
+# understand the difference between df.loc[n] and df.iloc[n]. I never use df.ix.
 # print(df.head())
 # print(df.tail())
 # print(df.columns)
@@ -239,7 +249,7 @@ print(df.date.max())
 # pnr = df.plot_nr.values[0]
 # print('plotting N2O slopes for plot_nr', pnr)
 # d = df[df.plot_nr == pnr]
-# cla()
+# plt.cla()
 # plt.axis('auto')
 # plt.plot(d['t'], d['N2O_slope'], '.-')
 # plt.show()
@@ -287,7 +297,7 @@ def test_nrs(df, plot_numbers):
         plt.plot(d.x, d.y, '.')
 
 
-cla()
+plt.cla()
 
 test_nrs(df, sorted(set(df.plot_nr)))
 plt.show()
@@ -430,7 +440,7 @@ def plot_all(df, ylims=True, t0=(2017, 1, 1, 0, 0, 0, 0, 0, 0)):
     units = flux_units['N2O']['name']
     if isinstance(t0, (list, tuple)):
         t0 = time.mktime(t0)
-    clf()
+    plt.clf()
     tr = sorted(set(df.treatment))
     nrows = len(tr)
     for i, t in enumerate(tr):
@@ -459,7 +469,7 @@ def barplot_trapz(df, sort_by_side=False):
         a = trapz_buckets(df)
     else:
         a = trapz_df(df)
-    cla()
+    plt.cla()
     # df.sort_index()
     rock_types = sorted(a.rock_type.unique())
     toplotx = []
@@ -492,7 +502,7 @@ def barplot_trapz(df, sort_by_side=False):
     return toplotx, toploty
 
 
-clf()
+plt.clf()
 plt.subplot()
 do_split = experiment.name == 'buckets'
 a, b = barplot_trapz(df, do_split)
@@ -531,7 +541,7 @@ def plot_ph_vs_flux(df_trapz, ph_df, ph_method='CaCl2'):
 
 
 if experiment.name in ['migmin', 'buckets']:
-    cla()
+    plt.cla()
     plot_ph_vs_flux(trapz_df(df), ph_df)
     plt.show()
     
@@ -606,8 +616,8 @@ def ginput_show_info(df, fun=None, x='x', y='y'):
 
 def show_reg_fun(row):
     plt.subplot(2, 1, 2)
-    cla()
-    filename = os.path.join(resdir.raw_data_path, row['filename'])
+    plt.cla()
+    filename = with_raw_dir(row['filename'])
     data = get_data.get_file_data(filename)
     regr.find_all_slopes(data, plotfun=plt.plot)
 
@@ -615,7 +625,7 @@ def show_reg_fun(row):
 def ginput_check_points(df):
     get_ipython().magic('matplotlib auto')
     time.sleep(3)
-    clf()
+    plt.clf()
     plt.subplot(2, 1, 1)
     test_nrs(df, sorted(set(df.plot_nr)))
     return ginput_show_info(df, show_reg_fun)
@@ -625,7 +635,7 @@ def ginput_check_points(df):
 
 
 def ginput_check_regres(df):
-    clf()
+    plt.clf()
     plt.subplot(2, 1, 1)
     plt.plot(df.t, df.N2O_slope, '.')
     return ginput_show_info(df, show_reg_fun, x='t', y='N2O_slope')

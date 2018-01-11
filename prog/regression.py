@@ -53,7 +53,7 @@ def regression2(x, y, plotfun=False):
     se_slope = mse * np.sqrt(1.0 / xcxc)
     if plotfun:
         plotfun(x, y, '.', x, intercept + slope * x)
-    return Regression(intercept, slope, se_intercept, se_slope, mse, 0, n - 1)
+    return Regression(intercept, slope, se_intercept, se_slope, mse, x[0], x[-1])
 
 
 def find_best_regression(x, y, xint, crit='mse', jump=1, plotfun=False):
@@ -94,7 +94,7 @@ def find_best_regression(x, y, xint, crit='mse', jump=1, plotfun=False):
         bestx = x[besti:bestj]
         plotfun(x, y, '.',
                 bestx, best.intercept + best.slope * bestx, '-')
-    best.set_start_and_stop(besti, bestj)
+    best.set_start_and_stop(x[besti], x[bestj])
     return best
 
 
@@ -110,5 +110,5 @@ def regress_within(x, y, x1, x2, plotfun=False):
     reg = regression2(xin, yin)
     if plotfun:
         plotfun(x, y, '.', xin, reg.intercept + xin * reg.slope)
-    reg.set_start_and_stop(i, j)
+    reg.set_start_and_stop(x[i], x[j])
     return reg
