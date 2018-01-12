@@ -24,9 +24,7 @@ import pandas as pd
 pd.options.mode.chained_assignment = None 
 sys.path.append(os.path.join(os.getcwd(), 'prog'))
 import plotting_compat
-from plotting_compat import plt
-if hasattr(plotting_compat, 'get_ipython'):
-    from plotting_compat import get_ipython
+import pylab as plt
 import resdir
 import get_data
 import utils
@@ -37,6 +35,7 @@ import sort_results as sr
 import divide_left_and_right
 import weather_data
 import flux_calculations
+import ginput_show
 # import scipy.stats
 from statsmodels.formula.api import ols#, rlm
 # from statsmodels.stats.anova import anova_lm
@@ -86,7 +85,8 @@ options = {'interval': 100, 'crit': 'steepest', 'co2_guides': True}
 regr = find_regressions.Regressor(slopes_filename, options, exception_list_filename)
 
 # regressions may take a long time. Set redo_regressions to False if you want to
-# just use the slope file without redoing regression
+# just reuse the slope file without redoing regression. Regressions will still be
+# done if options have changed.
 redo_regressions =  False
 # Choose flux units
 # factor is the conversion factor from mol/s/m2 to the given unit
@@ -96,7 +96,7 @@ redo_regressions =  False
 flux_units = {'N2O': {'name': 'N2O_N_mug_m2h', 'factor': 2 * 14 * 1e6 * 3600},
                'CO2': {'name': 'CO2_C_mug_m2h', 'factor': 12 * 1e6 * 3600}}
 
-start_and_stopdate = ['201701', '3']
+start_and_stopdate = ['201701', '3000']
 
 excel_filename_start = experiment.name
 # %% ################### END EDIT THESE PARAMETERS ############################
@@ -155,7 +155,11 @@ def plot_raw(filename, key='N2O'):
         filename = with_raw_dir(filename)
     a = get_data.get_file_data(filename)
     plt.plot(a[key][0], a[key][1], '.')
+    plt.gca().set_xlabel('seconds')
+    if key in ['N2O', 'CO2', 'CO']:
+        plt.gca().set_ylabel('ppm')
     return a
+
 # Get the data from file number 1000 (or the last one if there are
 # less than 1000 files)
 n = 1000 if len(filenames)>1000 else len(filenames)
@@ -168,34 +172,25 @@ plt.show()
 filename = with_raw_dir(example_file)
 # checking that it exists first to avoid that this script stops:
 if os.path.isfile(filename):
-    a = get_data.get_file_data(filename)
     plt.cla()
-    plt.plot(a['N2O'][0], a['N2O'][1], '.')
+    plot_raw(filename, 'N2O')
     plt.show()
 else:
     print('skipping example file')
     print('(does %s exist?)' % filename)
 
+# also,
+# a = get_data.get_file_data(filename)
+# plt.plot(a['N2O'][0], a['N2O'][1], '.')
 
 # %% Do a regression:
 plt.cla()
 reg = regr.find_all_slopes(filename, do_plot=True)
 plt.show()
 find_regressions.print_reg(reg)
-# (another way:
+# another way:
 # data = get_data.get_file_data(filename)
-# reg = regr.find_all_slope(data))
-# Interval is the length of time of the regression line. crit can be 'steepest'
-# or 'mse'; regressions will be done where the curves are steepest or where
-# they have the lowest mse, respectively. If co2_guides==True, the interval in
-# time where the co2 curve is the steepest or has the best mse is used for the
-# time of regression for the N2O.
-
-
-# (the division of the data from the two chambers is done in divide_left_and_right.py like this:
-# import divide_left_and_right
-# ad = divide_left_and_right.group_all(a)
-# )
+# reg = regr.find_all_slope(data)
 
 # %% Do many regressions
 
@@ -568,80 +563,28 @@ else:
     
 #plot_date(df,'20160923')
 print('For the last day:')
-d = plot_date(df, df.date.max(), treatments)
+#d = plot_date(df, df.date.max(), treatments)
 #d = plot_date(df,'20160923', treatments)
-print(d[['N2O_N_mug_m2h', 'plot_nr'] + treatments])
+#print(d[['N2O_N_mug_m2h', 'plot_nr'] + treatments])
 # %% subplots integration gothrough
 
 # %% ginput-examples
-# For this, you first need to enter
-# % matplotlib auto
-# or enter the command
-# get_ipython().magic('matplotlib auto')
-# in spyder. This makes the plot come up in a separate window, where they can
+# 
+# This makes the plot come up in a separate window, where they can
 # be clicked on. (The plot window sometimes shows up behind the spyder window.)
-# Enter "%matplotlib inline" when you want the inline plots back.
-# We had
 
+# We want to
+# 1: have a map with dots where we have sampled, and click on the dots to
+#    get the info about the sample and see the regression
+# 
+# ginput_show.ginput_check_points(df, rectangles, regr)
+#
+# 2: have a plot of results (slopes) and click on the dots to see the same
+#
+# ginput_show.ginput_check_regres(df, regr)
+#
 
-def test_nrs(df, plot_numbers):
-    plot_rectangles(rectangles, names=True)
-    for nr in plot_numbers:
-        d = df[df.plot_nr == nr]
-        plt.plot(d.x, d.y, '.')
-
-
-# We want to click on the dots and see the data associated with them
-
-
-def ginput_show_info(df, fun=None, x='x', y='y'):
-    print('Locate the plot window, click on a dot, or double-click (or triple-click) to quit')
-    double_click_time = 0.5
-    minimum_distance_index = None
-    t0 = time.time()
-    while 1:
-        xy = plt.ginput(1)
-        xy = xy[0]
-        previous_one = minimum_distance_index
-        if xy[0] is None or time.time() - t0 < double_click_time:
-            break
-        distances = np.sqrt((df[x] - xy[0])**2 + (df[y] - xy[1])**2)
-        minimum_distance_index = distances.argmin()
-        print(df.loc[minimum_distance_index])
-        if fun:
-            fun(df.loc[minimum_distance_index])
-        t0 = time.time()
-    return df.loc[previous_one] if previous_one else None
-
-
-def show_reg_fun(row):
-    plt.subplot(2, 1, 2)
-    plt.cla()
-    filename = with_raw_dir(row['filename'])
-    data = get_data.get_file_data(filename)
-    regr.find_all_slopes(data, plotfun=plt.plot)
-
-
-def ginput_check_points(df):
-    get_ipython().magic('matplotlib auto')
-    time.sleep(3)
-    plt.clf()
-    plt.subplot(2, 1, 1)
-    test_nrs(df, sorted(set(df.plot_nr)))
-    return ginput_show_info(df, show_reg_fun)
-
-
-# kind of the same, but plotting the slopes in the upper subplot
-
-
-def ginput_check_regres(df):
-    plt.clf()
-    plt.subplot(2, 1, 1)
-    plt.plot(df.t, df.N2O_slope, '.')
-    return ginput_show_info(df, show_reg_fun, x='t', y='N2O_slope')
-
-
-# %% making your own regression function:
+# %% Making your own regression function:
 
 # So you want to make your own regression function. We can do this like so (inheriting from the Regressor class):
 
@@ -704,33 +647,10 @@ plt.show()
 model = 'np.log(trapz + 0.005) ~ C(rock_type)'
 ols_trapz_res = ols(model, data=trapz_df(df2)).fit()
 print(ols_trapz_res.summary())
-ginput_check_points(df2)
-ginput_check_regres(df2)
+ginput_show.ginput_check_points(df2, rectangles, regr)
+ginput_show.ginput_check_regres(df, regr)
 ginput_check_regres(df[df.plot_nr==1])
 
 
 """)
-# %%
-# * batch-programmer
-# I will at least temporarily remove some of these to make the code more tidy
-# From dos, powershell or bash:
 
-# >> cd to_the_path_to_this_readme_file
-
-# >> python ffr_trace_plotter.py
-
-# (you can untick the plot tickbox for faster regressions)
-
-# Some command-line scripts. (-h gives a short help text)
-
-# >> python find_regressions.py -h
-
-# >> python sort_results.py -h
-
-# >> python export_raw_data_to_excel.py -h
-
-# For example
-
-# >> python find_regressions.py c:\data --out c:\regressions\slopes.txt
-
-# >> python sort_results.py  -s ..\slopes.txt
