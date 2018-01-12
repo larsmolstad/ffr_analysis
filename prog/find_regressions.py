@@ -52,52 +52,71 @@ def get_regression_segments(data, regressions):
     return res
 
 
-def plot_regressions(data, regressions, normalized=True):
+def plot_regressions(data, regressions, normalized=True, markers=None):
     """ plotting the n2o and co2 with regression lines.
     The CO2 is scaled to match the N2O"""
-    def min_and_max(x):
-        return min(x), max(x)
 
+    if markers is None:
+        markers = 'r. r- g. g- b. k. k-- c. c-- y.'
+        
     regression_segments = get_regression_segments(data, regressions)
-    tN2O, yN2O, tN2O_left, yN2O_left = regression_segments['left']['N2O']
-    _, _, tN2O_right, yN2O_right = regression_segments['right']['N2O']
-    tCO2, yCO2, tCO2_left, yCO2_left = regression_segments['left']['CO2']
-    _, _, tCO2_right, yCO2_right = regression_segments['right']['CO2']
-    
-    r = regressions['left']['CO2']
-    CO2_left_regy = tCO2_left*r.slope + r.intercept
-    
-    r = regressions['right']['CO2']
-    CO2_right_regy = tCO2_right*r.slope + r.intercept
-    
-    r = regressions['left']['N2O']
-    N2O_left_regy = tN2O_left*r.slope + r.intercept
-    
-    r = regressions['right']['N2O']
-    N2O_right_regy = tN2O_right*r.slope + r.intercept
+
+    if regression_segments['left']:
+        tN2O, yN2O, tN2O_left, yN2O_left = regression_segments['left']['N2O']
+        tCO2, yCO2, tCO2_left, yCO2_left = regression_segments['left']['CO2']
+        r = regressions['left']['CO2']
+        CO2_left_regy = tCO2_left*r.slope + r.intercept
+        r = regressions['left']['N2O']
+        N2O_left_regy = tN2O_left*r.slope + r.intercept
+    if regression_segments['right']:
+        tN2O, yN2O, tN2O_right, yN2O_right = regression_segments['right']['N2O']
+        tCO2, yCO2, tCO2_right, yCO2_right = regression_segments['right']['CO2']
+        r = regressions['right']['CO2']
+        CO2_right_regy = tCO2_right*r.slope + r.intercept
+        r = regressions['right']['N2O']
+        N2O_right_regy = tN2O_right*r.slope + r.intercept
 
     ax1 = plt.gca()
+    ax1.grid()
     ax2 = ax1.twinx()
 
-    s = ['b.', 'r.', 'r-', 'g.', 'g-']
-    ax1.plot(tN2O_left, yN2O_left,       s[1],
-             tN2O_left, N2O_left_regy,   s[2],
-             tN2O_right, yN2O_right,     s[3],
-             tN2O_right, N2O_right_regy, s[4],
-             markersize=20)#, markerfacecolor='none')
-    ax1.plot(tN2O, yN2O,                 s[0])
+    s = markers.split()
+    ax2.plot(tCO2, yCO2,                 s[9])
+    if regression_segments['left']:
+        ax1.plot(tN2O_left, yN2O_left,       s[0],
+                 tN2O_left, N2O_left_regy,   s[1], markersize=20)
+        ax2.plot(tCO2_left, yCO2_left,       s[5],
+                 tCO2_left, CO2_left_regy,   s[6])
+    if regression_segments['right']:
+        ax1.plot(tN2O_right, yN2O_right,     s[2],
+                 tN2O_right, N2O_right_regy, s[3], markersize=20)
+        ax2.plot(tCO2_right, yCO2_right,     s[7],
+                 tCO2_right, CO2_right_regy, s[8])
+    ax1.plot(tN2O, yN2O,  s[4])
 
     # some empty plots in ax2 to get the legend right. Not saying this is good
+    indexes = {'left':range(5), 'right': range(5,10)}
+    s2 = [(i, x) for i,x in enumerate(s)]
+    for side in {'left', 'right'}:
+        if not regression_segments[side]:
+            for x in s2:
+                if x[0] in indexes[side]:
+                    s2.remove(x)
+    s = [x[1] for x in s2]
+    print (s)
+    print ([x for c in s for x in [[], [], c]])
     ax2.plot(*[x for c in s for x in [[], [], c]])
-    ax2.plot(tCO2_left, yCO2_left,       'y.',
-             tCO2_left, CO2_left_regy,   'k-',
-             tCO2_right, yCO2_right,     'y.',
-             tCO2_right, CO2_right_regy, 'k-',
-             tCO2, yCO2,                 'k.')
-
-    ax2.legend(['N2O', 'N2O_left', 'N2O_left', 'N2O_right', 'N2O_right',
-                'CO2', 'CO2_left', 'CO2_left', 'CO2_right', 'CO2_right'])
     
+    leg = ['N2O_left', 'N2O_left', 'N2O_right', 'N2O_right', 'N2O',
+           'CO2_left', 'CO2_left', 'CO2_right', 'CO2_right', 'CO2']
+    for side in ['left', 'right']:
+        if not regression_segments[side]:
+            leg = [x for x in leg if not x.endswith(side)]
+    ax2.legend(leg)
+    
+    ax2.set_xlabel('seconds')
+    ax1.set_ylabel('ppm N2O')
+    ax2.set_ylabel('ppm CO2')
 
 # def plot_regressions(data, regressions, plotfun, normalized=True, do_plot=True):
 #     """ plotting the n2o and co2 with regression lines.
@@ -318,8 +337,8 @@ class Regressor(object):
                 return self.options.options['key']
             else:
                 return default
-        return {'cut_before':get_maybe('cut_before', 2),
-                'cut_after':get_maybe('cut_after', 3)}
+        return {'cut_before':get_maybe('cut_before', 3),
+                'cut_after':get_maybe('cut_after', 4)}
         
     def find_all_slopes(self, filename_or_data, do_plot=False, given_ex_options=False):
         """Finds the regression lines for N2O and CO2, for left and right
@@ -339,7 +358,6 @@ class Regressor(object):
             ex_options = given_ex_options
 
         cut_param = self._get_divide_cut_param(ex_options)
-        print ('asdf',cut_param)
         rawdict = divide_left_and_right.group_all(data, **cut_param)
 
         keys = ['CO2',  'N2O']
