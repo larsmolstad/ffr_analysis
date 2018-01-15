@@ -64,7 +64,7 @@ import agropro as experiment
 # (remember double backslashes)
 
 slopes_filename = experiment.slopes_filename
-exception_list_filename = '..\\..\\exceptions.xlsx'
+specific_options_filename = 'specific_options_examples.xlsx'
 # resdir.raw_data_path = 'Y:\\MINA\\Miljøvitenskap\\Jord\\FFR\\results'
 resdir.raw_data_path = '..\\..\\results'
 # How to do regressions: The next two lines makes the "regressor
@@ -77,17 +77,17 @@ resdir.raw_data_path = '..\\..\\results'
 # interval within the run (for example the best 100 seconds within 180
 # seconds). 'crit' can be 'steepest' or 'mse' (mean squared error)
 # 'co2_guides': wether or not the N2O regression will be done on the
-# same interval as the CO2 regression. Se the excel ex_options file
+# same interval as the CO2 regression. Se the excel specific_options file
 # for more options
 
 options = {'interval': 100, 'crit': 'steepest', 'co2_guides': True}
 
-regr = find_regressions.Regressor(slopes_filename, options, exception_list_filename)
+regr = find_regressions.Regressor(slopes_filename, options, specific_options_filename)
 
 # regressions may take a long time. Set redo_regressions to False if you want to
 # just reuse the slope file without redoing regression. Regressions will still be
 # done if options have changed.
-redo_regressions =  False
+redo_regressions =  True#False
 # Choose flux units
 # factor is the conversion factor from mol/s/m2 to the given unit
 # flux_units = {'N2O': {'name': 'N2O_N_mmol_m2day', 'factor': 2 * 1000 * 86400},
@@ -96,7 +96,7 @@ redo_regressions =  False
 flux_units = {'N2O': {'name': 'N2O_N_mug_m2h', 'factor': 2 * 14 * 1e6 * 3600},
                'CO2': {'name': 'CO2_C_mug_m2h', 'factor': 12 * 1e6 * 3600}}
 
-start_and_stopdate = ['201701', '3000']
+start_and_stopdate = ['20171209', '20171210']
 
 excel_filename_start = experiment.name
 # %% ################### END EDIT THESE PARAMETERS ############################
