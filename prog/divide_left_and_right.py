@@ -69,7 +69,7 @@ def find_shift_times(data_dict):
     return list(zip(t, [nr_side[x] for x in side[0::2]]))
 
 
-def group(t, y, shift_t, cut_before, cut_after):
+def group(t, y, shift_t, cut_beginnings, cut_ends):
     """ returns {'left':(t,y,Istartstop),
                  'right':(t,y,Istartstop)}
         Istartstop is [(Istart, Istop),...] """
@@ -79,22 +79,19 @@ def group(t, y, shift_t, cut_before, cut_after):
     # todo bedre. tar med t[-1] i tilfelle det skjer et skifte rett
     # etter der.
     for i, (ts, side) in enumerate(shift_t):
-        # print min(t), max(t), ts, cut_before
-        # print times
-        I1 = search_sorted(t, ts + cut_after)
-        I2 = search_sorted(t, times[i + 1] - cut_before) + 1
-        # print I1, I2
+        I1 = search_sorted(t, ts + cut_beginnings)
+        I2 = search_sorted(t, times[i + 1] - cut_ends) + 1
         ty[side][0].extend(list(t[I1:I2]))
         ty[side][1].extend(list(y[I1:I2]))
         ty[side][2].append((I1, I2))
     return ty
 
 
-def group_all(data_dict, cut_before=2, cut_after=3):
+def group_all(data_dict, cut_beginnings=3, cut_ends=2):
     shift_times = find_shift_times(data_dict)
     a = dict()
     for key, item in data_dict.items():
         if key in ['aux', 'side', 'Wind', 'filename']:
             continue
-        a[key] = group(item[0], item[1], shift_times, cut_before, cut_after)
+        a[key] = group(item[0], item[1], shift_times, cut_beginnings, cut_ends)
     return a

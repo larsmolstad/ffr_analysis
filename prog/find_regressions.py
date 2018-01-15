@@ -273,8 +273,8 @@ class Regressor(object):
                 return self.options.options['key']
             else:
                 return default
-        return {'cut_before':get_maybe('cut_before', 3),
-                'cut_after':get_maybe('cut_after', 4)}
+        return {'cut_ends':get_maybe('cut_ends', 3),
+                'cut_beginnings':get_maybe('cut_beginnings', 4)}
         
     def find_all_slopes(self, filename_or_data, do_plot=False, given_specific_options=False):
         """Finds the regression lines for N2O and CO2, for left and right
