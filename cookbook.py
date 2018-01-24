@@ -21,7 +21,7 @@ import time
 import glob
 import numpy as np
 import pandas as pd
-pd.options.mode.chained_assignment = None 
+#pd.options.mode.chained_assignment = None 
 sys.path.append(os.path.join(os.getcwd(), 'prog'))
 import plotting_compat
 import pylab as plt
@@ -86,7 +86,7 @@ redo_regressions =  True
 #              'CO2': {'name': 'CO2_C_mmol_m2day', 'factor': 1000 * 86400}}
 flux_units = {'N2O': {'name': 'N2O_N_mug_m2h', 'factor': 2 * 14 * 1e6 * 3600},
                'CO2': {'name': 'CO2_C_mug_m2h', 'factor': 12 * 1e6 * 3600}}
-start_and_stopdate = ['20171209', '20171210']
+start_and_stopdate = ['20171201', '20171210']
 excel_filename_start = experiment.name
 # %% ################### END EDIT THESE PARAMETERS ############################
 
@@ -265,22 +265,25 @@ weather_data.data.update()
 
 
 def finalize_df(df, precip_dt=2):
+    bucket_factor = (50/23.5)**2 * 0.94
     df['Tc'] = weather_data.data.get_temp(df.t)
     df['precip'] = weather_data.data.get_precip(df.t)
-    # df['precip2'] = weather_data.data.get_precip2(df.t, [0, precip_dt]) #todo failed
-    N2O_mol_secm2 = flux_calculations.calc_flux(df.N2O_slope, df.Tc)
-    CO2_C_mol_secm2 = flux_calculations.calc_flux(df.CO2_slope, df.Tc)
+    df['N2O_mol_m2s'] = flux_calculations.calc_flux(df.N2O_slope, df.Tc)
+    df['CO2_mol_m2s'] = flux_calculations.calc_flux(df.CO2_slope, df.Tc)
     if experiment.name == 'buckets':
-        N2O_mol_secm2 = N2O_mol_secm2 * (50/23.5)**2 * 0.94
-        CO2_C_mol_secm2 = CO2_C_mol_secm2 * (50/23.5)**2 *0.94
-    df['N2O_mol_m2s'] = N2O_mol_secm2
-    df['CO2_mol_m2s'] = CO2_C_mol_secm2
+        df.N2O_mol_m2s *= bucket_factor
+        df.CO2_mol_m2s *= bucket_factor
+    elif 'experiment' in df.columns:
+        # see https://www.dataquest.io/blog/settingwithcopywarning/
+        df.loc[df.experiment=='buckets', 'N2O_mol_m2s'] *= bucket_factor
+        df.loc[df.experiment=='buckets', 'CO2_mol_m2s'] *= bucket_factor  
     Nunits = flux_units['N2O']
     Cunits = flux_units['CO2']
-    df[Nunits['name']] = Nunits['factor'] *  N2O_mol_secm2
-    df[Cunits['name']] = Cunits['factor'] *  CO2_C_mol_secm2
+    df[Nunits['name']] = Nunits['factor'] *  df.N2O_mol_m2s
+    df[Cunits['name']] = Cunits['factor'] *  df.CO2_mol_m2s
     df = sr.rearrange_df(df)
     return df
+
 
 df = finalize_df(df)
 
