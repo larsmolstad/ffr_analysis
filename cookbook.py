@@ -47,27 +47,59 @@ plt.rcParams['figure.figsize'] = (10, 6)
 current_path = os.getcwd()
 
 # %% #################  EDIT THESE PARAMETERS: ################################
-
-# Select which rectangles, treatments and files you want:
-
+#
+# Explanation:
+# slopes_filename:
+#    The name of the file where the regression results will be stored
+# specific_options_filename:
+#    Name of a spreadsheet containing options for regressions raw result
+#    files requiering special treatment
+# resdir.raw_data path:
+#    Where the raw data is stored
+# options:
+#    parameters given to the function performing the regressions
+# redo_regressions:
+#    If True, discard all the regressions in the slopes_file and do
+#    them over. If False, redo only if options have changed (given
+#    either in the options variable or the specific_options spreadsheet)
+# flux_units: 
+#    The units that will be used in the dataframe
+# start_and_stopdate
+#    The first and last date of the raw data that will be considered
+#    Example ['20171224', '20180305']. Note that since stopdate is compared
+#    to a string which includes hours, minutes and seconds, the last day '20180305'
+#    will not be included unless written as e.g., '2018030524' (or just '20180306')
+#
+# First, select which rectangles, treatments and files you want:
 # import migmin as experiment
-
 # or
-
 # import buckets as experiment
-
 # or
-
 import agropro as experiment
-
-# Override the default result directories:
-# (remember double backslashes)
 
 slopes_filename = experiment.slopes_filename
 specific_options_filename = 'specific_options_examples.xlsx'
-# resdir.raw_data_path = 'Y:\\MINA\\Miljøvitenskap\\Jord\\FFR\\results'
 resdir.raw_data_path = '..\\..\\results'
-# How to do regressions: The next two lines makes the "regressor
+options = {'interval': 100, 'crit': 'steepest', 'co2_guides': True}
+redo_regressions =  True
+# flux_units = {'N2O': {'name': 'N2O_N_mmol_m2day', 'factor': 2 * 1000 * 86400},
+#              'CO2': {'name': 'CO2_C_mmol_m2day', 'factor': 1000 * 86400}}
+flux_units = {'N2O': {'name': 'N2O_N_mug_m2h', 'factor': 2 * 14 * 1e6 * 3600},
+               'CO2': {'name': 'CO2_C_mug_m2h', 'factor': 12 * 1e6 * 3600}}
+start_and_stopdate = ['20171209', '20171210']
+excel_filename_start = experiment.name
+# %% ################### END EDIT THESE PARAMETERS ############################
+
+slopes_filename = utils.ensure_absolute_path(slopes_filename)
+rectangles = experiment.rectangles
+treatments = experiment.treatments
+data_file_filter_function = experiment.data_files_rough_filter
+
+treatment_names = sr.find_treatment_names(treatments)
+example_file = '2016-06-16-10-19-50-x599234_725955-y6615158_31496-z0_0-h0_743558650162_both_Plot_9_'
+
+
+# How to do regressions: The next line makes the "regressor
 # object" regr which will be used further below.  It contains the
 # functions and parameters for doing the regressions.  The parameters
 # are collected in the dict named options. (Organizing the code this
@@ -80,35 +112,8 @@ resdir.raw_data_path = '..\\..\\results'
 # same interval as the CO2 regression. Se the excel specific_options file
 # for more options
 
-options = {'interval': 100, 'crit': 'steepest', 'co2_guides': True}
 
 regr = find_regressions.Regressor(slopes_filename, options, specific_options_filename)
-
-# regressions may take a long time. Set redo_regressions to False if you want to
-# just reuse the slope file without redoing regression. Regressions will still be
-# done if options have changed.
-redo_regressions =  True#False
-# Choose flux units
-# factor is the conversion factor from mol/s/m2 to the given unit
-# flux_units = {'N2O': {'name': 'N2O_N_mmol_m2day', 'factor': 2 * 1000 * 86400},
-#              'CO2': {'name': 'CO2_C_mmol_m2day', 'factor': 1000 * 86400}}
-
-flux_units = {'N2O': {'name': 'N2O_N_mug_m2h', 'factor': 2 * 14 * 1e6 * 3600},
-               'CO2': {'name': 'CO2_C_mug_m2h', 'factor': 12 * 1e6 * 3600}}
-
-start_and_stopdate = ['20171209', '20171210']
-
-excel_filename_start = experiment.name
-# %% ################### END EDIT THESE PARAMETERS ############################
-
-slopes_filename = utils.ensure_absolute_path(slopes_filename)
-rectangles = experiment.rectangles
-treatments = experiment.treatments
-data_file_filter_function = experiment.data_files_rough_filter
-
-treatment_names = sr.find_treatment_names(treatments)
-example_file = '2016-06-16-10-19-50-x599234_725955-y6615158_31496-z0_0-h0_743558650162_both_Plot_9_'
-
 
 #we'll do this a lot:
 def with_raw_dir(filename):
@@ -201,7 +206,8 @@ print('number of raw data files:', len(filenames))
 if redo_regressions:
     regr.find_regressions(filenames)
 else:
-    # update resfile without redoing regressions:
+    # update regressions file (slopes file) without redoing
+    # regressions unless options have changed:
     regr.update_regressions_file(filenames)
 
 def plot_error_number(n, key='N2O'):
@@ -278,8 +284,6 @@ def finalize_df(df, precip_dt=2):
 
 df = finalize_df(df)
 
-# print(df.head())
-
 
 # %% A little check that the sorting is ok:
 # Look at ginput-examples below to see how we can click on the dots to see
@@ -300,9 +304,9 @@ plt.show()
 # also, for example,
 # test_nrs(df[df.treatment=='Larvikite'], sorted(set(df.plot_nr)))
 
-# %% Just the days with high fluxes:
+# %% Make a new df with just the days with high fluxes:
 
-df2 = sr.filter_for_average_slope_days(df, 0.0005)
+# df2 = sr.filter_for_average_slope_days(df, 0.0005)
 
 
 # %% Excel.
@@ -320,11 +324,57 @@ sr.xlswrite_from_df(excel_filenames[1], df, openthefineapp, towrite)
 # or if you want it all:
 sr.xlswrite_from_df(excel_filenames[2], df, openthefineapp, df.columns)
 print('Excel files written to parent directory')
-# todo more sheets, names, small rectangles?
 
-# %%barmaps
+def _write_raw(raw_filename, worksheet, regr, column_start=0):
+    data = get_data.get_file_data(raw_filename)
+    reg = regr.find_all_slopes(raw_filename, do_plot=False)
+    segments = find_regressions.get_regression_segments(data, reg)
+    column = column_start
+    w = worksheet
+    w.write(0, column, filename)
+    def write_ty(title, ty, column_start):
+        w.write(1, column_start, title)
+        for i in range(len(ty[0])):
+            w.write(i+2, column_start, ty[0][i])
+            w.write(i+2, column_start+1, ty[1][i])
+        return column_start + 2
+    for subst, vals in data.items():
+        if not (isinstance(vals, list) and len(vals)==2\
+                and isinstance(vals[0], list) and isinstance(vals[1], list)\
+                and len(vals[0])==len(vals[1])):
+            continue
+        column = write_ty(subst, vals, column)
+        for side in ['right', 'left']:  
+            if side in segments:     
+                if subst in segments[side]:
+                    column = write_ty('%s_%s' % (subst, side), 
+                                      segments[side][subst][2:], 
+                                      column)
+    reg_attrs = ['slope', 'intercept', 'se_slope', 'se_intercept', 'mse']
+    for side, regs in reg.items():
+        for gas in regs.keys():
+            if regs[gas] is None:
+                continue
+            w.write(1,column,'reg:%s_%s' % (side, gas))
+            for i, s in enumerate(reg_attrs):
+                w.write(i*2+2, column, s)
+                w.write(i*2+3, column, getattr(regs[gas], s))
+            column += 1
+    return column
 
-# _ = sr.barmap_splitted(df, theta=0)
+def xls_write_raw_data_files(raw_filenames, xls_filename, 
+                                column_start=0, do_open=False):
+    assert(isinstance(raw_filenames, list))
+    workbook = xlwt.Workbook()
+    w = workbook.add_sheet('raw_data')
+    for name in raw_filenames:
+        column_start =_write_raw(name, w, column_start)
+    try:
+        workbook.save(xls_filename)
+    except IOError:
+        raise IOError("You must close the old xls file")
+    if do_open:
+        os.startfile(xls_filename)
 
 # %% trapezoidal integration to calculate the emitted N2O over a period of time:
 

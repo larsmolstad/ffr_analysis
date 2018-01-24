@@ -11,6 +11,10 @@ path = os.path.split(os.path.split(path)[0])[0]  # grandparent folder
 # YR_SOUP_NAME = os.path.join(path, 'yr_beautiful_soups.pickle')
 DATA_FILE_NAME = os.path.join(path, 'yr_data.pickle')
 
+"""Ås (NMBU) målestasjon (17850) Stasjonen ligger i Ås kommune, 92 m
+o.h. Den er nærmeste offisielle målestasjon, 0,9 km fra punktet
+Ås. Stasjonen ble opprettet i januar 1874. Stasjonen måler nedbør,
+temperatur og snødybde. Det kan mangle data i observasjonsperioden."""
 
 def get_yr_soup(dato):
     res = requests.get(
