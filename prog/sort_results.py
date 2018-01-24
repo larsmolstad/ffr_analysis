@@ -235,13 +235,12 @@ def find_nonlast_redoings(df, nr, dt=3600):
     """
     d = df[df.plot_nr == nr]
     # sides = df0.loc[d.index].side
-    d_left = d[d.side == 'left']
-    d_right = d[d.side == 'right']
+    d_left = d[d.side == 'left'].sort_values(by='t')
+    d_right = d[d.side == 'right'].sort_values(by='t')
     left = np.where(np.diff(d_left.t) < dt)
     right = np.where(np.diff(d_right.t) < dt)
     # return left, right, d_left, d_right
     return pd.concat([d_left.iloc[left], d_right.iloc[right]])
-
 
 def remove_redoings(df, dt=3600):
     """
@@ -251,11 +250,11 @@ def remove_redoings(df, dt=3600):
 
     """
     plotnrs = set(df.plot_nr)
-    to_remove = [find_nonlast_redoings(df, i)
+    to_remove = [find_nonlast_redoings(df, i, dt)
                  for i in plotnrs]
     if to_remove:
         to_remove = pd.concat(to_remove)
-        df.drop(to_remove.index)
+        df = df.drop(to_remove.index)
         return df
     else:
         return df
