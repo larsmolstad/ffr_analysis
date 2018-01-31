@@ -532,15 +532,13 @@ def show_all(df, sols=['water', 'KCl', 'CaCl2']):
 
 
 df = ph_df[ph_df.date != '20160529']
-# x = df[df.treatment == 'Dolomite']
-# x = x[x.CaCl2>6.5]
-# y = df[df.treatment == 'Marble']
-# y[y.CaCl2<5.9]
-# df.loc[183,'CaCl2'], df.loc[180,'CaCl2'] = df.loc[180].CaCl2, df.loc[183].CaCl2
 
 def switch_in_df(df, nrs, column_name):
+    temp = pd.options.mode.chained_assignment
+    pd.options.mode.chained_assignment = None
     a, b = nrs
     df.loc[a, column_name], df.loc[b, column_name] = df.loc[b, column_name], df.loc[a, column_name]
+    pd.options.mode.chained_assignment = temp
 
 switch_in_df(df, [183, 180], 'CaCl2')
 switch_in_df(df, [207, 204], 'CaCl2')
