@@ -168,7 +168,7 @@ def get_result_list_from_slope_file(slope_file,
     reslist = [x.split('\t') for x in a if x]
     reslist = reslist[start:stop] if stop >= 0 else reslist[start:]
     if index_list is not None:
-        reslist = [x[i] for i in index_list]
+        reslist = [reslist[i] for i in index_list]
     for s in reslist:
         str2num_line(s)
     return reslist
