@@ -535,6 +535,8 @@ df = ph_df[ph_df.date != '20160529']
 
 def switch_in_df(df, nrs, column_name):
     temp = pd.options.mode.chained_assignment
+    # this is to avoid the warrning about modifying a copy of dataframe.
+    # Not sure if this is good
     pd.options.mode.chained_assignment = None
     a, b = nrs
     df.loc[a, column_name], df.loc[b, column_name] = df.loc[b, column_name], df.loc[a, column_name]
