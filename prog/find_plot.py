@@ -21,3 +21,4 @@ def find_plot(df_row, rectangles):
 
 def find_plots(df, rectangles):
     return [find_plot(df.loc[i], rectangles) for i in df.index]
+

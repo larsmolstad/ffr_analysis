@@ -19,6 +19,7 @@ def _ginput_show_info(df, fun=None, x='x', y='y'):
             break
         distances = np.sqrt((df[x] - xy[0])**2 + (df[y] - xy[1])**2)
         minimum_distance_index = distances.argmin()
+        print('\n\n')
         print(df.loc[minimum_distance_index])
         if fun:
             fun(df.loc[minimum_distance_index])
@@ -36,6 +37,7 @@ def _show_reg_fun(regr):
         filename = os.path.join(resdir.raw_data_path,
                                 df_row['filename'])
         regr.find_all_slopes(filename, do_plot=True)
+        plt.gca().set_title(os.path.split(filename)[1])
     return fun
 
 

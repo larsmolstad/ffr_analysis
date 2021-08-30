@@ -155,13 +155,16 @@ def get_result_list_from_slope_file(slope_file,
                                     stop=-1,
                                     index_list=None):
     """ returns reslist
-        reslist[i] is like [filename, side, name, number, name, number ...]
+        reslist[i] is like [filename, side, options, name, number, name, number ...]
     """
     def str2num_line(s):
         # reslist[i] is like [filename, side, options, name, number, name, number ...]
         # this converts the numbers from strings to floats: (in place)
-        for i in range(4, len(s), 2):
-            s[i] = float(s[i])
+        for i in range(4, len(s), 2):  # starting at item 4 in slopefile line, grab every other item (effectively getting all the numbers). range(start,stop,step)
+            try:
+                s[i] = float(s[i])
+            except:
+                s[i] = s[i]      #This exception is to allow N2O_quality_check to pass through as a sting
     with open(slope_file) as f:
         a = f.readlines()
     a = [x.strip('\n\r') for x in a]
@@ -190,13 +193,13 @@ def make_df_from_slope_file(name,
             return None
     unsorted_res = get_result_list_from_slope_file(name, start=0)
     df0 = make_df(unsorted_res)
-    df0['plot_nr'] = find_plot.find_plots(df0, rectangles)
-    treatment_names = find_treatment_names(treatment_dict)
+    df0['plot_nr'] = find_plot.find_plots(df0, rectangles)  #Assign plot #
+    treatment_names = find_treatment_names(treatment_dict)  #Assign treatment names
     for name in treatment_names:
         df0[name] = [get_treatments(i, name) for i in df0.plot_nr]
     #df0['treatment'] = df0.plot_nr.map(lambda x: treatment_dict[x]
     #                                   if x in treatment_dict else None)
-    translations = {'N2O': 'N2O_slope', 'CO': 'CO_slope', 'CO2': 'CO2_slope'}
+    translations = {'N2O': 'N2O_slope', 'CO': 'CO_slope', 'CO2': 'CO2_slope', 'H2O': 'H2O_slope', 'licor_H2O': 'licor_H2O_slope'} #rename slope columns because they were just called 'CO2' or 'N2O' etc
     df0.rename(columns=translations, inplace=True)
     df = df0
     if remove_data_outside_rectangles:

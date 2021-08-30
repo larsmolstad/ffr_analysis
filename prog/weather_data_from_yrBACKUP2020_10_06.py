@@ -9,10 +9,8 @@ import sys
 import json
 from dateutil import parser
 #import urllib
-path = '/home/larsmo/test/ffr/FFR/ffr_analysis/sort_ffr_results/prog'
 path = os.path.dirname(os.path.abspath(__file__))  # path of this file
 path = os.path.split(os.path.split(path)[0])[0]  # grandparent folder
-
 # this file must currently be put in the parent folder
 DATA_FILE_NAME = os.path.join(path, 'yr_data.pickle')
 
@@ -38,7 +36,6 @@ def get_yr_soup(dato):
     res.raise_for_status()
     return bs4.BeautifulSoup(res.text, 'lxml')
 
-all_soups_for_debug = [0]
 
 def get_all_yr_soups(start=(2015, 0o1, 0o1, 12, 0, 0, 0, 0, 0),
                      stop=None):
@@ -53,29 +50,24 @@ def get_all_yr_soups(start=(2015, 0o1, 0o1, 12, 0, 0, 0, 0, 0),
     tt = np.arange(t0, t1, 86400)
     y = []
     t0 = time.time()
-    print('fetching weather data from yr.no')
+    print('fetching yr data since last time program ran')
     for i, t in enumerate(tt):
         ts = t2tstr(t)
-        print(ts) #print(ts, i, len(tt), (time.time() - t0) / (i + 1))
+        print(ts, i, len(tt), (time.time() - t0) / (i + 1))  #example: 2020-8-10 161 206 1.179779745914318
         try:
             y.append([t, get_yr_soup(ts)])
         except:
             y.append([t, None])
             traceback.print_exc()
             print('not this one')
-    all_soups_for_debug[0] = y
     return y
 
-def all_scripts(soup):
-    return soup.find_all('script')
 
-#--
-def all_json_in_scripts(soup):
-    a = all_scripts(soup)
+def all_json_in_scripts(s):
+    a = s.find_all("script")
     ret = []
     for b in a:
- #       b2 = [x for x in b.text.split('\n') if x.find("JSON.parse(")>-1]
-        b2 = [x for x in str(b).split('\n') if x.find("JSON.parse(")>-1]
+        b2 = [x for x in b.text.split('\n') if x.find("JSON.parse(")>-1]
         for c in b2:
             try:
                 start = c.find("JSON.parse(")
@@ -86,21 +78,19 @@ def all_json_in_scripts(soup):
                 pass #todo
     return ret
 
-#--
 
 def soup2data(soup):
     aj = all_json_in_scripts(soup)
     aj0 = aj[0]
-    q = list(aj0["statistics"]["locations"].values())[0]["days"]
+    x1 = [x for x in aj0["statistics"]["locations"].values()][0]['days']
     try:
-        w = list(q.values())[0]
-        e = w["data"]['historical'] # er hele forskjellen at 'historical' er borte?
-        e['units']
-        data = e['days'][0]['hours']
+        x2 = [x for x in x1.values()][0]['data']['historical']['summary']
+        units = x2['units']
+        data = x2['days'][0]["hours"]
+        res = []
     except KeyError as e:
         print("KeyError", e)
         return []
-    res = []
     for (i, d) in enumerate(data):
         try:
             t = parser.parse(d["time"]).timestamp()  #Note if verifying on yr.no: CET is UTC+1 in winter and UTC+2 in summer
@@ -113,6 +103,7 @@ def soup2data(soup):
             print("KeyError", e, time.ctime(t))
             sys.stdout.flush()
     return res
+
 
 def all_soups2data(time_soup_list):
     return sum([soup2data(ts[1]) for ts in time_soup_list], [])
@@ -154,34 +145,4 @@ def update_weather_data(stop=None):
     updated_data = combine_data(old_data, d)
     if updated_data != old_data:
         pickle.dump(updated_data, open(DATA_FILE_NAME, 'wb'))
-
-
-def my_find_all(s, substr):
-    res = []
-    i = s.find(substr)
-    while i>=0:
-        res.append(i)
-        i = s.find(substr, i+1)
-    return res
-
-#--
-#     q = list(aj0["statistics"]["locations"].values())[0]["days"]
-#     w = list(q.values())[0]
-#     e = w["data"]['historical']
-# e['units']
-# r = e['days'][0]['hours']
-# res = {}
-# res['temperature'] = [x['temperature']['value'] for x in r]
-# #res['wind'] = [x['wind'] for x in r]
-# res['precip'] = [x['precipitation']['total'] for x in r]
-# res['humidity'] = [x['humidity']['value'] for x in r]
-# t = [parser.parse(x["time"]).timestamp()  for x in r]
-
-#Note if verifying on yr.no: CET is UTC+1 in winter and UTC+2 in summer
-# update_weather_data(stop=(2020,3,10,12,0,0,0,0,0))
-update_weather_data()
-# get_all_yr_soups(start=(2015, 0o1, 0o1, 12, 0, 0, 0, 0, 0), stop = (2015, 0o1, 0o7, 12, 0, 0, 0, 0, 0))
-#soups = all_soups_for_debug[0]
-#--
-
 

@@ -26,6 +26,10 @@ def rectangles():
     width_limits = ([0, 10.8], [10.8, 21.6],
                     [27, 37.8], [37.8, 48.6],
                     [54, 64.8], [64.8, 75.6])
+#    print('using fake rectangle width, see E22.py')
+#    width_limits = ([0, 10.8], [10.8, 21.6+2],
+#                    [27-2, 37.8], [37.8, 48.6+2],
+#                    [54-2, 64.8], [64.8, 75.6])
     length_limits = [[i * plot_length, (i + 1) * plot_length]
                      for i in range(32)]
     p = dict()

@@ -79,3 +79,17 @@ class Weather_data(object):
 
 
 data = Weather_data()
+
+def weatherdatatest(day=(2015,2,10)):
+    import time, webbrowser
+    while len(day) < 9:
+        day = (*day, 0)
+    day = list(day)
+    for i in range(1,25):
+        day[3] = i
+        t = time.mktime(tuple(day))
+        print(time.ctime(t), "    {:.2f}".format(data.get_temp(t)))
+    date_string = "{}-{}-{}".format(*day[:3])
+    webbrowser.open(weather_data_from_yr.make_url(date_string), new=0)
+    return time.ctime(t)
+
