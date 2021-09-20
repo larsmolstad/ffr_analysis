@@ -109,6 +109,7 @@ def plot_regressions(data, regressions,normalized=True):
             ax2.plot([],[], marker, markersize=size)
         legends.append(legend)
         
+    plt.clf()
     ax1 = plt.gca()
     ax1.grid()
     ax2 = ax1.twinx()
