@@ -557,11 +557,13 @@ class Regressor(object):
                         title_right_QC = 'Right: '+right_QC if right_QC else ""
                         plt.title(title_filename + '\n' + title_options + '\n' + title_left_QC + '\n' + title_right_QC )
                         if self.save_options['save_images']:
-                            plt.savefig(os.path.join(self.detailed_output_path+"\\images", title_filename +'.png'))
+                            image_name = os.path.join(self.detailed_output_path,"Images", title_filename +'.png')
+                            print(image_name)
+                            plt.savefig(image_name)
                             if left_QC:
-                                plt.savefig(os.path.join(self.detailed_output_path+"\\Check\\"+left_QC,  "LEFT " + left_QC  +" "+ title_filename +'.png'))
+                                plt.savefig(os.path.join(self.detailed_output_path, "Check", left_QC,  "LEFT " + left_QC  +" "+ title_filename +'.png'))
                             elif right_QC:
-                                plt.savefig(os.path.join(self.detailed_output_path+"\\Check\\"+right_QC, "RIGHT "+ right_QC +" "+ title_filename +'.png'))
+                                plt.savefig(os.path.join(self.detailed_output_path, "Check", right_QC, "RIGHT "+ right_QC +" "+ title_filename +'.png'))
                         if self.save_options['show_images']:
                             plt.show()
                         plt.clf()
@@ -571,8 +573,9 @@ class Regressor(object):
                        
                         filename = data['filename']
                         xls_write_raw_data_file(filename, 
-                                                self.detailed_output_path+'\\Values\\'+
-                                                'DetailedRawData_'+ filename+'.xls', 
+                                                os.path.join(
+                                                    self.detailed_output_path,'Values',
+                                                    'DetailedRawData_'+ filename+'.xls'),
                                                 data, reg, False)
                 
                     
@@ -664,5 +667,20 @@ def print_reg(regres):
             print(subst)
             print(reg)
 
+
+def make_detailed_output_folders(detailed_output_path):
+    paths = [["Images"],
+             ["Values"],
+             ["Check", "Outliers likely"],
+             ["Check", "Out of range - possibly zero slope"],
+             ["Check", "Out of range and negative"],
+             ["Check", "Out of range"],
+             ["Check", "Fails p-test for other reason"],
+             ["Check", "Probably zero slope"]]
+    for p in paths:
+        path = os.path.join(detailed_output_path, *p)
+        print(path)
+        if not os.path.exists(path):
+            os.makedirs(path)
 
 
