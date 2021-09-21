@@ -235,55 +235,6 @@ a list"""
 
 
 
-
-# Old stuff, keeping it in case
-
-# def combine_adjacent_rectangles_of_equal_size(rectangle_list):
-#     ### ummm I'll take the midpoint of all... no. The two furthest
-#     ### points, then the owwww. Find smallest rectangle that covers
-#     ### all points. Google. Convex hull, of course. Generalize? Later
-#     r = np.concatenate([np.array(r) for r in rectangle_list], axis=1)
-#     #return convex_hull(r.transpose()) no, that's too sensitive
-
-def combine_adjacent_rectangles_of_equal_size(rectangle_list):
-    # in case they are not arrays
-    rectangle_list = [np.array(r) for r in rectangle_list]
-    # [[x,y], [x, y], ....]
-    points = np.concatenate(rectangle_list, axis=1).transpose()
-    midpoint = points.mean(axis=0)
-    dists = [[np.linalg.norm(p - midpoint), i] for i, p in enumerate(points)]
-    indexes = [x[1] for x in sorted(dists[:4], reverse=True)]
-    # got the four points, now I have to make sure they don't cross
-    return np.array(convex_hull(points[indexes])[:-1]).transpose()
-
-
-def convex_hull(points):
-    """from Mike Loukides at
-    https://www.oreilly.com/ideas/an-elegant-solution-to-the-convex-hull-problem
-
-    """
-    def split(u, v, points):
-        # return points on left side of UV
-        return [p for p in points if np.cross(p - u, v - u) < 0]
-
-    def extend(u, v, points):
-        if not points:
-            return []
-
-        # find furthest point W, and split search to WV, UW
-        w = min(points, key=lambda p: np.cross(p - u, v - u))
-        p1, p2 = split(w, v, points), split(u, w, points)
-        return extend(w, v, p1) + [w] + extend(u, w, p2)
-
-    # find two hull points, U, V, and split to left and right search
-    u = min(points, key=lambda p: p[0])
-    v = max(points, key=lambda p: p[0])
-    left, right = split(u, v, points), split(v, u, points)
-
-    # find convex hull on each side
-    return [v] + extend(u, v, left) + [u] + extend(v, u, right) + [v]
-
-
 # fast enough so far:
 def find_polygon(x, y, polygons):
     """ return index of the first polygon (in a list of polygons) containing (x,y).
@@ -293,39 +244,5 @@ def find_polygon(x, y, polygons):
             return i
     return -1
 
-def plot_rectangles_old(rectangles, names=True):
-    """rectangles can be a dict or a list of rectangles. If rectangles is
-a dict and names==True, the keys are usesd as names. names may also be
-a list"""
-
-    if isinstance(rectangles, dict):
-        pairs = [(key, rectangles[key]) for key in list(rectangles)]
-        rectangles = [x[1] for x in pairs]
-        if names is True:
-            names = [x[0] for x in pairs]
-    not_plottable = 0
-    for i, r in enumerate(rectangles):
-        not_plottable += plot_rectangle(r,
-                                        text=None if not names else names[i])
-    if not_plottable:
-        print('%d non-plottable rectangle-functions' % not_plottable)
-    # plt.axis('equal')
-    # plt.axis('equal') gives me problems when I forget to unset it for later plots
-    # (with axis('auto')), so:
-    if any([callable(x) for x in rectangles]):
-        return
-    xx = [p[0] for p in r for r in rectangles]
-    yy = [p[1] for p in r for r in rectangles]
-    xlims = [min(xx), max(xx)]
-    ylims = [min(yy), max(yy)]
-    xd = max(xlims) - min(xlims)
-    yd = max(ylims) - min(ylims)
-    if xd > yd:
-        ycenter = (ylims[0] + ylims[1]) / 2
-        ylims = [ycenter - xd / 2, ycenter + xd / 2]
-    else:
-        xcenter = (xlims[0] + xlims[1]) / 2
-        xlims = [xcenter - yd / 2, xcenter + yd / 2]
-    plt.plot(xlims, ylims, 'w.')
 
 
