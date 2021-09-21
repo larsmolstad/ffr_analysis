@@ -181,6 +181,36 @@ def find_treatment_names(treatment_dict):
     return list(set([x for y in treatment_dict.values()
                      for x in y]))
 
+
+def make_simple_df_from_slope_file(name, remove_redoings_time=3600):
+    unsorted_res = get_result_list_from_slope_file(name, start=0)
+    df = make_df(unsorted_res)
+    translations = {'N2O': 'N2O_slope', 'CO': 'CO_slope', 'CO2': 'CO2_slope', 'H2O': 'H2O_slope', 'licor_H2O': 'licor_H2O_slope'} #rename slope columns because they were just called 'CO2' or 'N2O' etc
+    df.rename(columns=translations, inplace=True)
+    return df
+
+
+def add_df_plot_nr(df, rectangles_or_function, remove_data_outside_rectangles=True):
+    df['plot_nr'] = find_plot.find_plots(df, rectangles_or_function)  #Assign plot #
+    if remove_data_outside_rectangles:
+        df = df[df.plot_nr > 0]
+    return df
+
+
+def add_df_treatment(df, treatment_dict):
+    def get_treatments(nr, name):
+        try:
+            return treatment_dict[nr][name]
+        except KeyError:
+            return None
+    treatment_names = find_treatment_names(treatment_dict)  #Assign treatment names
+    for name in treatment_names:
+        df[name] = [get_treatments(i, name) for i in df.plot_nr]
+    return df
+
+def translate_slope_names(df):
+    return df
+
 def make_df_from_slope_file(name,
                             rectangles,
                             treatment_dict,
