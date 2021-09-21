@@ -97,7 +97,7 @@ plt.scatter(x-offset.x, y-offset.y, marker='.')
 def file_belongs(filename):
     name = os.path.split(filename)[1]
     date_ok = start_date <= name.replace('-','') <= stop_date
-    x, y=position(filename)
+    x, y = position(filename)
     pos_ok = 0 < x - offset.x < 45 and 0 < y - offset.y < 55 
     #text_ok = name.find('Measure') > -1
     return date_ok and pos_ok
@@ -144,11 +144,11 @@ df.sort_values('date', inplace=True)
 # plt.scatter(x-offset.x, y-offset.y, color="red", s=1)
 
 
-rect1 = polygon_utils2.Polygon(0,0,W=37.5,L=48)
+rect1 = polygon_utils2.Polygon(0, 0, W=37.5, L=48)
 rect1.rotate(.4152).move(15.2,-2.55)
 #rect1.rotate(.4152).move(599216.2,6615256.5)
-rr = rect1.divide_rectangle(6, other_way=True)
-rectangles = sum([r.divide_rectangle(6) for r in rr], [])
+
+rectangles = rect1.grid_rectangle(6,6)
 
 # polygon_utils2.plot_rectangles(rectangles, textkwargs={'fontsize': 5}, linewidth=.1)
 

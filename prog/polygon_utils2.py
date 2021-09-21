@@ -26,7 +26,10 @@ def test_point(x,y):
 
 test_point(.3, 10.5)
 
+grid = p.grid_rectangle(3,4)
+plot_rectangles(grid, range(12))
 """
+
 from plotting_compat import plt
 import numpy as np
 
@@ -97,30 +100,46 @@ class Polygon(object):
         self.x = np.array([0, W, W, 0]) + x0
         self. y = np.array([0, 0, L, L]) + y0
         
+    def grid_rectangle(self, m, n, mgaps=(0,0,0), ngaps=(0,0,0)):
+        """Divides the rectangle
+          p3 --- p2     
+          |       |
+          p0 --- p1
+      
+        (possibly rotated) into m x n equal rectangles (m rows and n columns)
+        numbered like so, if m=2 and n=3:
+        
+           r1  r2  r3
+           r4  r5  r6
 
+        See divide_rectangle for description of gaps"""
+        rectlist = self.divide_rectangle(m, gaps=mgaps, other_way=True)
+        rectlists = [r.divide_rectangle(n, gaps=ngaps) for r in rectlist]
+        return sum(rectlists, [])
+    
     def divide_rectangle(self, n, other_way=False, gaps=(0,0,0)):
         """Divides the rectangle
     
-          p2 --- p1     
+          p3 --- p2     
           |       |
-          p3 --- p0
+          p0 --- p1
       
         (possibly rotated) into n equal rectangles. If other_way is
-        false, new points are inserted between p0 and p1, and p3 and
-        p2.  If gaps are not all zero, there will be gaps like so (for
-        n = 2):
+        false, new points are inserted between p1 and p2, and p0 and
+        p3.  If gaps are not all zero, there will be gaps like so (for
+        n = 2, other_way=False):
             
-            p2     p1 
+            p3     p2
               gaps[2]
-            r2 --- r1
+            r3 --- r2
             |       |
-            r3 --- r0 
+            r0 --- r1 
               gaps[1]
-            q2 --- q1 
+            q3 --- q2 
             |       |
-            q3 --- q0 
+            q0 --- q1 
               gaps[0]
-            p3     p0  
+            p0     p1  
         
         gaps[1] is repeated if n>2.
         Actually, it doesn't need to be a rectangle, just a 4-gon
