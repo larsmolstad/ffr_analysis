@@ -1,3 +1,5 @@
+# todo the y_data.pickle file must be in granparent folder
+# starting empty does not work at the moment
 import numpy as np
 import traceback
 import requests
@@ -34,6 +36,7 @@ def make_url(dato):
     return 'https://www.yr.no/en/statistics/table/1-60637/Norway/Viken/%C3%85s/%C3%85s?q=' + dato
 
 def get_yr_soup(dato):
+    print(make_url(dato))
     res = requests.get(make_url(dato))
     res.raise_for_status()
     return bs4.BeautifulSoup(res.text, 'lxml')
@@ -66,10 +69,11 @@ def get_all_yr_soups(start=(2015, 0o1, 0o1, 12, 0, 0, 0, 0, 0),
     all_soups_for_debug[0] = y
     return y
 
+
 def all_scripts(soup):
     return soup.find_all('script')
 
-#--
+
 def all_json_in_scripts(soup):
     a = all_scripts(soup)
     ret = []
@@ -81,14 +85,36 @@ def all_json_in_scripts(soup):
                 start = c.find("JSON.parse(")
                 start = c.find('"', start) + 1
                 end = c.rfind('"')
-                ret.append(json.loads(c[start:end].replace('\\','')))
+                c = c[start:end]
+                s = "**doublebacklashes**" # todoooooooooo: put back the thermometers in the chambers!
+                # replacing "\\" with "\\", but not "\\\\"
+                c = c.replace('\\',s).replace(s*3, "\\").replace(s,"")
+                ret.append(json.loads(c))
             except:
                 pass #todo
     return ret
 
-#--
 
-def soup2data(soup):
+def soup2data_new(soup):
+    aj = all_json_in_scripts(soup)
+    aj1 = aj[1]
+    data = aj1['queries'][3]['state']['data']['historical']['days'][0]['hours']
+    res = []
+    for (i, d) in enumerate(data):
+        try:
+            t = parser.parse(d["time"]).timestamp()  #Note if verifying on yr.no: CET is UTC+1 in winter and UTC+2 in summer
+            kl = i
+            temp = [d["temperature"].get(s, None) for s in ["value", "max", "min"]] #Note if verifying on yr.no: python weather data is rearranged, the yr site is ordered min, max, measured value.
+            precipitation = d["precipitation"].get("total", None)
+            humidity = d["humidity"].get("value", None)
+            res.append((t, [kl, temp, precipitation, humidity]))
+        except KeyError as e:
+            print("KeyError", e, time.ctime(t))
+            sys.stdout.flush()
+    return res
+
+
+def soup2data_old(soup):
     aj = all_json_in_scripts(soup)
     aj0 = aj[0]
     q = list(aj0["statistics"]["locations"].values())[0]["days"]
@@ -113,6 +139,16 @@ def soup2data(soup):
             print("KeyError", e, time.ctime(t))
             sys.stdout.flush()
     return res
+
+
+def soup2data(soup):
+    try:
+        return soup2data_new(soup)
+    except:
+        print("soup2data_new doesn't work, trying old version")
+        return soup2data_old(soup)
+        print("That didn't work either")
+
 
 def all_soups2data(time_soup_list):
     return sum([soup2data(ts[1]) for ts in time_soup_list], [])
