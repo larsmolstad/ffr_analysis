@@ -6,7 +6,10 @@ Used for defining and plotting the geometry of the plots in E22.
 A 4-gon (for example a rectangle) is internally represented by the corners as
 [[x1, x2, x3, x4], [y1, y2, y3, y4]]
 
+Example:
+from polygon_utils2 import Polygon, plot_rectangles
 p = Polygon([0,1,1,0], [10,10,14,11])
+plt.ion()
 plt.cla()
 p.rotate(.3, 0)
 p.plot(color="green")
@@ -26,6 +29,7 @@ def test_point(x,y):
 
 test_point(.3, 10.5)
 
+plt.cla()
 grid = p.grid_rectangle(3,4)
 plot_rectangles(grid, range(12))
 """
@@ -228,13 +232,12 @@ a list"""
         if names is True:
             names = range(1, len(rectangles)+1)
     for i, r in enumerate(rectangles):
+        if callable(r): # for the pot experiment, where we don't have rectangles, but a list of functions. untested todo.
+            continue
         r.plot(text=None if not names else names[i],
                textkwargs=textkwargs,
                **kwargs)
     
-
-
-
 # fast enough so far:
 def find_polygon(x, y, polygons):
     """ return index of the first polygon (in a list of polygons) containing (x,y).
