@@ -372,7 +372,7 @@ class Regressor(object):
             if key in specific_options:
                 return specific_options[key]
             elif key in self.options.options:
-                return self.options.options['key']
+                return self.options.options[key]
             else:
                 return default
         return {'cut_ends':get_maybe('cut_ends', 3),
@@ -684,3 +684,20 @@ def make_detailed_output_folders(detailed_output_path):
             os.makedirs(path)
 
 
+def plot_raw(examplefilename, key='N2O'):
+    "key may be 'N2O', 'CO2', 'Wind'"
+    if not os.path.isfile(examplefilename):
+        examplefilename = with_raw_dir(examplefilename)
+    a = get_data.get_file_data(examplefilename)
+    plt.plot(a[key][0], a[key][1], '.')
+    plt.gca().set_xlabel('seconds')
+    if key in ['N2O', 'CO2', 'CO']:
+        plt.gca().set_ylabel('ppm')
+    return a
+
+def plot_error_number(n, key='N2O'):
+    name, err = regression_errors[-1][n]
+    print('--------- name was: %s\nerror was:\n%s\n----------'%(name,err))
+    a = plot_raw(name)
+    print('shifting:', a['side'])
+    return name, a
