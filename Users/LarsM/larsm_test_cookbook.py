@@ -23,7 +23,7 @@ import numpy as np
 import pandas as pd
 import textwrap
 pd.options.mode.chained_assignment = None 
-sys.path.append(os.path.join(os.getcwd(), 'prog'))
+sys.path.append(os.path.join(os.getcwd(), '../../prog'))
 import pylab as plt
 import resdir
 import get_data
@@ -41,7 +41,7 @@ from statsmodels.formula.api import ols#, rlm
 # from statsmodels.stats.anova import anova_lm
 # import statsmodels.api as sm
 # from scipy.stats import norm
-import pH_data
+#import pH_data
 import xlwt 
 import shutil
 import errno
