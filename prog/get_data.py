@@ -9,29 +9,34 @@ import licor_indexes
 import dlt_indexes
 
 
-def number_after(s, letter, decimal_symbol, start=0):
+def number_after(s, letters, decimal_symbol, start=0):
     """ Returns the floating point number and the starting and ending positios 
     of the number.
     decimal_symbol is required.
     Example:
     number_after('ab2_7cd3_14ef','d','_') => (3.14, 7, 11)"""
+    def find(needle, haystack):
+        pos = haystack.find(needle)
+        if pos == -1:
+            raise RuntimeError("{} not found in {}".format(needle, haystack))
+        return pos
     def tonum(s):
         return float(s.replace('_', '.'))
-    startpos = s.find(letter, start) + len(letter)
-    I_decimal = s.find(decimal_symbol, startpos)
+    startpos = find(letters, s[start:]) + len(letters)
+    I_decimal = find(decimal_symbol, s[startpos:]) + startpos
     notdig = re.search('[^\d]', s[I_decimal + 1:])
     I_notdig = len(s) if notdig is None else notdig.start() + I_decimal + 1
     return tonum(s[startpos:I_notdig]), startpos, I_notdig
 
 
-def parse_filename(name):
+def parse_filename1(name): 
     name = os.path.split(name)[1]
     date = name.split('x')[0][:-1]
     x = number_after(name, 'x', '_')[0]
     y = number_after(name, 'y', '_')[0]
     z = number_after(name, 'z', '_')[0]
     try:  # in the beginning we did not save the heading, i think
-        heading = number_after(name, '-h', '_')[0]
+        heading = number_after(name, 'h', '_')[0]
     except Exception:
         # print 'no heading in', name
         heading = float('nan')
@@ -45,18 +50,12 @@ def parse_filename(name):
             'vehicle_pos': {'x': x, 'y': y, 'z': z, 'side': side, 'posname': posname, 'heading': heading}}
 
 
-def try_parse_filename(s):
-    """
- parse_filename takes a raw data filename and divides it into
- date, x- and y-position, heading, etc. This function just returns
- Fasle if parse_filename fails
- """
+def parse_filename(name):
     try:
-        return parse_filename(s)
+        return parse_filename1(name)
     except:
-        print('Could not parse ', s)
-        return False
-
+        print('Could not properly parse filename {}, filling in nan'.format(name))
+        return parse_filename2(name)
 
 def old2new(data):
     # just to convert from older format, where I stored everything in a list.
@@ -110,15 +109,22 @@ def parse_saved_data(data, filename):
             res['N2O'] = pick_data(data[key], t0, dlt_indexes.N2O_dry)
             res['H2O'] = pick_data(data[key], t0, dlt_indexes.H2O)
             res['CO'] = pick_data(data[key], t0, dlt_indexes.CO_dry)
+            res['P'] = pick_data(data[key], t0, dlt_indexes.pressure_i_think)
         elif key == 'li-cor':
             res['CO2'] = pick_data(data[key], t0, licor_indexes.CO2)
             res['licor_H2O'] = pick_data(data[key], t0, licor_indexes.H2O)
+            res['licor_P'] = pick_data(data[key], t0, licor_indexes.P)
+            res['licor_T'] = pick_data(data[key], t0, licor_indexes.Temp)
         elif key == 'wind':
             d = data[key]['ty']
             t = [x[0] - t0 for x in d]
             res['Wind'] = [t, [sumwind(y[1]) for y in d]]
     # todo wind components
-    res['aux'] = parse_filename(os.path.split(filename)[-1])
+    try:
+        res['aux'] = parse_filename(os.path.split(filename)[-1])
+    except:
+        print("""Warning: res['aux'] not set. Could not do
+get_data.parse_filename({})""".format(os.path.split(filename)[-1]))
     res['side'] = data['aux']
     while '' in res['side']:
         res['side'].remove('')
@@ -166,3 +172,62 @@ def get_files_data(directory, G, write_filenames=True):
         except Exception as e:
             print(e)
     return res
+
+
+### The following three functions are for tests I do without running the robot properly,
+### when I save files which don't conform to the format:
+### 2021-06-11-02-48-47-x599317_251037-y6615317_24887-z0_0-h-0_358071854577_both__
+
+def parse_filename2(name):
+    """ like parse_filename1,  but fills in missing information with nan"""
+    name = os.path.split(name)[1]
+    def try_number_after(sbefore, decimal_letter):
+        try:
+            return number_after(name, sbefore, decimal_letter)[0]
+        except:
+            return float('nan')
+    try:
+        date = name[:len('2021-06-11-02-48-47')]
+        t = time.mktime(time.strptime(date, '%Y-%m-%d-%H-%M-%S'))
+        date = date.replace('-', '')
+        date = '{}-{}'.format(date[:8], date[8:])
+    except:
+        date = t = None, None
+    x = try_number_after('-x', '_')
+    y = try_number_after('-y', '_')
+    z = try_number_after('-z', '_')
+    heading = try_number_after('-h', '_')
+    side_m = re.search('right|left|both', name)
+    try:
+        side = side_m.group()
+        posname = name[side_m.end() + 1:].strip('_')
+    except:
+        side = 'unknown'
+        posname = ''
+    return {'t': t, 'date': date, 'filename': name,
+            'vehicle_pos': {'x': x, 'y': y, 'z': z, 'side': side, 'posname': posname, 'heading': heading}}
+
+
+def _make_filename(pos, side, t, name=''):
+    def twodig(n):
+        a = str(n)
+        if len(a)==1:
+           a = '0'+a
+        return a
+    p = tuple([str(x).replace('.','_') for x in pos])
+    u = time.localtime()
+    u = [u.tm_year, u.tm_mon, u.tm_mday, u.tm_hour, u.tm_min, u.tm_sec]
+    tc = '-'.join([twodig(x) for x in u])
+    return  tc + '-x%s-y%s-z%s'%p + '_' + side + '_' + name
+
+
+def make_conformant_filename_for_tests(name, date=[1970, 1, 1, 0, 0, 1], x=0, y=0, side='both'):
+    """ for tests I do without running the robot properly, I save files which don't 
+    conform to the format:
+      2021-06-11-02-48-47-x599317_251037-y6615317_24887-z0_0-h-0_358071854577_both__
+    This function extracts as much information it can from `name` and makes a filename that
+    conforms"""
+    folder, filename = os.path.split(name)
+    d = parse_filename2(name)
+    return _make_filename()
+
