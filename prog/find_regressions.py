@@ -442,7 +442,8 @@ class Regressor(object):
                 
         # Begin image and detailed excel output functionality ... move to their own functions and call here?
         if self.do_plot or do_plot or self.save_options['save_images'] or self.save_options['show_images']:
-            self.plot_fun(data, regressions) #this calls plot_regressions, also defined in this .py file        
+            self.plot_fun(data, regressions) #this calls plot_regressions, also defined in this .py file
+            plt.pause(0.0001)
             
 #        if self.save_options['excel']: Fredrik was here! 
 #            self.xls_write_raw_data_file(title_filename, os.path.join(self.detailed_output_path+"\\excel",'DetailedRawData_'
@@ -536,11 +537,12 @@ class Regressor(object):
             for i, name in enumerate(files):                                 #do regression for each file
                 t0, n_on_line = print_info_maybe(i, n, t0, n_on_line)
                 try:
+                    if self.save_options['show_images'] or self.save_options['save_images']:
+                        plt.clf()
                     data = get_data.get_file_data(name)
                     reg = self.find_all_slopes(data)
                     self.write_result_to_file(reg, name, f)
                     resdict[os.path.split(name)[1]] = reg
-                                        
                     # Save images of each regression if wanted
                     if self.save_options['show_images'] or self.save_options['save_images']:
                         title_filename = data['filename']
@@ -566,7 +568,6 @@ class Regressor(object):
                                 plt.savefig(os.path.join(self.detailed_output_path, "Check", right_QC, "RIGHT "+ right_QC +" "+ title_filename +'.png'))
                         if self.save_options['show_images']:
                             plt.show()
-                        plt.clf()
                         
                     # Save detailed raw excel if wanted
                     if self.save_options['save_detailed_excel']:
