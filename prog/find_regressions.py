@@ -387,8 +387,6 @@ class Regressor(object):
         """
         if isinstance(filename_or_data, str):
             data = get_data.get_file_data(filename_or_data)
-
-        
         else:
             data = filename_or_data
             
@@ -396,7 +394,6 @@ class Regressor(object):
             specific_options = self.options.get_specific_options(data['filename'])
         else:
             specific_options = given_specific_options
-        
         
         cut_param = self._get_divide_cut_param(specific_options)
         rawdict = divide_left_and_right.group_all(data, **cut_param)
@@ -412,45 +409,43 @@ class Regressor(object):
                 regressions[side][key], tbest = self._regress1(rawdict, side, key,
                                                                specific_options, tbest)
                 
-                if(regressions[side][key] != None and self.options.options["correct_negatives"] == True):
-                    specific_options_bcp = specific_options
-                    #print(data['filename'],specific_options_bcp)
-                    if((key=="N2O") and (regressions[side][key].slope < 0)):
-                        specific_options["co2_guides"] = False
-                        regressions_tmp[side][key], tbest_tmp = self._regress1(rawdict, side, key,
-                                                                   specific_options, tbest_orig)
-                        #print(" trying co2 OFF")
-                        
-                        if(regressions_tmp[side][key].slope < 0):
-                            specific_options = specific_options_bcp
-                            specific_options[side] = {'N2O': {'start': 1, 'stop': 190}}
-                            regressions_tmp[side][key], tbest_tmp = self._regress1(rawdict, side, key,
-                                                                       specific_options, tbest_orig)
-                            #print(", trying 190s")
-                            
-                        if(regressions_tmp[side][key].slope  > 0):
-                            regressions[side][key] = regressions_tmp[side][key]
-                            tbest = tbest_tmp
-                        else:
-                            specific_options = specific_options_bcp
-                            #print(", positive N2O not found")
-                        self.options.specific_options_dict[data['filename']] = specific_options  #this is not updating properly
-                        #print(specific_options)
-                       
+                if(regressions[side][key] is not None and 
+                   self.options.options["correct_negatives"]):
+                    specific_options, tbest = \
+                    self.try_correct_negative(specific_options, key, side, rawdict, tbest_orig)
+                
             if len(list(regressions[side].keys())) == 0:
                 regressions.pop(side)
-                
-        # Begin image and detailed excel output functionality ... move to their own functions and call here?
+
         if self.do_plot or do_plot or self.save_options['save_images'] or self.save_options['show_images']:
-            self.plot_fun(data, regressions) #this calls plot_regressions, also defined in this .py file
+            self.plot_fun(data, regressions) 
             plt.pause(0.0001)
-            
-#        if self.save_options['excel']: Fredrik was here! 
-#            self.xls_write_raw_data_file(title_filename, os.path.join(self.detailed_output_path+"\\excel",'DetailedRawData_'
-#                                                      +title_filename
-#                                                      +'.xls'), do_open=False)
+
         return regressions
 
+    def try_correct_negative(self, specific_options, key, side, rawdict, tbest_orig):
+        # Todo I haven't tested this method since I refactored it out of find_all_slopes,
+        # and have been told it is not used anymore. Probably
+        # best to remove it all, with a warning
+        specific_options_bcp = specific_options # this should be deep-copied
+        #print(data['filename'],specific_options_bcp)
+        if((key=="N2O") and (regressions[side][key].slope < 0)):
+            specific_options["co2_guides"] = False
+            regressions_tmp[side][key], tbest_tmp = self._regress1(rawdict, side, key,
+                                                       specific_options, tbest_orig)
+            if(regressions_tmp[side][key].slope < 0):
+                specific_options = specific_options_bcp
+                specific_options[side] = {'N2O': {'start': 1, 'stop': 190}}
+                regressions_tmp[side][key], tbest_tmp = self._regress1(rawdict, side, key,
+                                                           specific_options, tbest_orig)
+            if(regressions_tmp[side][key].slope > 0):
+                regressions[side][key] = regressions_tmp[side][key]
+                tbest = tbest_tmp
+            else:
+                specific_options = specific_options_bcp
+            self.options.specific_options_dict[data['filename']] = specific_options  #this is not updating properly
+        return specific_options, tbest
+    
     def _regress1(self, rawdict, side, key, specific_options, tbest):
         # rawdict is like {'CO2': x1, 'N2O': x2, ...}
         # where x1 and x2 is like{'left':(t,y,Istartstop), 'right':(t,y,Istartstop)}
