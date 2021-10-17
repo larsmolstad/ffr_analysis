@@ -26,7 +26,7 @@ import find_regressions
 import sort_results as sr
 import weather_data
 import flux_calculations
-import polygon_utils2
+import polygon_utils
 # import ginput_show
 # import textwrap
 # import regression
@@ -144,15 +144,15 @@ df.sort_values('date', inplace=True)
 # plt.scatter(x-offset.x, y-offset.y, color="red", s=1)
 
 
-rect1 = polygon_utils2.Polygon(0, 0, W=37.5, L=48)
+rect1 = polygon_utils.Polygon(0, 0, W=37.5, L=48)
 rect1.rotate(.4152).move(15.2,-2.55)
 #rect1.rotate(.4152).move(599216.2,6615256.5)
 
 rectangles = rect1.grid_rectangle(6,6)
 
-# polygon_utils2.plot_rectangles(rectangles, textkwargs={'fontsize': 5}, linewidth=.1)
+# polygon_utils.plot_rectangles(rectangles, textkwargs={'fontsize': 5}, linewidth=.1)
 
-df['nr'] = [polygon_utils2.find_polygon(p[0]-offset.x, p[1]-offset.y, rectangles) + 1
+df['nr'] = [polygon_utils.find_polygon(p[0]-offset.x, p[1]-offset.y, rectangles) + 1
             for p in  zip(df.x, df.y)]
 
     
@@ -169,7 +169,7 @@ df['treatment'] = [treatments[i] for i in df.nr]
 
 plt.cla()
 
-polygon_utils2.plot_rectangles(rectangles, textkwargs={'fontsize': 5}, linewidth=.1)
+polygon_utils.plot_rectangles(rectangles, textkwargs={'fontsize': 5}, linewidth=.1)
 
 colors = 'bgrcmyk'*10
 markers = '.......xxxxxxx'*5

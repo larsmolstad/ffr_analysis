@@ -2,7 +2,7 @@ import os
 import time
 import pylab as plt
 import numpy as np
-from polygon_utils import plot_rectangles
+from polygon_utils_old import plot_rectangles
 import resdir
 
 # todo maybe add a button instead of the while loop

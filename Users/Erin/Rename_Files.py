@@ -1,7 +1,7 @@
 #You must first run the cookbook on the correct data range, and then you can run
 #this script to save the raw data in a new folder within FFR named '_RENAMEDATA'
 
-import polygon_utils as pols
+import polygon_utils_old as pols
 import os
 import shutil
 import math 

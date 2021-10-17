@@ -30,7 +30,7 @@ import get_data
 import utils
 import regression
 import find_regressions
-from polygon_utils import plot_rectangles
+from polygon_utils_old import plot_rectangles
 import sort_results as sr
 import divide_left_and_right
 import weather_data

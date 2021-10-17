@@ -28,7 +28,33 @@ class G:  # (G for global) # todo get rid of
     stopdate = False
     filter_fun = False
 
+def regression_quality_check_n2o(reg):
+    try:
+        reg.signal_range = reg.max_y - reg.min_y
+    except:
+        reg.signal_range = 0
+    try:
+        reg.curve_factor = abs(reg.slope)/reg.signal_range
+    except:
+        reg.curve_factor = -1
+    if reg.signal_range > 0.14 or (side=='left' and reg.curve_factor>0.0081) or (side=='right' and reg.curve_factor>0.0066) or (reg.pval>0.0001 and reg.pval<0.001 and reg.signal_range >.003) or reg.curve_factor == -1 or reg.signal_range == -1:
+        reg.quality_check='Outliers likely'
+    elif reg.min_y < 0.31 or reg.min_y > 0.34 or (reg.slope < 0 and reg.max_y > 0.34):
+        if reg.pval > 0.001 and reg.signal_range < 0.003:
+            reg.quality_check='Out of range - possibly zero slope'
+        elif reg.slope < 0:
+            reg.quality_check='Out of range and negative'
+        else:
+            reg.quality_check='Out of range'
+    elif reg.pval > 0.001: 
+        if reg.signal_range > 0.003:
+            reg.quality_check='Fails p-test for other reason'
+        else:
+            reg.quality_check='Probably zero slope'
+    else:
+        reg.quality_check=''
 
+        
 """ORIGINAL VERSION
 def get_regression_segments(data, regressions):
     #returns a dict of dicts of tuples of lists, res[side][substance] =
@@ -479,31 +505,7 @@ class Regressor(object):
             reg.Iswitch = rawdict[key][side][2] # EEB adds switching times to reg, like [(27, 41), (67, 81), (107, 121), (147, 161), (182, 181)]
             #Quality check of N2O regressions
             if key=='N2O':
-                try:
-                    reg.signal_range = reg.max_y - reg.min_y
-                except:
-                    reg.signal_range = 0
-                try:
-                    reg.curve_factor = abs(reg.slope)/reg.signal_range
-                except:
-                    reg.curve_factor = -1
-                if reg.signal_range > 0.14 or (side=='left' and reg.curve_factor>0.0081) or (side=='right' and reg.curve_factor>0.0066) or (reg.pval>0.0001 and reg.pval<0.001 and reg.signal_range >.003) or reg.curve_factor == -1 or reg.signal_range == -1:
-                    reg.quality_check='Outliers likely'
-                elif reg.min_y < 0.31 or reg.min_y > 0.34 or (reg.slope < 0 and reg.max_y > 0.34):
-                    if reg.pval > 0.001 and reg.signal_range < 0.003:
-                        reg.quality_check='Out of range - possibly zero slope'
-                    elif reg.slope < 0:
-                        reg.quality_check='Out of range and negative'
-                    else:
-                        reg.quality_check='Out of range'
-                elif reg.pval > 0.001: 
-                    if reg.signal_range > 0.003:
-                        reg.quality_check='Fails p-test for other reason'
-                    else:
-                        reg.quality_check='Probably zero slope'
-                else:
-                    reg.quality_check=''
-        
+                regression_quality_check_n2o(reg)
         return reg, tbest
 
     def do_regressions(self, files, write_mode='w'):
