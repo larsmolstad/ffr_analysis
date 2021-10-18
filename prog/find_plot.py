@@ -12,7 +12,7 @@ def find_plot(df_row, rectangles):
         if callable(p):
             if p(df_row):
                 return i
-        elif isinstance(p, Polygon):
+        elif isinstance(p, polygon_utils.Polygon):
             if p.contains(x,y):
                 return i
         else:

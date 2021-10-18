@@ -426,7 +426,6 @@ class Regressor(object):
 
         keys = ['CO2',  'N2O', 'CO', 'H2O', 'licor_H2O']
         regressions = {'left': {}, 'right': {}}
-        regressions_tmp = {'left': {}, 'right': {}}
         
         for side in list(regressions.keys()):
             tbest = None
@@ -438,7 +437,8 @@ class Regressor(object):
                 if(regressions[side][key] is not None and 
                    self.options.options["correct_negatives"]):
                     specific_options, tbest = \
-                    self.try_correct_negative(specific_options, key, side, rawdict, tbest_orig)
+                    self.try_correct_negative(regressions, data, specific_options, key, side,
+                                              rawdict, tbest_orig)
                 
             if len(list(regressions[side].keys())) == 0:
                 regressions.pop(side)
@@ -449,10 +449,11 @@ class Regressor(object):
 
         return regressions
 
-    def try_correct_negative(self, specific_options, key, side, rawdict, tbest_orig):
+    def try_correct_negative(self, regressions, data, specific_options, key, side, rawdict, tbest_orig):
         # Todo I haven't tested this method since I refactored it out of find_all_slopes,
         # and have been told it is not used anymore. Probably
         # best to remove it all, with a warning
+        regressions_tmp = {'left': {}, 'right': {}}
         specific_options_bcp = specific_options # this should be deep-copied
         #print(data['filename'],specific_options_bcp)
         if((key=="N2O") and (regressions[side][key].slope < 0)):
@@ -531,7 +532,8 @@ class Regressor(object):
         n_on_line = 0
         errors = []
         with open(self.slopes_file_name, write_mode) as f:
-            for i, name in enumerate(files):                                 #do regression for each file
+            for i, name in enumerate(files):
+                # do regression for each file
                 t0, n_on_line = print_info_maybe(i, n, t0, n_on_line)
                 try:
                     if self.save_options['show_images'] or self.save_options['save_images']:
@@ -540,44 +542,17 @@ class Regressor(object):
                     reg = self.find_all_slopes(data)
                     self.write_result_to_file(reg, name, f)
                     resdict[os.path.split(name)[1]] = reg
-                    # Save images of each regression if wanted
                     if self.save_options['show_images'] or self.save_options['save_images']:
-                        title_filename = data['filename']
-                        title_options = 'options: ' + self.options.get_options_string(data['filename'])
-                        try:
-                            left_QC = reg['left']['N2O'].quality_check
-                        except:
-                            left_QC = None
-                        try:
-                            right_QC = reg['right']['N2O'].quality_check
-                        except:
-                            right_QC = None
-                        title_left_QC = 'Left: '+left_QC if left_QC else "" 
-                        title_right_QC = 'Right: '+right_QC if right_QC else ""
-                        plt.title(title_filename + '\n' + title_options + '\n' + title_left_QC + '\n' + title_right_QC )
-                        if self.save_options['save_images']:
-                            image_name = os.path.join(self.detailed_output_path,"Images", title_filename +'.png')
-                            print(image_name)
-                            plt.savefig(image_name)
-                            if left_QC:
-                                plt.savefig(os.path.join(self.detailed_output_path, "Check", left_QC,  "LEFT " + left_QC  +" "+ title_filename +'.png'))
-                            elif right_QC:
-                                plt.savefig(os.path.join(self.detailed_output_path, "Check", right_QC, "RIGHT "+ right_QC +" "+ title_filename +'.png'))
-                        if self.save_options['show_images']:
-                            plt.show()
-                        
-                    # Save detailed raw excel if wanted
+                        self.show_and_save_images(reg, data)
                     if self.save_options['save_detailed_excel']:
-                       
                         filename = data['filename']
-                        xls_write_raw_data_file(filename, 
-                                                os.path.join(
-                                                    self.detailed_output_path,'Values',
-                                                    'DetailedRawData_'+ filename+'.xls'),
-                                                data, reg, False)
-                
-                    
-                except Exception as e:
+                        xls_write_raw_data_file(
+                            filename, 
+                            os.path.join(
+                                self.detailed_output_path,'Values',
+                                'DetailedRawData_'+ filename+'.xls'),
+                            data, reg, False)
+                except Exception:
                     import traceback
                     errors.append([name, traceback.format_exc()])
                     # continue
@@ -588,6 +563,31 @@ class Regressor(object):
             regression_errors.append(errors)
             print('See find_regressions.regression_errors[-1]')
         return resdict, errors
+
+    def show_and_save_images(self, reg, data):
+        title_filename = data['filename']
+        title_options = 'options: ' + self.options.get_options_string(data['filename'])
+        try:
+            left_QC = reg['left']['N2O'].quality_check
+        except:
+            left_QC = None
+        try:
+            right_QC = reg['right']['N2O'].quality_check
+        except:
+            right_QC = None
+        title_left_QC = 'Left: '+left_QC if left_QC else "" 
+        title_right_QC = 'Right: '+right_QC if right_QC else ""
+        plt.title(title_filename + '\n' + title_options + '\n' + title_left_QC + '\n' + title_right_QC )
+        if self.save_options['save_images']:
+            image_name = os.path.join(self.detailed_output_path,"Images", title_filename +'.png')
+            print(image_name)
+            plt.savefig(image_name)
+            if left_QC:
+                plt.savefig(os.path.join(self.detailed_output_path, "Check", left_QC,  "LEFT " + left_QC  +" "+ title_filename +'.png'))
+            elif right_QC:
+                plt.savefig(os.path.join(self.detailed_output_path, "Check", right_QC, "RIGHT "+ right_QC +" "+ title_filename +'.png'))
+        if self.save_options['show_images']:
+            plt.show()
 
     def find_regressions(self, directory_or_files):
         files = get_filenames(directory_or_files, {})
@@ -682,11 +682,9 @@ def make_detailed_output_folders(detailed_output_path):
             os.makedirs(path)
 
 
-def plot_raw(examplefilename, key='N2O'):
+def plot_raw(filename, key='N2O'):
     "key may be 'N2O', 'CO2', 'Wind'"
-    if not os.path.isfile(examplefilename):
-        examplefilename = with_raw_dir(examplefilename)
-    a = get_data.get_file_data(examplefilename)
+    a = get_data.get_file_data(filename)
     plt.plot(a[key][0], a[key][1], '.')
     plt.gca().set_xlabel('seconds')
     if key in ['N2O', 'CO2', 'CO']:
