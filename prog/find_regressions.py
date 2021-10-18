@@ -28,7 +28,7 @@ class G:  # (G for global) # todo get rid of
     stopdate = False
     filter_fun = False
 
-def regression_quality_check_n2o(reg):
+def regression_quality_check_n2o(reg, side):
     try:
         reg.signal_range = reg.max_y - reg.min_y
     except:
@@ -505,11 +505,10 @@ class Regressor(object):
             reg.Iswitch = rawdict[key][side][2] # EEB adds switching times to reg, like [(27, 41), (67, 81), (107, 121), (147, 161), (182, 181)]
             #Quality check of N2O regressions
             if key=='N2O':
-                regression_quality_check_n2o(reg)
+                regression_quality_check_n2o(reg, side)
         return reg, tbest
 
     def do_regressions(self, files, write_mode='w'):
-        
         def print_info_maybe(i, n, t0, n_on_line):
             t = time.time()
             if t - t0 > 10:
@@ -519,6 +518,7 @@ class Regressor(object):
                 if n_on_line > 4:
                     n_on_line = 0
                     print('')
+                sys.stdout.flush()
             return t0, n_on_line
 
         if not files:

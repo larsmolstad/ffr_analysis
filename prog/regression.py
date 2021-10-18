@@ -10,7 +10,18 @@ from scipy import stats
 
 class Regression():
     
-    def __init__(self, intercept, slope, se_intercept, se_slope, mse, start, stop, rsq, pval, min_y, max_y):
+    def __init__(self,
+                 intercept,
+                 slope,
+                 se_intercept,
+                 se_slope,
+                 mse,
+                 start,
+                 stop,
+                 rsq,
+                 pval,
+                 min_y,
+                 max_y):
         self.intercept = intercept
         self.slope = slope
         self.se_intercept = se_intercept
@@ -30,14 +41,21 @@ class Regression():
     def __str__(self):
         def f(x):
             return '{:.5g}'.format(x)
-        s = 'Regr(slope:{}, intercept: {}, se_intercept: {}, se_slope: {}, mse: {}, start: {}, stop: {}, rsq: {}, pval: {}, min_y: {}, max_y: {})'
+        s = 'Regr(slope:{}, intercept: {}, se_intercept: {}, se_slope: {}, mse: {}'
+        s += ', start: {}, stop: {}, rsq: {}, pval: {}, min_y: {}, max_y: {})'
         return s.format(f(self.slope), f(self.intercept), f(self.se_intercept),
-                        f(self.se_slope), f(self.mse), self.start, self.stop, self.rsq, self.pval, self.min_y, self.max_y)
+                        f(self.se_slope), f(self.mse), self.start, self.stop,
+                        self.rsq, self.pval, self.min_y, self.max_y)
 
     def __repr__(self):
         return self.__str__()
 
+    def to_dict(self): # for saving as json later todo
+        return {x: get(self, x) for x in
+                ('intercept', 'slope', 'se_intercept', 'se_slope', 'mse',
+                 'start', 'stop', 'rsq', 'pval', 'min_y', 'max_y')}
 
+    
 def mean(x):
     return sum(x) * 1.0 / len(x)
 
