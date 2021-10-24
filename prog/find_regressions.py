@@ -17,7 +17,6 @@ import xlwt
 
 regression_errors = []
 
-
 class G:  # (G for global) # todo get rid of
     res_file_name = 'slopes.txt'
     directory = ''
@@ -93,6 +92,8 @@ def get_regression_segments(data, regressions):
     ar = np.array
     res = defaultdict(dict)
     for side, rdict in regressions.items():
+        if side == 'filename':
+            continue
         for substance, reg in rdict.items():
             if reg is None:
                 continue
@@ -110,9 +111,18 @@ def get_regression_segments(data, regressions):
     return res
 
 
-def plot_regressions(data, regressions,normalized=True):
+def plot_regressions(regressions, data=None, normalized=True):
     """ plotting the n2o and co2 with regression lines.
+    If data is None, it uses get_data.get_file_data(regressions['filename']);
+    resdir.raw_data_path must be set correctly
 """
+    if 'N2O' in regressions.keys():
+        raise Exception("""Deprecated call to plot_regressions. The old way was 
+plot_regressions(data, regressions {, normalized=True}).  The new way is
+plot_regressions(regressions, {, data=None, normalized=True})""")
+    
+    if data is None:
+        data = get_data.get_file_data(regressions['filename'])
     colors = {'N2O':{'left':'r', 'right':'g', 'between':'b'},
               'CO2':{'left':'k', 'right':'c', 'between': 'y'}}
     
@@ -367,6 +377,25 @@ class Options_manager(object):
         s += '   (options.specific_options_dict contains the specific_options)'
         return s
 
+## not used yet
+class ChamberRegressions(object):
+    """ Container for regressions for one chamber of robot"""
+    def __init__(self):
+        pass
+
+
+class FileRegressions(object):
+    """ Containing all the regressions for a file"""
+    def __init__(self, filename):
+        self.left = ChamberRegressions()
+        self.right = ChamberRegressions()
+        self.filename = filename
+        self.rawdata_directory = ''
+    def plot(self, rawdata_directory):
+        self.data = get_data.get_file_data(
+            os.path.join(self.rawdata_directory, self.filename))
+
+## [end not used yet]
 
 class Regressor(object):
 
@@ -425,14 +454,17 @@ class Regressor(object):
         rawdict = divide_left_and_right.group_all(data, **cut_param)
 
         keys = ['CO2',  'N2O', 'CO', 'H2O', 'licor_H2O']
-        regressions = {'left': {}, 'right': {}}
+        regressions = {'left': {}, 'right': {}, 'filename':data['filename']}
         
         for side in list(regressions.keys()):
+            if side == 'filename':
+                continue
             tbest = None
             for key in keys:
                 tbest_orig = tbest
-                regressions[side][key], tbest = self._regress1(rawdict, side, key,
-                                                               specific_options, tbest)
+                regressions[side][key], tbest = \
+                    self._regress1(rawdict, side, key,
+                                   specific_options, tbest)
                 
                 if(regressions[side][key] is not None and 
                    self.options.options["correct_negatives"]):
@@ -444,7 +476,7 @@ class Regressor(object):
                 regressions.pop(side)
 
         if self.do_plot or do_plot or self.save_options['save_images'] or self.save_options['show_images']:
-            self.plot_fun(data, regressions) 
+            self.plot_fun(regressions, data=data) 
             plt.pause(0.0001)
 
         return regressions
@@ -623,10 +655,11 @@ class Regressor(object):
             pickle.dump(resdict, f)
     
     
-
     def write_result_to_file(self, res, name, f):
         options_string = self.options.get_options_string(name)
         for side, sideres in res.items():
+            if side == 'filename':
+                continue
             s = os.path.split(name)[1] + '\t' + side
             s += '\t' + options_string
             ok = []

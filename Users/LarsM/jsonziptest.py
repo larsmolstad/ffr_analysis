@@ -136,8 +136,7 @@ def update_dbdict3_faster(dbfilename, fullfilenames):
     return d
 
 #--
-def getrawdata(key):
-    d = dbdict("rawdb")
+def getrawdata(key, d=dbdict("rawdb")):
     a = d[key]
     b = gzip.decompress(a)
     return json.loads(b)
@@ -157,7 +156,8 @@ def getN2O(key):
 
 # getN2O(keys[1000])
 
-all_n2o = {key:getN2O(key) for key in keys}
+%time all_n2o = {key:getN2O(key) for key in keys} # ca 45sek
+
 #--
 import pylab as plt
 import numpy as np
