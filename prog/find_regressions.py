@@ -1,3 +1,11 @@
+import xlwt
+import pylab as plt
+import read_regression_exception_list
+import bisect_find
+import divide_left_and_right
+import get_data
+import licor_indexes
+import regression
 import os
 import sys
 import time
@@ -6,16 +14,9 @@ import numpy as np
 import pickle
 sys.path.append(os.path.split(os.path.split(
     os.path.realpath(__file__))[0])[0])  # sorry
-import regression
-import licor_indexes
-import get_data
-import divide_left_and_right
-import bisect_find
-import read_regression_exception_list
-import pylab as plt
-import xlwt 
 
 regression_errors = []
+
 
 class G:  # (G for global) # todo get rid of
     res_file_name = 'slopes.txt'
@@ -27,6 +28,7 @@ class G:  # (G for global) # todo get rid of
     stopdate = False
     filter_fun = False
 
+
 def regression_quality_check_n2o(reg, side):
     try:
         reg.signal_range = reg.max_y - reg.min_y
@@ -36,24 +38,24 @@ def regression_quality_check_n2o(reg, side):
         reg.curve_factor = abs(reg.slope)/reg.signal_range
     except:
         reg.curve_factor = -1
-    if reg.signal_range > 0.14 or (side=='left' and reg.curve_factor>0.0081) or (side=='right' and reg.curve_factor>0.0066) or (reg.pval>0.0001 and reg.pval<0.001 and reg.signal_range >.003) or reg.curve_factor == -1 or reg.signal_range == -1:
-        reg.quality_check='Outliers likely'
+    if reg.signal_range > 0.14 or (side == 'left' and reg.curve_factor > 0.0081) or (side == 'right' and reg.curve_factor > 0.0066) or (reg.pval > 0.0001 and reg.pval < 0.001 and reg.signal_range > .003) or reg.curve_factor == -1 or reg.signal_range == -1:
+        reg.quality_check = 'Outliers likely'
     elif reg.min_y < 0.31 or reg.min_y > 0.34 or (reg.slope < 0 and reg.max_y > 0.34):
         if reg.pval > 0.001 and reg.signal_range < 0.003:
-            reg.quality_check='Out of range - possibly zero slope'
+            reg.quality_check = 'Out of range - possibly zero slope'
         elif reg.slope < 0:
-            reg.quality_check='Out of range and negative'
+            reg.quality_check = 'Out of range and negative'
         else:
-            reg.quality_check='Out of range'
-    elif reg.pval > 0.001: 
+            reg.quality_check = 'Out of range'
+    elif reg.pval > 0.001:
         if reg.signal_range > 0.003:
-            reg.quality_check='Fails p-test for other reason'
+            reg.quality_check = 'Fails p-test for other reason'
         else:
-            reg.quality_check='Probably zero slope'
+            reg.quality_check = 'Probably zero slope'
     else:
-        reg.quality_check=''
+        reg.quality_check = ''
 
-        
+
 """ORIGINAL VERSION
 def get_regression_segments(data, regressions):
     #returns a dict of dicts of tuples of lists, res[side][substance] =
@@ -80,7 +82,6 @@ def get_regression_segments(data, regressions):
 
 
 def get_regression_segments(data, regressions):
-
     """
         returns a dict of dicts of tuples of lists, res[side][substance] =
         t_all, y_all:     All points. 
@@ -97,17 +98,18 @@ def get_regression_segments(data, regressions):
         for substance, reg in rdict.items():
             if reg is None:
                 continue
-            #populate first two columns with all points
-            t_all, y_all = data[substance][:2]    
-            #populate next two columns with all points from each side
-            t_side = [ti for (I1, I2) in reg.Iswitch for ti in t_all[I1:I2]]    
+            # populate first two columns with all points
+            t_all, y_all = data[substance][:2]
+            # populate next two columns with all points from each side
+            t_side = [ti for (I1, I2) in reg.Iswitch for ti in t_all[I1:I2]]
             y_side = [yi for (I1, I2) in reg.Iswitch for yi in y_all[I1:I2]]
-            #populate next two columns with points used in regression
+            # populate next two columns with points used in regression
             i0 = bisect_find.bisect_find(t_side, reg.start, nearest=True)
             i1 = bisect_find.bisect_find(t_side, reg.stop, nearest=True)
             t_used = t_side[i0:i1]
             y_used = y_side[i0:i1]
-            res[side][substance] = (ar(t_all), ar(y_all), ar(t_side), ar(y_side), ar(t_used), ar(y_used))
+            res[side][substance] = (ar(t_all), ar(y_all), ar(
+                t_side), ar(y_side), ar(t_used), ar(y_used))
     return res
 
 
@@ -120,12 +122,12 @@ def plot_regressions(regressions, data=None, normalized=True):
         raise Exception("""Deprecated call to plot_regressions. The old way was 
 plot_regressions(data, regressions {, normalized=True}).  The new way is
 plot_regressions(regressions, {, data=None, normalized=True})""")
-    
+
     if data is None:
         data = get_data.get_file_data(regressions['filename'])
-    colors = {'N2O':{'left':'r', 'right':'g', 'between':'b'},
-              'CO2':{'left':'k', 'right':'c', 'between': 'y'}}
-    
+    colors = {'N2O': {'left': 'r', 'right': 'g', 'between': 'b'},
+              'CO2': {'left': 'k', 'right': 'c', 'between': 'y'}}
+
     def get_marker(side, substance):
         mark = 'o' if substance == 'N2O' and side in ['left', 'right'] else '.'
         if substance in colors and side in colors[substance]:
@@ -137,35 +139,36 @@ plot_regressions(regressions, {, data=None, normalized=True})""")
         return '-' if substance == 'N2O' else '--'
 
     def twoax_plot(subst, legend, t, y, marker):
-    # the legend goes in ax2, so we have to do a trick: adding empty plots to
-    # ax2 when plotting in ax1
+        # the legend goes in ax2, so we have to do a trick: adding empty plots to
+        # ax2 when plotting in ax1
         size = 8 if 'o' in marker else None
         ax[subst].plot(t, y, marker, markersize=size)
         if subst == 'N2O':
-            ax2.plot([],[], marker, markersize=size)
+            ax2.plot([], [], marker, markersize=size)
         legends.append(legend)
-        
+
     plt.clf()
     ax1 = plt.gca()
     ax1.grid()
     ax2 = ax1.twinx()
-    ax = defaultdict(lambda:ax2)
+    ax = defaultdict(lambda: ax2)
     ax['N2O'] = ax1
     legends = []
-    
-    #EEB:  Is it possible this call to get_regression_segments has already been done elsewhere and can be removed?
+
+    # EEB:  Is it possible this call to get_regression_segments has already been done elsewhere and can be removed?
     segments = get_regression_segments(data, regressions)
-    
+
     for subst in ['N2O', 'CO2']:
         t, y = data[subst][:2]
         marker = get_marker('between', subst)
         twoax_plot(subst, subst, t, y, marker)
-    
+
     for side in ['left', 'right']:
         if segments[side]:
             for subst in ['N2O', 'CO2']:
-                t, y, tside, yside, tused, yused = segments[side][subst]  #EEB: tside and yside are not used here. But they are left in to be compatible with new version of get_regression_segments
-                if len(tused)==0:
+                # EEB: tside and yside are not used here. But they are left in to be compatible with new version of get_regression_segments
+                t, y, tside, yside, tused, yused = segments[side][subst]
+                if len(tused) == 0:
                     continue
                 r = regressions[side][subst]
                 marker = get_marker(side, subst)
@@ -176,75 +179,87 @@ plot_regressions(regressions, {, data=None, normalized=True})""")
                 twoax_plot(subst, legend, tused, yhat, marker[0] + regline)
     t, y = data['N2O'][:2]
     ax['N2O'].plot(t, y, get_marker('between', 'N2O'))
-    
+
     ax2.set_xlabel('seconds')
     ax1.set_ylabel('ppm N2O')
     ax2.set_ylabel('ppm CO2')
     ax2.legend(legends)
-    
+
+
 def xls_write_raw_data_file(filename, xls_filename, data, reg, do_open=False):
-        workbook = xlwt.Workbook()
-        w = workbook.add_sheet('raw_data')
-        _write_raw(filename, w,  data, reg)  #EEB column_start is leftover from when all measurements were put in same excel file
-        try:
-            workbook.save(xls_filename)
-        except IOError:
-            raise IOError("You must close the old xls file")
-        if do_open:
-            os.startfile(xls_filename)
-    
+    workbook = xlwt.Workbook()
+    w = workbook.add_sheet('raw_data')
+    # EEB column_start is leftover from when all measurements were put in same excel file
+    _write_raw(filename, w,  data, reg)
+    try:
+        workbook.save(xls_filename)
+    except IOError:
+        raise IOError("You must close the old xls file")
+    if do_open:
+        os.startfile(xls_filename)
+
+
 def _write_raw(filename, worksheet,  data, reg, column_start=0):
-    #data = get_data.get_file_data(filename)                       
-    #reg = regr.find_all_slopes(filename, do_plot=False) #EEB can we delete do_plot here?                # EEB This is also done when make images.  Combine functions?
+    #data = get_data.get_file_data(filename)
+    # reg = regr.find_all_slopes(filename, do_plot=False) #EEB can we delete do_plot here?                # EEB This is also done when make images.  Combine functions?
     segments = get_regression_segments(data, reg)
-    #print(segments)
+    # print(segments)
     column = column_start
     w = worksheet
-    w.write(0, column, filename)                                            # Row 0 gets filename
-    def write_columns(title, columns, column_start, under_titles):          
-        w.write(1, column_start, title)                                     # Row 1 gets substance name (title)
+    # Row 0 gets filename
+    w.write(0, column, filename)
+
+    def write_columns(title, columns, column_start, under_titles):
+        # Row 1 gets substance name (title)
+        w.write(1, column_start, title)
         for i, vector in enumerate(columns):
-            w.write(2, column_start, under_titles[i])                       # Row 2 gets "under title" e.g. time or signal
+            # Row 2 gets "under title" e.g. time or signal
+            w.write(2, column_start, under_titles[i])
             for j, v in enumerate(vector):
-                w.write(j+3, column_start, v)                               # Data starts at row 3 (which is row 4 in Excel)
-            column_start += 1                                               # increment so next column(s)
+                # Data starts at row 3 (which is row 4 in Excel)
+                w.write(j+3, column_start, v)
+            # increment so next column(s)
+            column_start += 1
         return column_start
     for subst, vals in data.items():
-        if not (isinstance(vals, list) and len(vals)==2\
-                and isinstance(vals[0], list) and isinstance(vals[1], list)\
-                and len(vals[0])==len(vals[1])):                            # Skip non-gas data items for now, e.g. filename, aux, side
+        if not (isinstance(vals, list) and len(vals) == 2
+                and isinstance(vals[0], list) and isinstance(vals[1], list)
+                and len(vals[0]) == len(vals[1])):                            # Skip non-gas data items for now, e.g. filename, aux, side
             continue
-        column = write_columns(subst, vals, column, ['time', 'signal'])     #Write time column and all measurements
+        # Write time column and all measurements
+        column = write_columns(subst, vals, column, ['time', 'signal'])
         t_orig, y_orig = vals
-        for side in ['right', 'left']:  
-            if side in segments:     
+        for side in ['right', 'left']:
+            if side in segments:
                 if subst in segments[side]:
-                    tside, yside = segments[side][subst][2:4]               #Write all measurements attributed to each side
-                    yy = [y if t_orig[i] in tside else None 
+                    # Write all measurements attributed to each side
+                    tside, yside = segments[side][subst][2:4]
+                    yy = [y if t_orig[i] in tside else None
                           for i, y in enumerate(y_orig)]
                     #deb.append([segments, side, subst, t_orig])
-                    column = write_columns('%s_%s_%s' % (subst, side, 'all'),         
-                                           [yy], #segments[side][subst][2:], 
+                    column = write_columns('%s_%s_%s' % (subst, side, 'all'),
+                                           [yy],  # segments[side][subst][2:],
                                            column, ['signal'])
-                    tside, yside = segments[side][subst][4:6]                #Write measurements used in each side's regression if applicable
-                    yy = [y if t_orig[i] in tside else None 
+                    # Write measurements used in each side's regression if applicable
+                    tside, yside = segments[side][subst][4:6]
+                    yy = [y if t_orig[i] in tside else None
                           for i, y in enumerate(y_orig)]
                     #deb.append([segments, side, subst, t_orig])
-                    column = write_columns('%s_%s_%s' % (subst, side, 'used'),         
-                                           [yy], #segments[side][subst][2:], 
+                    column = write_columns('%s_%s_%s' % (subst, side, 'used'),
+                                           [yy],  # segments[side][subst][2:],
                                            column, ['signal'])
-        column += 1                                                         #Write a blank column before the next gas' columns start
+        column += 1  # Write a blank column before the next gas' columns start
     reg_attrs = ['slope', 'intercept', 'se_slope', 'se_intercept', 'mse']
     for side, regs in reg.items():
         for gas in regs.keys():
             if regs[gas] is None:
                 continue
-            w.write(1,column,'reg:%s_%s' % (side, gas))                     #label columns for each regression (side_gas)
+            # label columns for each regression (side_gas)
+            w.write(1, column, 'reg:%s_%s' % (side, gas))
             for i, s in enumerate(reg_attrs):
                 w.write(i*2+2, column, s)
                 w.write(i*2+3, column, getattr(regs[gas], s))
             column += 1
-
 
 
 def remove_zeros(t, y):
@@ -304,8 +319,8 @@ class Options_manager(object):
         """Will be used to save a representation for the options used for a given
         filename (or the current one)."""
         filename = os.path.split(filename)[1]
-        return repr((self.get_specific_options(filename), self.options)).replace('\t',' ')
-    
+        return repr((self.get_specific_options(filename), self.options)).replace('\t', ' ')
+
     def get_options(self, side, substance, filename_or_specific_options):
         if isinstance(filename_or_specific_options, str):
             filename = os.path.split(filename_or_specific_options)[1]
@@ -377,25 +392,31 @@ class Options_manager(object):
         s += '   (options.specific_options_dict contains the specific_options)'
         return s
 
-## not used yet
+# not used yet
+
+
 class ChamberRegressions(object):
     """ Container for regressions for one chamber of robot"""
+
     def __init__(self):
         pass
 
 
 class FileRegressions(object):
     """ Containing all the regressions for a file"""
+
     def __init__(self, filename):
         self.left = ChamberRegressions()
         self.right = ChamberRegressions()
         self.filename = filename
         self.rawdata_directory = ''
+
     def plot(self, rawdata_directory):
         self.data = get_data.get_file_data(
             os.path.join(self.rawdata_directory, self.filename))
 
-## [end not used yet]
+# [end not used yet]
+
 
 class Regressor(object):
 
@@ -414,7 +435,7 @@ class Regressor(object):
 
     """
 
-    def __init__(self, slopes_file_name, options,save_options, specific_options_file_name=None, detailed_output_path=None):
+    def __init__(self, slopes_file_name, options, save_options, specific_options_file_name=None, detailed_output_path=None):
         self.options = Options_manager(options, specific_options_file_name)
         self.slopes_file_name = slopes_file_name
         self.save_options = save_options
@@ -430,9 +451,9 @@ class Regressor(object):
                 return self.options.options[key]
             else:
                 return default
-        return {'cut_ends':get_maybe('cut_ends', 3),
-                'cut_beginnings':get_maybe('cut_beginnings', 4)}
-        
+        return {'cut_ends': get_maybe('cut_ends', 3),
+                'cut_beginnings': get_maybe('cut_beginnings', 4)}
+
     def find_all_slopes(self, filename_or_data, do_plot=False, given_specific_options=False):
         """Finds the regression lines for N2O and CO2, for left and right
         side
@@ -444,18 +465,19 @@ class Regressor(object):
             data = get_data.get_file_data(filename_or_data)
         else:
             data = filename_or_data
-            
+
         if given_specific_options is False:
-            specific_options = self.options.get_specific_options(data['filename'])
+            specific_options = self.options.get_specific_options(
+                data['filename'])
         else:
             specific_options = given_specific_options
-        
+
         cut_param = self._get_divide_cut_param(specific_options)
         rawdict = divide_left_and_right.group_all(data, **cut_param)
 
         keys = ['CO2',  'N2O', 'CO', 'H2O', 'licor_H2O']
-        regressions = {'left': {}, 'right': {}, 'filename':data['filename']}
-        
+        regressions = {'left': {}, 'right': {}, 'filename': data['filename']}
+
         for side in list(regressions.keys()):
             if side == 'filename':
                 continue
@@ -465,18 +487,18 @@ class Regressor(object):
                 regressions[side][key], tbest = \
                     self._regress1(rawdict, side, key,
                                    specific_options, tbest)
-                
-                if(regressions[side][key] is not None and 
+
+                if(regressions[side][key] is not None and
                    self.options.options["correct_negatives"]):
                     specific_options, tbest = \
-                    self.try_correct_negative(regressions, data, specific_options, key, side,
-                                              rawdict, tbest_orig)
-                
+                        self.try_correct_negative(regressions, data, specific_options, key, side,
+                                                  rawdict, tbest_orig)
+
             if len(list(regressions[side].keys())) == 0:
                 regressions.pop(side)
 
         if self.do_plot or do_plot or self.save_options['save_images'] or self.save_options['show_images']:
-            self.plot_fun(regressions, data=data) 
+            self.plot_fun(regressions, data=data)
             plt.pause(0.0001)
 
         return regressions
@@ -486,25 +508,27 @@ class Regressor(object):
         # and have been told it is not used anymore. Probably
         # best to remove it all, with a warning
         regressions_tmp = {'left': {}, 'right': {}}
-        specific_options_bcp = specific_options # this should be deep-copied
-        #print(data['filename'],specific_options_bcp)
-        if((key=="N2O") and (regressions[side][key].slope < 0)):
+        specific_options_bcp = specific_options  # this should be deep-copied
+        # print(data['filename'],specific_options_bcp)
+        if((key == "N2O") and (regressions[side][key].slope < 0)):
             specific_options["co2_guides"] = False
             regressions_tmp[side][key], tbest_tmp = self._regress1(rawdict, side, key,
-                                                       specific_options, tbest_orig)
+                                                                   specific_options, tbest_orig)
             if(regressions_tmp[side][key].slope < 0):
                 specific_options = specific_options_bcp
                 specific_options[side] = {'N2O': {'start': 1, 'stop': 190}}
                 regressions_tmp[side][key], tbest_tmp = self._regress1(rawdict, side, key,
-                                                           specific_options, tbest_orig)
+                                                                       specific_options, tbest_orig)
             if(regressions_tmp[side][key].slope > 0):
                 regressions[side][key] = regressions_tmp[side][key]
                 tbest = tbest_tmp
             else:
                 specific_options = specific_options_bcp
-            self.options.specific_options_dict[data['filename']] = specific_options  #this is not updating properly
+            # this is not updating properly
+            self.options.specific_options_dict[data['filename']
+                                               ] = specific_options
         return specific_options, tbest
-    
+
     def _regress1(self, rawdict, side, key, specific_options, tbest):
         # rawdict is like {'CO2': x1, 'N2O': x2, ...}
         # where x1 and x2 is like{'left':(t,y,Istartstop), 'right':(t,y,Istartstop)}
@@ -516,12 +540,12 @@ class Regressor(object):
         if len(t) == 0:
             reg = None
         elif 'slope' in options:  # If slope was manually set
-            #(EEB) This manually creates the 'reg' without calling the regression2 function.
-            #It sets SE's and MSE's to zero, and start/stop to the min and max
-            #(EEB) items passed to Regression:(self, intercept, slope, se_intercept, se_slope, mse, start, stop)
+            # (EEB) This manually creates the 'reg' without calling the regression2 function.
+            # It sets SE's and MSE's to zero, and start/stop to the min and max
+            # (EEB) items passed to Regression:(self, intercept, slope, se_intercept, se_slope, mse, start, stop)
             reg = regression.Regression(
                 t[0], options['slope'], 0, 0, 0, t[0], t[-1])
-        #If user manually gave start and stop times, call regression2 via regress_within
+        # If user manually gave start and stop times, call regression2 via regress_within
         elif 'start' in options and 'stop' in options:
             reg = regression.regress_within(t, y, options['start'], options['stop'])
         #If the regression should use CO2's start and stop points, call regression2 via regress_within
