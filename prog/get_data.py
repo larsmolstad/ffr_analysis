@@ -4,10 +4,9 @@ import math
 import time
 import pickle
 from collections import OrderedDict, defaultdict
-
 import licor_indexes
 import dlt_indexes
-
+import resdir
 
 def number_after(s, letters, decimal_symbol, start=0):
     """ Returns the floating point number and the starting and ending positios 
@@ -135,6 +134,11 @@ get_data.parse_filename({})""".format(os.path.split(filename)[-1]))
 
 
 def get_file_data(filename):
+    if not os.path.isfile(filename) and os.path.split(filename)[0]=='':
+        filename0 = filename
+        filename = os.path.join(resdir.raw_data_path, filename)
+    if not os.path.isfile(filename):
+        raise Exception("Neither {} nor {} found".format(filename0, filename))
     with open(filename, 'rb') as f:
         a = pickle.load(f)
     return parse_saved_data(old2new(a), filename)
