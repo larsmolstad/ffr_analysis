@@ -18,15 +18,15 @@ sys.path.append(os.path.split(os.path.split(
 regression_errors = []
 
 
-class G:  # (G for global) # todo get rid of
-    res_file_name = 'slopes.txt'
-    directory = ''
-    interval = 100
-    co2_guides = True
-    co2_lag_time = 0
-    startdate = False
-    stopdate = False
-    filter_fun = False
+# class G:  # (G for global) # todo get rid of
+#     res_file_name = 'slopes.txt'
+#     directory = ''
+#     interval = 100
+#     co2_guides = True
+#     co2_lag_time = 0
+#     startdate = False
+#     stopdate = False
+#     filter_fun = False
 
 
 def regression_quality_check_n2o(reg, side):
@@ -89,8 +89,6 @@ def get_regression_segments(data, regressions):
         t_used, y_used:   All points, for that side, that were used in the regression.
         (t in seconds and y in ppm, so far) 
     """
-
-    ar = np.array
     res = defaultdict(dict)
     for side, rdict in regressions.items():
         if side == 'filename':
@@ -108,8 +106,8 @@ def get_regression_segments(data, regressions):
             i1 = bisect_find.bisect_find(t_side, reg.stop, nearest=True)
             t_used = t_side[i0:i1]
             y_used = y_side[i0:i1]
-            res[side][substance] = (ar(t_all), ar(y_all), ar(
-                t_side), ar(y_side), ar(t_used), ar(y_used))
+            res[side][substance] = tuple(np.array(x) for x in
+                                         (t_all, y_all, t_side, y_side, t_used, y_used))
     return res
 
 
@@ -392,8 +390,8 @@ class Options_manager(object):
         s += '   (options.specific_options_dict contains the specific_options)'
         return s
 
-# not used yet
 
+# [start not used yet]
 
 class ChamberRegressions(object):
     """ Container for regressions for one chamber of robot"""
@@ -454,7 +452,7 @@ class Regressor(object):
         return {'cut_ends': get_maybe('cut_ends', 3),
                 'cut_beginnings': get_maybe('cut_beginnings', 4)}
 
-    def find_all_slopes(self, filename_or_data, do_plot=False, given_specific_options=False):
+    def find_all_slopes(self, filename_or_data, do_plot=True, given_specific_options=False):
         """Finds the regression lines for N2O and CO2, for left and right
         side
         returns {'left':{'CO2':(Regression, (x,y)),'N2O':...}, {'right': ...}}
@@ -650,7 +648,8 @@ class Regressor(object):
         resdict, errors = self.do_regressions(files)
         with open(os.path.splitext(self.slopes_file_name)[0] + '.pickle', 'wb') as f:
             pickle.dump(resdict, f)
-
+        return resdict
+        
     def update_regressions_file(self, directory_or_files):
         """ this assumes that all files is in the same directory"""
         files = get_filenames(directory_or_files, {})
@@ -717,6 +716,8 @@ This in not yet handled by this software. Line not written to file""")
 
 def print_reg(regres):
     for k, dct in regres.items():
+        if k == 'filename':
+            continue
         print(k)
         for subst, reg in dct.items():
             print(subst)

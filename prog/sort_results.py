@@ -341,13 +341,13 @@ def xlswrite_from_df(name, df, do_open=False, columns=['N2O_slope', 'CO2_slope']
         os.startfile(name)
 
 
-if __name__ == '__main__' and G.xls_file not in ['False', 'None']:
-    lastfile = '.sort_result_lastfile'
-    if not G.slope_file:
-        G.slope_file = tk_getfilename(lastfile, "Select slope file")
-    rectangles = migmin_rectangles.migmin_rectangles()  # todo
-    df, _ = make_df_from_slope_file(G.slope_file,
-                                    rectangles,
-                                    find_plot.treatments,
-                                    remove_redoings_time=3600)
-    xlswrite_from_df(G.xls_file, df, True)
+# if __name__ == '__main__' and G.xls_file not in ['False', 'None']:
+#     lastfile = '.sort_result_lastfile'
+#     if not G.slope_file:
+#         G.slope_file = tk_getfilename(lastfile, "Select slope file")
+#     rectangles = migmin_rectangles.migmin_rectangles()  # todo
+#     df, _ = make_df_from_slope_file(G.slope_file,
+#                                     rectangles,
+#                                     find_plot.treatments,
+#                                     remove_redoings_time=3600)
+#     xlswrite_from_df(G.xls_file, df, True)
