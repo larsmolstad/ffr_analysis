@@ -23,21 +23,30 @@ o.h. Den er nærmeste offisielle målestasjon, 0,9 km fra punktet
 Ås. Stasjonen ble opprettet i januar 1874. Stasjonen måler nedbør,
 temperatur og snødybde. Det kan mangle data i observasjonsperioden."""
 
+def t2tstr(t):
+    t = time.gmtime(t)
+    return "%s-%s-%s" % (t.tm_year, t.tm_mon, t.tm_mday)
+
 def fix_date(dato):
+    if isinstance(dato, float):
+        dato = t2tstr(dato)
     d = dato.split('-')
     for i in [1,2]:
         if len(d[i]) == 1:
             d[i] = '0' + d[i]
     return '-'.join(d)
 
-def make_url(dato):
+def make_url(dato, station):
     dato = fix_date(dato)
-    #    url = "https://www.yr.no/en/statistics/table/1-60637/Norway/Viken/%C3%85s/%C3%85s?q=2020-02-25"
-    return 'https://www.yr.no/en/statistics/table/1-60637/Norway/Viken/%C3%85s/%C3%85s?q=' + dato
+    urlstarts = \
+        {'aas': 'https://www.yr.no/en/statistics/table/1-60637/Norway/Viken/%C3%85s/%C3%85s?q=',
+         'samfunnet': 'https://www.yr.no/en/statistics/table/1-2246625/Norway/Viken/%C3%85s/Studentsamfunnet?q=',
+         'blindern': 'https://www.yr.no/en/forecast/daily-table/1-73738/Norway/Oslo/Oslo/Blindern?q='}
+    return urlstarts[station] + dato
 
-def get_yr_soup(dato):
-    print(make_url(dato))
-    res = requests.get(make_url(dato))
+def get_yr_soup(dato, station):
+    print(make_url(dato, station))
+    res = requests.get(make_url(dato, station))
     res.raise_for_status()
     return bs4.BeautifulSoup(res.text, 'lxml')
 
@@ -61,7 +70,7 @@ def get_all_yr_soups(start=(2015, 0o1, 0o1, 12, 0, 0, 0, 0, 0),
         ts = t2tstr(t)
         print(ts) #print(ts, i, len(tt), (time.time() - t0) / (i + 1))
         try:
-            y.append([t, get_yr_soup(ts)])
+            y.append([t, get_yr_soup(ts, 'aas')])
         except:
             y.append([t, None])
             traceback.print_exc()
@@ -114,40 +123,15 @@ def soup2data_new(soup):
     return res
 
 
-def soup2data_old(soup):
-    aj = all_json_in_scripts(soup)
-    aj0 = aj[0]
-    q = list(aj0["statistics"]["locations"].values())[0]["days"]
-    try:
-        w = list(q.values())[0]
-        e = w["data"]['historical'] # er hele forskjellen at 'historical' er borte?
-        e['units']
-        data = e['days'][0]['hours']
-    except KeyError as e:
-        print("KeyError", e)
-        return []
-    res = []
-    for (i, d) in enumerate(data):
-        try:
-            t = parser.parse(d["time"]).timestamp()  #Note if verifying on yr.no: CET is UTC+1 in winter and UTC+2 in summer
-            kl = i
-            temp = [d["temperature"].get(s, None) for s in ["value", "max", "min"]] #Note if verifying on yr.no: python weather data is rearranged, the yr site is ordered min, max, measured value.
-            precipitation = d["precipitation"].get("total", None)
-            humidity = d["humidity"].get("value", None)
-            res.append((t, [kl, temp, precipitation, humidity]))
-        except KeyError as e:
-            print("KeyError", e, time.ctime(t))
-            sys.stdout.flush()
-    return res
-
-
 def soup2data(soup):
     try:
         return soup2data_new(soup)
     except:
-        print("soup2data_new doesn't work, trying old version")
-        return soup2data_old(soup)
-        print("That didn't work either")
+        print(traceback.format_exc())
+        print("soup2data_new doesn't work")
+        #", trying old version")
+        #return soup2data_old(soup)
+        #print("That didn't work either")
 
 
 def all_soups2data(time_soup_list):
@@ -192,6 +176,42 @@ def update_weather_data(stop=None):
         pickle.dump(updated_data, open(DATA_FILE_NAME, 'wb'))
 
 
+def get_station_daydata(t, station):
+    ts = t2tstr(t)
+    print(ts)
+    try:
+        soup = get_yr_soup(ts, station)
+        return soup2data(soup)
+    except Exception as e:
+        print(e)
+        print('not this one: ' + ts)
+        print(make_url(ts, station))
+        return None
+    
+def update_weather_data(stop=None):
+    data = get_stored_data()
+    old_n = len(data)
+    last_date = max([x[0] for x in data])
+    t0 = last_date - 86400
+    if stop is None:
+        t1 = time.time()
+    else:
+        t1 = time.mktime(stop)
+    tt = np.arange(t0, t1, 86400)
+    print('fetching weather data from yr.no')
+    for t in tt:
+        data = get_station_daydata(t, 'aas')
+        if data is None:
+            data = get_station_daydata(t, 'samfunnet', t)
+        if data is not None:
+            data = combine_data(data, d)
+        else:
+            print("No data for this day: {}".format(time.ctime(t)))
+    if len(data) != old_n:
+        pickle.dump(data, open(DATA_FILE_NAME, 'wb'))
+        
+
+        
 def my_find_all(s, substr):
     res = []
     i = s.find(substr)
@@ -199,6 +219,7 @@ def my_find_all(s, substr):
         res.append(i)
         i = s.find(substr, i+1)
     return res
+
 
 #--
 #     q = list(aj0["statistics"]["locations"].values())[0]["days"]
@@ -221,3 +242,28 @@ def my_find_all(s, substr):
 #--
 
 
+# def soup2data_old(soup):
+#     aj = all_json_in_scripts(soup)
+#     aj0 = aj[0]
+#     q = list(aj0["statistics"]["locations"].values())[0]["days"]
+#     try:
+#         w = list(q.values())[0]
+#         e = w["data"]['historical'] # er hele forskjellen at 'historical' er borte?
+#         e['units']
+#         data = e['days'][0]['hours']
+#     except KeyError as e:
+#         print("KeyError", e)
+#         return []
+#     res = []
+#     for (i, d) in enumerate(data):
+#         try:
+#             t = parser.parse(d["time"]).timestamp()  #Note if verifying on yr.no: CET is UTC+1 in winter and UTC+2 in summer
+#             kl = i
+#             temp = [d["temperature"].get(s, None) for s in ["value", "max", "min"]] #Note if verifying on yr.no: python weather data is rearranged, the yr site is ordered min, max, measured value.
+#             precipitation = d["precipitation"].get("total", None)
+#             humidity = d["humidity"].get("value", None)
+#             res.append((t, [kl, temp, precipitation, humidity]))
+#         except KeyError as e:
+#             print("KeyError", e, time.ctime(t))
+#             sys.stdout.flush()
+#     return res
