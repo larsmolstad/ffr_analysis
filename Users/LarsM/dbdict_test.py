@@ -42,15 +42,16 @@
 # #--
 
 # prover aa lagre raadataene i db, ikke de parsede dataene
+
 def make_or_update_raw_dbdict(dbfilename, fullfilenames):
     d = dbdict(dbfilename)
     keyset = set(d.keys())
     for (i, f) in enumerate(fullfilenames):
         filename = os.path.split(f)[1]
-        if filename in keyset:
-            continue
         if i%1000 == 0:
             print(i)
+        if filename in keyset:
+            continue
         try:
             a = pickle.load(open(f, 'rb'))
         except:
@@ -64,7 +65,6 @@ def make_or_update_raw_dbdict(dbfilename, fullfilenames):
 %time rawdb = make_or_update_raw_dbdict("rawdb", fullrawfiles)
 
 keys = rawdb.keys()
-#--
 
 #--
 def getrawdata(key, d=dbdict("rawdb")):
@@ -87,8 +87,6 @@ def getN2O(key):
     y = [x[1][dlt_indexes.N2O_dry] for x in ty]
     return t, y
 
-# getN2O(keys[1000])
-
 %time all_n2o = {key:getN2O(key) for key in keys} # ca 45sek
 %time all_parsed = [sr.parse_filename(key) for key in keys]
 import pylab as plt
@@ -98,7 +96,6 @@ plt.ion()
 x = [p['vehicle_pos']['x'] for p in all_parsed]
 y = [p['vehicle_pos']['y'] for p in all_parsed]
 
-#--
 
 plt.plot([1])
 hikeys = set([])
@@ -121,3 +118,8 @@ for key in keys:
         print(key)
 
 #--
+
+a = [x for x in d.keys() if x.startswith('2021')]
+len(a)
+
+for 
