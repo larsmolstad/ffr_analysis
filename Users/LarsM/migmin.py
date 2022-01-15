@@ -5,7 +5,7 @@ Also maps plot numbers to treatments.
 # todo use the small rectangles to make the migmin_field rectangles
 import os
 
-from polygon_utils import *
+from polygon_utils_old import *
 import E22
 
 

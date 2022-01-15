@@ -4,7 +4,7 @@ Also maps plot numbers to treatments.
 """
 import os
 
-from polygon_utils import *
+from polygon_utils_old import *
 import E22
 
 name = 'agropro'

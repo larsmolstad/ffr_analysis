@@ -240,7 +240,7 @@ def ensure_absolute_path(name, newbase='.', maybe_new=True):
         newbase = os.path.join(*newbase)
     if not os.path.isabs(newbase):
         newbase = os.path.join(os.getcwd(),
-                               newbase if newbase is not '.' else '')
+                               newbase if newbase != '.' else '')
     if not os.path.isabs(name):
         name = os.path.join(newbase, name)
     if maybe_new:

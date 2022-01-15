@@ -30,7 +30,7 @@ import get_data
 import utils
 import regression
 import find_regressions
-from polygon_utils import plot_rectangles
+from polygon_utils_old import plot_rectangles
 import sort_results as sr
 import divide_left_and_right
 import weather_data
@@ -103,7 +103,7 @@ starttime = time.time()
 # 
 # resdir.raw_data path:
 #    Directory where raw measurements imported from the robot are stored
-#    Examples:  '..\\..\\_RAWDATA' or Y:\\MINA\\Miljøvitenskap\\Jord\\FFR\\_RAWDATA
+#    Examples:  '..\\..\\_RAWDATA' or Y:\\Shared\\N-group\\FFR\\_RAWDATA
 #
 # reg_output_path:
 #    Directory to save the RegressionOutput Excel file
@@ -115,22 +115,16 @@ starttime = time.time()
 
 """Edit Parameters below""" 
 
-# import migmin as experiment
-# or
-#import buckets as experiment
-# or
-#import agropro as experiment
-# or
-import all_e22_experiments as experiment
-
+import all_e22_experiments as experiment  #DO NOT CHANGE THIS
+# experiment.name = 'buckets' # if using buckets
 #start_and_stopdate = ['20152007', '20151213']  #YYYYMMDD 2nd date has to be one day after the last date you want
 #start_and_stopdate = ['20150615', '20151111']  #YYYYMMDD 2nd date has to be one day after the last date you want
-start_and_stopdate = ['20200901', '20201009']  #YYYYMMDD 2nd date has to be one day after the last date you want
+start_and_stopdate = ['20210531', '20210604']  #YYYYMMDD 2nd date has to be one day after the last date you want
 redo_regressions =  True
 
 options = {#'interval': 130, 
            'start':0,
-           'stop':200,
+           'stop':1850,
            'crit': 'steepest', 
            'co2_guides': False,
            'correct_negatives':False
@@ -139,7 +133,7 @@ options = {#'interval': 130,
 save_options= {'show_images':False,
                'save_images':True,
                'save_detailed_excel':True,
-               'sort_detailed_by_experiment':False
+               'sort_detailed_by_experiment':True
                }
 
 remove_redoings_time = 10 #seconds
@@ -154,16 +148,16 @@ flux_units = {'N2O': {'name': 'N2O_N_mug_m2h', 'factor': 2 * 14 * 1e6 * 3600},
 
 
 # *NOTE:  Directories must exist before the program is run.
-specific_options_filename = 'Y:\\MINA\\Miljøvitenskap\\Jord\\FFR\\specific_options.xlsx'
+specific_options_filename = 'Y:\\Shared\\N-group\\FFR\\specific_options.xlsx'
 
-resdir.raw_data_path = 'Y:\\MINA\\Miljøvitenskap\\Jord\\FFR\\_RAWDATA'
+resdir.raw_data_path = 'Y:\\Shared\\N-group\\FFR\\_RAWDATA'
                                      
 #Woops this does nothing!  You have to change the path in this file, excel_filenames
-reg_output_path = 'Y:\\MINA\\Miljøvitenskap\\Jord\\FFR'
+reg_output_path = 'Y:\\Shared\\N-group\\FFR'
 
 # Can also set to False
 #Woops this does nothing!  You have to change the path in find_regressions.py -> class Regressor -> self.detailed_output_path (update - Have now done this so it should work)
-detailed_output_path = 'Y:\\MINA\\Miljøvitenskap\\Jord\\FFR\\temp_output'
+detailed_output_path = 'Y:\\Shared\\N-group\\FFR\\Detailed_regression_output_Unsorted'
 
 
 """Optional:  Specify an example file to see CO2 and N2O charts displayed in Python"""
@@ -255,11 +249,11 @@ Define a plotting function for Regressor.  EEB:  This functionality was moved to
 # EEB: Disabled this because it was called via find_regressions or update_regressions, and plotted all lines on a single image instead of separate ones.
 # The legend disappeared, and other strange problems.  It also made regressions run much slower.
 # Instead there is now a standalone function for saving images further down.
-"""def my_plotfun(data, regressions, normalized=True):
+"""def my_plotfun(regressions, data, normalized=True):
     plt.cla()
     print(data['filename'])
     print(regressions)
-    find_regressions.plot_regressions(data, regressions, normalized)
+    find_regressions.plot_regressions(regressions, data, normalized)
     #plt.show()
     saveimagefilename = os.path.join(images_output_path, data['filename']+'.png')
     opt = regr.options.get_options_string(data['filename'])
@@ -549,23 +543,24 @@ if save_options['sort_detailed_by_experiment']==True:
             #print(serverfilename)
             if row['filename'][0:19] in serverfilename: #Save time by only comparing date string within filename (first 19 characters)
                 #print("MATCH "+row['filename'])
-                newserverfilename = serverfilename.replace("temp_output","Detailed_regression_output_"+row['experiment'])
-                #newserverfilename = os.path.join(os.path.split(serverfilename)[0]+'\\'+row['experiment']+' '+os.path.split(serverfilename)[1])
-                #print(newserverfilename)
-                try:
-                    shutil.move(serverfilename,newserverfilename)
-                except OSError as e:
-                    #print("exception reached")
-                    if e.errno != errno.ENOENT:   #Requires some library to use errno functionality
-                        raise
-                    # try creating parent directories
+                if row['experiment']!='_': #skip any measurement that doesn't belong to a defined experiment
+                    newserverfilename = serverfilename.replace("Detailed_regression_output_Unsorted","Detailed_regression_output_"+row['experiment'])
+                    #newserverfilename = os.path.join(os.path.split(serverfilename)[0]+'\\'+row['experiment']+' '+os.path.split(serverfilename)[1])
+                    #print(newserverfilename)
                     try:
-                        os.makedirs(os.path.dirname(newserverfilename))
-                        #print("trying to make dir")
-                    except:
-                        #print("failed make dir")
-                        pass
-                    shutil.move(serverfilename,newserverfilename)
+                        shutil.move(serverfilename,newserverfilename)
+                    except OSError as e:
+                        #print("exception reached")
+                        if e.errno != errno.ENOENT:   #Requires some library to use errno functionality
+                            raise
+                        # try creating parent directories
+                        try:
+                            os.makedirs(os.path.dirname(newserverfilename))
+                            #print("trying to make dir")
+                        except:
+                            #print("failed make dir")
+                            pass
+                        shutil.move(serverfilename,newserverfilename)
 
 """
 Copy image files which have not been caught by any checks to their own folder
@@ -1084,5 +1079,5 @@ ginput_check_regres(df[df.plot_nr==1])
 
 """)
 
-print(time.time()-starttime)
+print('run time was', int(time.time()-starttime), 'seconds')
 
