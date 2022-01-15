@@ -43,6 +43,23 @@
 
 # prover aa lagre raadataene i db, ikke de parsede dataene
 
+import json
+import gzip
+import os
+import pickle
+from dbdict import dbdict
+import sys
+sys.path.append('/home/larsmo/div/ffr/merge/ffr_analysis/prog')
+import dlt_indexes
+from imports import *
+
+rawdir = '/home/larsmo/div/ffr/merge/_RAWDATA'
+files = os.listdir(rawdir)
+len(files)
+files = [x for x in files if x.startswith('2')]
+len(files)
+fullrawfiles = [os.path.join(rawdir, x) for x in files]
+
 def make_or_update_raw_dbdict(dbfilename, fullfilenames):
     d = dbdict(dbfilename)
     keyset = set(d.keys())
@@ -62,7 +79,7 @@ def make_or_update_raw_dbdict(dbfilename, fullfilenames):
         d[filename] = ajc
     return d
 
-%time rawdb = make_or_update_raw_dbdict("rawdb", fullrawfiles)
+rawdb = make_or_update_raw_dbdict("rawdb", fullrawfiles)
 
 keys = rawdb.keys()
 
@@ -119,7 +136,3 @@ for key in keys:
 
 #--
 
-a = [x for x in d.keys() if x.startswith('2021')]
-len(a)
-
-for 

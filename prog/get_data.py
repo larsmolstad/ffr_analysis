@@ -139,7 +139,8 @@ def get_file_raw_data(filename):
         filename0 = filename
         filename = os.path.join(resdir.raw_data_path, filename)
     if not os.path.isfile(filename):
-        raise Exception("Neither {} nor {} found".format(filename0, filename))
+        raise Exception("Neither {} nor {} found. 
+Is resdir.raw_data_path correct?".format(filename0, filename))
     if os.path.splitext(filename)[1] == '.gz':
         s = gzip.open(filename).read()
         raw = json.loads(s)

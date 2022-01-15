@@ -111,7 +111,7 @@ def get_regression_segments(data, regressions):
     return res
 
 
-def plot_regressions(regressions, data=None, normalized=True):
+def plot_regressions(regressions, data=None, normalized=True, ax=None, **kw):
     """ plotting the n2o and co2 with regression lines.
     If data is None, it uses get_data.get_file_data(regressions['filename']);
     resdir.raw_data_path must be set correctly
@@ -144,9 +144,10 @@ plot_regressions(regressions, {, data=None, normalized=True})""")
         if subst == 'N2O':
             ax2.plot([], [], marker, markersize=size)
         legends.append(legend)
-
-    plt.clf()
-    ax1 = plt.gca()
+    ax1 = ax
+    if ax1 is None:
+        plt.clf()
+        ax1 = plt.gca()
     ax1.grid()
     ax2 = ax1.twinx()
     ax = defaultdict(lambda: ax2)
@@ -749,9 +750,25 @@ def plot_raw(filename, key='N2O'):
         plt.gca().set_ylabel('ppm')
     return a
 
+
 def plot_error_number(n, key='N2O'):
     name, err = regression_errors[-1][n]
     print('--------- name was: %s\nerror was:\n%s\n----------'%(name,err))
     a = plot_raw(name)
     print('shifting:', a['side'])
     return name, a
+
+
+class Reg(object):
+    def __init__(self, r):
+        self.r = r
+        self.name = r['filename']
+    def plot(self, ax=None):
+        plot_regressions(self.r, ax=ax)
+    def plot_raw(self, key='N2O'):
+        plot_raw(self.name, key)
+    def show(self):
+        print_reg(self.r)
+    def raw_data(self):
+        return get_data.get_file_data(self.name)
+        

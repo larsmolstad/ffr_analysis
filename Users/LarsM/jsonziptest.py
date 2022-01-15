@@ -6,7 +6,7 @@ from dbdict import dbdict
 import sys
 sys.path.append('/home/larsmo/div/ffr/merge/ffr_analysis/prog')
 import dlt_indexes
-
+from imports import *
 def write_jsongz(a, filename):
     json_object = json.dumps(a)
     gzip.open(filename, "w").write(json_object.encode('utf-8'))
@@ -37,11 +37,11 @@ def jsonzipfilename(filename, with_dir=True):
 def translate_file(filename):
     full_filename = os.path.join(rawdir,filename)
     a = get_data.get_file_raw_data(full_filename)
-    write_jsongz(a, jzfilename(filename))
+    write_jsongz(a, jsonzipfilename(filename))
 
 # translate_file(files[0])
 
-q = read(os.path.join(rawdir2, files[0]+".gz"))
+q = read_gzfile(os.path.join(rawdir2, files[0]+".gz"))
 
 try:
     failed
@@ -66,7 +66,7 @@ def translate_files(files):
             nfail += 1
     print("{} translated, {} already done, {} failed".format(nok, nwas, nfail))
     
-translate_files(files)
+# translate_files(files)
 
 def testraw(n1, n2):
     for i in range(n1, n2):
