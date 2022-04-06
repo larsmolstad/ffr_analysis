@@ -244,6 +244,11 @@ a list"""
         polygons = [x[1] for x in pairs]
         if names is True:
             names = [x[0] for x in pairs]
+        elif isinstance(names, list):
+            raise TypeError("names cannot be list if polygons is dict")
+        elif isinstance(names, dict):
+            ks = [x[0] for x in pairs]
+            names = [names[key] for key in ks]
     else:
         if names is True:
             names = range(1, len(polygons)+1)
@@ -275,4 +280,29 @@ def find_polygon(x, y, polygons):
     return -1
 
 
+
+def combine_adjacent_rectangles_of_equal_size(rectangle_list):
+    """return one polygon made from a list of one or more polygons
+which should be adjacent rectangles which together form a rectangle
+Example:
+p1 = Polygon([1,2,2,1], [0,0,1,1])
+p2 = p1.copy().move(x=1,y=0)
+p3 = combine_adjacent_rectangles_of_equal_size([p1, p2])
+plt.cla()
+p1.plot()
+p2.plot()
+p3.plot(color="red")
+"""
+    points = []
+    for r in rectangle_list:
+        points.extend(r.points())
+    points = np.array(points)
+    midpoint = points.mean(axis=0)
+    dists = [[np.linalg.norm(p - midpoint), i] for i, p in enumerate(points)]
+    indexes = [x[1] for x in sorted(dists, reverse=True)[:4]]
+    # got the four points, now I have to make sure they don't cross
+    new_points = points[indexes]
+    theta = [np.arctan2(x[1]-midpoint[1], x[0]-midpoint[0]) for x in new_points]
+    new_points = [x[1] for x in sorted(zip(theta, new_points))]
+    return Polygon(new_points)
 
