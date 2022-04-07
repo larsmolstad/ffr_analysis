@@ -92,6 +92,8 @@ def getrawdata(key, d=dbdict("rawdb")):
 %time a = [get_data.parse_saved_data(getrawdata(key), key) for key in keys[:100]]
 %time a = [getrawdata(key) for key in keys[:100]]
 # 206 ms and 323 ms. Slower without parsing.
+# and now:
+%time a = [get_data.get_file_raw_data(key) for key in keys[:100]]
 
 d = dbdict("rawdb")
 keys = d.keys()

@@ -8,28 +8,39 @@ def default_selection_fun(x):
     return x.startswith('20') or x.startswith('21') or x.startswith('punkt')
 
 
-def sorting_fun_by_os_stat(x, y):
-    def filetime(filename):
-        # I think it will always be st_mtime, but dont know this. todo look it up
-        s = os.stat(filename)
-        t = min([s.st_atime, s.st_mtime, s.st_ctime])
-        return t
-    tx = filetime(x)
-    ty = filetime(y)
-    if tx == ty:
-        return 0
-    else:
-        return -1 if tx < ty else 1
+# def sorting_fun_by_os_stat(x, y):
+#     def filetime(filename):
+#         # I think it will always be st_mtime, but dont know this. todo look it up
+#         s = os.stat(filename)
+#         t = min([s.st_atime, s.st_mtime, s.st_ctime])
+#         return t
+#     tx = filetime(x)
+#     ty = filetime(y)
+#     if tx == ty:
+#         return 0
+#     else:
+#         return -1 if tx < ty else 1
 
 
-def default_sorting_fun(x, y):
+# def default_sorting_fun(x, y):
+#     # sort by name!
+#     # sorting_fun_by_os_stat is very slow because os.stat is slow.
+#     # always now saving the files with a name beginning with the date and time
+#     if x == y:
+#         return 0
+#     return -1 if x < y else 1
+
+def sorting_fun_by_os_stat(filename):
+    # I think it will always be st_mtime, but dont know this. todo look it up
+    s = os.stat(filename)
+    t = min([s.st_atime, s.st_mtime, s.st_ctime])
+    return t
+
+def default_sorting_fun(filename):
     # sort by name!
     # sorting_fun_by_os_stat is very slow because os.stat is slow.
     # always now saving the files with a name beginning with the date and time
-    if x == y:
-        return 0
-    return -1 if x < y else 1
-
+    return filename
 
 def path_slash(name):
     return name.replace('\\', '/')
@@ -82,7 +93,7 @@ class File_list(object):
         # ext = os.path.splitext(name)[1]
         all_files = [x for x in all_files if self.selection_fun(x)]
         self.all_files = [my_path_join(katalog, x) for x in all_files]
-        self.all_files.sort(cmp=self.sorting_fun)
+        self.all_files.sort(key=self.sorting_fun)
         self.index = self.all_files.index(path_slash(self.current))
         self.nfiles = len(self.all_files)
 

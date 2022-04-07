@@ -6,6 +6,7 @@ import pickle
 import json
 import gzip
 from collections import OrderedDict, defaultdict
+import dbdict
 import licor_indexes
 import dlt_indexes
 import resdir
@@ -134,20 +135,76 @@ get_data.parse_filename({})""".format(os.path.split(filename)[-1]))
 
     return res
 
-def get_file_raw_data(filename):
-    if not os.path.isfile(filename) and os.path.split(filename)[0]=='':
-        filename0 = filename
-        filename = os.path.join(resdir.raw_data_path, filename)
-    if not os.path.isfile(filename):
-        raise Exception("""Neither {} nor {} found. 
-Is resdir.raw_data_path correct?""".format(filename0, filename))
-    if os.path.splitext(filename)[1] == '.gz':
-        s = gzip.open(filename).read()
+# def get_file_raw_data(filename, path_or_dbdict=None):
+#     """ Look in path_or_dbdict for filename. If path_or_dbdict is None,
+# use resdir.raw_data_path. If path_or_dbdict is a dbdict, use that dbdict with filename
+# as key. Otherwise try the filename without and with gz-extension. Return raw data."""
+#     if path_or_dbdict is None:
+#         path_or_dbdict = resdir.raw_data_path
+#     if filename.endswith(".gz"):
+#         name = os.path.splitext(filename)[0]
+#     if not os.path.isfile(name) \
+#        and not os.path.isfile(name + ".gz") \
+#        and os.path.split(filename)[0] == "":
+#         if isinstance(path_or_dbdict, dbdict.dbdict):
+#             a = path_or_dbdict[name]
+#             b = gzip.decompress(a)
+#             raw = json.loads(b)
+#         else:
+#             _name = name
+#             name = os.path.join(path_or_dbdict, name)
+#             file_exists = os.path.isfile(name)
+#             gzfile_exists = os.path.isfile(name + ".gz")
+#             if not (file_exists or gzfile_exists):
+#                 raise Exception("""Neither {} nor {} found. 
+#                 Is resdir.raw_data_path correct?""".format(_name, name))
+#         if gzfile_exists:
+#             name += ".gz"
+#             s = gzip.open(name).read()
+#             raw = json.loads(s)
+#         else:
+#             with open(name, 'rb') as f:
+#                 raw = pickle.load(f)
+#     return raw
+
+
+def _raw_data_from_file(name, path):
+    if not os.path.isfile(name) and not os.path.isfile(name + ".gz"):
+        _name = name
+        name = os.path.join(path, name)
+        file_exists = os.path.isfile(name)
+        gzfile_exists = os.path.isfile(name + ".gz")
+        if not (file_exists or gzfile_exists):
+            raise Exception("""Neither \n{} nor \n{} found, 
+            with or without ".gz"-extension 
+            Is resdir.raw_data_path correct?""".format(_name, name))
+    if os.path.isfile(name + ".gz"):
+        s = gzip.open(name + ".gz").read()
         raw = json.loads(s)
     else:
-        with open(filename, 'rb') as f:
+        with open(name, 'rb') as f:
             raw = pickle.load(f)
     return raw
+
+
+def get_file_raw_data(filename, path_or_dbdict=None):
+    """ Look in path_or_dbdict for filename. If path_or_dbdict is None,
+use resdir.raw_data_path. If path_or_dbdict is a dbdict, use that dbdict with filename
+as key. Otherwise try the filename without and with gz-extension. Return raw data."""
+    if path_or_dbdict is None:
+        path_or_dbdict = resdir.raw_data_path
+    if filename.endswith(".gz"):
+        name = os.path.splitext(filename)[0]
+    else:
+        name = filename
+    if isinstance(path_or_dbdict, dbdict.dbdict):
+        a = path_or_dbdict[name]
+        b = gzip.decompress(a)
+        raw = json.loads(b)
+    else:
+        raw = _raw_data_from_file(name, path_or_dbdict)
+    return raw
+
 
 def get_file_data(filename):
     name = filename[:-3] if filename.endswith('.gz') else filename

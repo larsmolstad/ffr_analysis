@@ -7,7 +7,7 @@ from sqlite3 import dbapi2 as sqlite
 class dbdict():
     ''' dbdict, a dictionnary-like object for large datasets (several Tera-bytes) '''
    
-    def __init__(self,dictName):
+    def __init__(self, dictName):
         self.db_filename = "%s.sqlite" % dictName #larsm changed "dbdict_%s.sqlite" to just "%s.sqlite"
         if not os.path.isfile(self.db_filename):
             self.con = sqlite.connect(self.db_filename)
