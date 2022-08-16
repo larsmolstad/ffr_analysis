@@ -90,20 +90,22 @@ def dictify(res):
             raise(e)
     return y
 
+
 def remove_overruled_raw_results(raw_result_list):
     """keepeing the last one of the lines with equal filename and side
 (but not options) from the slopes file"""
     x = reversed(raw_result_list)
-    done = []
+    done = set([])
     y = []
     for i, line in enumerate(x):
-        new = line[:2] 
+        new = tuple(line[:2])
         if not new in done:
-            done.append(new)
+            done.add(new)
             y.append(line)
     y.reverse()
     return y
-            
+
+
 def make_df(raw_result_list):
     print('%d lines from slope file'%len(raw_result_list))
     raw_result_list = remove_overruled_raw_results(raw_result_list)
